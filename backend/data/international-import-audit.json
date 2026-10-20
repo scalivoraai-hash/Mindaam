@@ -1,0 +1,315 @@
+{
+  "scope": "28 source-backed bounded central districts; not whole-city coverage or surveyed interiors",
+  "attribution": "\u00a9 OpenStreetMap contributors \u00b7 ODbL 1.0",
+  "retrieved": "2026-09-25",
+  "districts": [
+    {
+      "id": "paris",
+      "roads": 2106,
+      "buildings": 856,
+      "features": 3785,
+      "source_sha256": "08f11bd71b8d51e4775a5b04a63edbaf57052a19ae217dadc4f28c3a15d8e107",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "berlin",
+      "roads": 1221,
+      "buildings": 328,
+      "features": 1945,
+      "source_sha256": "5d9904ad809f99851a0cfc08a7f11aa3212fd17569ca91eb1f6d5fe536337e7f",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "amsterdam",
+      "roads": 628,
+      "buildings": 2213,
+      "features": 3967,
+      "source_sha256": "d6f4dbb117feec579ae39b3db71118b219de79d9b29d2a20b1fe3b277fed86c2",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "madrid",
+      "roads": 738,
+      "buildings": 1181,
+      "features": 3330,
+      "source_sha256": "c1f223ad9b71f50428a899e0b151cfe87e152e65154284e2104fff322b66ad1a",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "barcelona",
+      "roads": 839,
+      "buildings": 1824,
+      "features": 3793,
+      "source_sha256": "cc98c8ecac9239735b74049decc261d02c926dd21722bf0cfc5f5a773c824df8",
+      "safe_spawn": [
+        4.515,
+        -3.29
+      ]
+    },
+    {
+      "id": "rome",
+      "roads": 1339,
+      "buildings": 1302,
+      "features": 2822,
+      "source_sha256": "06f4eaa558fafeb8d8602a6a2d355f314ca427c0ad674a8fdd93f4284f4618c2",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "milan",
+      "roads": 1641,
+      "buildings": 513,
+      "features": 3014,
+      "source_sha256": "f81da7824acae9e6b202b3d44f99d439efcde1a75d56b786aa16493e649badb4",
+      "safe_spawn": [
+        32.06,
+        -36.61
+      ]
+    },
+    {
+      "id": "dublin",
+      "roads": 994,
+      "buildings": 982,
+      "features": 2634,
+      "source_sha256": "7e2f4af4141fe215122b939b15f992ca22465237c02f7f7ce9cab1c364f834a3",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "new-york",
+      "roads": 1720,
+      "buildings": 490,
+      "features": 2918,
+      "source_sha256": "751d6da30d262be2e8f3ec3b86e1cf78f46f821d0e8512fcea7324192ac111fb",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "los-angeles",
+      "roads": 927,
+      "buildings": 142,
+      "features": 1152,
+      "source_sha256": "e552e1508a81a6cedba3cd9f4b6161ed9b4d3e3662b4fc43b66460d63b504cb6",
+      "safe_spawn": [
+        -12.335555555555556,
+        7.994444444444444
+      ]
+    },
+    {
+      "id": "miami",
+      "roads": 898,
+      "buildings": 211,
+      "features": 1209,
+      "source_sha256": "c8d1ad1221c4016cbfbdf93630a0e2e8022c3e6d91f5522df39330fdc5df9ad8",
+      "safe_spawn": [
+        -0.485000000000003,
+        -6.595000000000001
+      ]
+    },
+    {
+      "id": "toronto",
+      "roads": 1425,
+      "buildings": 240,
+      "features": 2487,
+      "source_sha256": "7cfba0e8a21e2632b28c9cff973c657d8a2b8da620005055a086543263db8403",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "vancouver",
+      "roads": 762,
+      "buildings": 656,
+      "features": 1714,
+      "source_sha256": "bf9223f824bd3acb3a4a0759f05bd91b87070b9eb3e6de85139ad93ea32115ce",
+      "safe_spawn": [
+        1.4849999999999999,
+        -8.15
+      ]
+    },
+    {
+      "id": "dubai",
+      "roads": 454,
+      "buildings": 601,
+      "features": 1520,
+      "source_sha256": "d3c1ef9af3e317707b78b75cbcfd890faa34fd950a22467ac1dfee74441eb99f",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "abu-dhabi",
+      "roads": 196,
+      "buildings": 136,
+      "features": 378,
+      "source_sha256": "fd2d3cc3073af39fffd612dfac11711b5020193aa5ec15ff0d3d1e49d9413006",
+      "safe_spawn": [
+        -25.71227272727272,
+        -28.89272727272727
+      ]
+    },
+    {
+      "id": "riyadh",
+      "roads": 185,
+      "buildings": 20,
+      "features": 216,
+      "source_sha256": "a5fbfad3b1c451c349e10c7819bb471e9e1ea51aeaccc610902048457fb83bf6",
+      "safe_spawn": [
+        0.4684848484848523,
+        7.088181818181818
+      ]
+    },
+    {
+      "id": "jeddah",
+      "roads": 71,
+      "buildings": 19,
+      "features": 97,
+      "source_sha256": "a084c570d13fcf81c9885342ec4d5d4ed9cd5515ba8cbd995bd59ba576b5723e",
+      "safe_spawn": [
+        0.7142307692307668,
+        8.644423076923077
+      ]
+    },
+    {
+      "id": "doha",
+      "roads": 602,
+      "buildings": 405,
+      "features": 1217,
+      "source_sha256": "df7ae942108abcf1b0550bfcadf496d3b68877132cbb4a0a462b604183324374",
+      "safe_spawn": [
+        -0.6181081081081174,
+        -8.816486486486486
+      ]
+    },
+    {
+      "id": "mumbai",
+      "roads": 170,
+      "buildings": 144,
+      "features": 335,
+      "source_sha256": "c1ee44eb64a055b929491322e4736c0fa5738a6079f4c29394fc3f0890ba852a",
+      "safe_spawn": [
+        -13.04052631578947,
+        18.970526315789478
+      ]
+    },
+    {
+      "id": "bengaluru",
+      "roads": 391,
+      "buildings": 58,
+      "features": 536,
+      "source_sha256": "456eb94c6a955bb045a5fa55cc38c4531bcbc8f9e5c4b66eb5aa32e459463b71",
+      "safe_spawn": [
+        6.122307692307693,
+        4.54192307692308
+      ]
+    },
+    {
+      "id": "kochi",
+      "roads": 135,
+      "buildings": 952,
+      "features": 1352,
+      "source_sha256": "76fc110c7276c61e5f08bb33d0863b88c08879d7005fc1b2b27eda7f02b4a408",
+      "safe_spawn": [
+        -8.485454545454544,
+        26.42909090909091
+      ]
+    },
+    {
+      "id": "singapore",
+      "roads": 737,
+      "buildings": 280,
+      "features": 1481,
+      "source_sha256": "7e2787b96fd96a89b423ff49c395d061a12d8fb682cbf56ef80fd4815f873542",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "tokyo",
+      "roads": 534,
+      "buildings": 99,
+      "features": 697,
+      "source_sha256": "327bfad3598520d2efe259897809511e0693e511978c516e3a6e24f40125536a",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "seoul",
+      "roads": 452,
+      "buildings": 608,
+      "features": 2264,
+      "source_sha256": "dd38f1ce2c0f5692dc226cab7ea2c9a20749be948e4b7e24b00bd13f8b386b0b",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bangkok",
+      "roads": 575,
+      "buildings": 981,
+      "features": 1660,
+      "source_sha256": "4d72673c32147b64b8d6bd7093682982e61287615bd716ae2bfd732ed4060137",
+      "safe_spawn": [
+        -0.23931034482758307,
+        -7.732758620689656
+      ]
+    },
+    {
+      "id": "shanghai",
+      "roads": 344,
+      "buildings": 161,
+      "features": 633,
+      "source_sha256": "eb58415aa8010bf00a22f1ae3419e244ac31a6c170ab65fb04802fdb969cadf0",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "sydney",
+      "roads": 1556,
+      "buildings": 441,
+      "features": 2704,
+      "source_sha256": "2d6f4025ca3b7acad29570104238bb646b8df1d444109ace5b63401e2a7ef28d",
+      "safe_spawn": [
+        14.739411764705883,
+        -0.2582352941176502
+      ]
+    },
+    {
+      "id": "melbourne",
+      "roads": 1407,
+      "buildings": 725,
+      "features": 3384,
+      "source_sha256": "7a4e11a1d32d236f2ab630ae5e04c905787b537470ed08281a8a14127f0d7ff4",
+      "safe_spawn": [
+        0,
+        0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "authenticated light walk",
+      "distance": 94.97774202005236,
+      "seconds": 4.21110000000149,
+      "start": [
+        -3.043924741802261,
+        -194.72836940847785
+      ],
+      "end": [
+        -84.4194245338452,
+        -243.7059103106387
+      ],
+      "acknowledgements": {
+        "count": 37,
+        "p50Ms": 42,
+        "p95Ms": 113,
+        "maxMs": 122,
+        "maxServerGapMs": 195.73187828063965
+      },
+      "mps": 22.554140728080252
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 96.39824048475874,
+      "seconds": 1.358800000000745,
+      "start": [
+        -3.043924741802261,
+        -194.72836940847785
+      ],
+      "end": [
+        -85.63648623757457,
+        -244.43842426787674
+      ],
+      "acknowledgements": {
+        "count": 14,
+        "p50Ms": 45,
+        "p95Ms": 133,
+        "maxMs": 133,
+        "maxServerGapMs": 141.49212837219238
+      },
+      "mps": 70.9436565239225
+    }
+  ],
+  "checks": [
+    "effective run faster than walk",
+    "bike XP label",
+    "bike no horizontal overflow",
+    "bike first tap single XP debit",
+    "car XP label",
+    "car no horizontal overflow",
+    "car first tap single XP debit",
+    "bus XP fare label",
+    "bus no horizontal overflow",
+    "bus first tap XP debit",
+    "bus retry cannot charge again",
+    "no browser errors"
+  ],
+  "city": "new-york",
+  "viewport": 1440,
+  "route": {
+    "x": -3.043924741802261,
+    "z": -194.72836940847785,
+    "direction": [
+      -0.8567849483604522,
+      -0.5156738816955704
+    ],
+    "length": 132.2410608790584,
+    "asset": null
+  }
+}

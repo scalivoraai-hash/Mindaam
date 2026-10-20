@@ -1,0 +1,71 @@
+{
+  "date": "2026-09-29",
+  "source_commit": "8a488740a35e5c274f4528462d2a9e7b01019ce0",
+  "scope": "existing consumer visual layer and camera response",
+  "backend_files_changed": 0,
+  "existing_files_removed": 0,
+  "tests": {
+    "backend": {
+      "passed": 217
+    },
+    "frontend": {
+      "passed": 25
+    },
+    "camera_projection": {
+      "passed": 40
+    },
+    "production_build": "PASS"
+  },
+  "local_browser": {
+    "engine": "Chromium, software WebGL2",
+    "desktop": [
+      1440,
+      900
+    ],
+    "mobile": [
+      390,
+      844
+    ],
+    "cities": [
+      "milton-keynes",
+      "cambridge",
+      "paris"
+    ],
+    "page_exceptions": [],
+    "horizontal_overflow": false,
+    "checked": [
+      "world entry",
+      "rankings",
+      "walk input",
+      "orbit drag",
+      "auditorium start and exit",
+      "business card and Coming Soon assistant"
+    ]
+  },
+  "diagnostic_render_sample": {
+    "fps": 1.987478883036378,
+    "drawCallsPerFrame": 756
+  },
+  "uncertified": [
+    "physical GPU and mobile performance",
+    "every city manually",
+    "real multi-user voice/video/LiveFace",
+    "full accessibility audit"
+  ],
+  "railway": {
+    "service_id": "f28de9c9-b5c5-43da-bdfe-73aa4826d0b0",
+    "deployment_id": "f1ca6190-e4f6-4a56-a1a5-b7a01576d0ea",
+    "status": "SUCCESS",
+    "commit_verified": true,
+    "healthcheck": "PASS",
+    "backend_tests_passed": 217,
+    "backend_test_seconds": 211.82
+  },
+  "live_public_browser": {
+    "updated_interface": true,
+    "places_available": 45,
+    "paris_map_loaded": true,
+    "rendering_mode": "supported 2D fallback",
+    "authenticated_session": false
+  }
+}

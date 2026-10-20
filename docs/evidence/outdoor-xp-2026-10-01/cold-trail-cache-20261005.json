@@ -1,0 +1,70 @@
+{
+  "scope": "Isolated server prepared_points(city,48) in a fresh local Python process; not full world load or production latency",
+  "before": [
+    {
+      "city": "milton-keynes",
+      "cold_ms": 6162.42,
+      "warm_ms": 0.002
+    },
+    {
+      "city": "london",
+      "cold_ms": 1368.27,
+      "warm_ms": 0.001
+    }
+  ],
+  "after": [
+    {
+      "city": "milton-keynes",
+      "cold_ms": 2.061,
+      "warm_ms": 0.001,
+      "points": 48
+    },
+    {
+      "city": "london",
+      "cold_ms": 1.899,
+      "warm_ms": 0.001,
+      "points": 48
+    },
+    {
+      "city": "nottingham",
+      "cold_ms": 1.838,
+      "warm_ms": 0.001,
+      "points": 14
+    }
+  ],
+  "preservation": {
+    "cities": [
+      "milton-keynes-centre",
+      "milton-keynes-willen",
+      "milton-keynes",
+      "london",
+      "birmingham",
+      "manchester",
+      "liverpool",
+      "leeds",
+      "bristol",
+      "oxford",
+      "cambridge",
+      "york",
+      "brighton",
+      "newcastle",
+      "nottingham",
+      "cardiff",
+      "edinburgh"
+    ],
+    "runtime_first48_unchanged": true,
+    "database_changes": false
+  },
+  "affected_backend_tests_passed": 43,
+  "ci_failure": {
+    "run": 37350382930,
+    "attempt": 2,
+    "commit": "106d273e3e85f634fd0ad4c99c5ec5471731d168",
+    "light_walk_mps": 16.612476271993803,
+    "run_mps": 70.73204480286701,
+    "walk_ack_max_ms": 1401,
+    "walk_max_server_gap_ms": 1773.472547531128,
+    "assertion": "measured walk approximately 3x",
+    "causality": "A real cold-path cache defect was isolated. Its relationship to the intermittent measured walking gap is not yet established."
+  }
+}

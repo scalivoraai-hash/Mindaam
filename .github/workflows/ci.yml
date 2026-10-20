@@ -1,0 +1,200 @@
+name: Validation
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  multiplayer:
+    name: Multiplayer (${{ matrix.city }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        city: [london, birmingham, madrid, dubai, mumbai, new-york, sydney]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - name: Install test browser and pinned LiveKit release
+        run: |
+          npm install --prefix /tmp/mylil-qa --no-save playwright@1.62.1
+          /tmp/mylil-qa/node_modules/.bin/playwright install --with-deps chromium
+          curl --fail --location --retry 3 https://github.com/livekit/livekit/releases/download/v1.13.7/livekit_1.13.7_linux_amd64.tar.gz --output /tmp/livekit.tar.gz
+          echo '6634aeeb2fb1366b6723708ae4320b9d5408106a4c63457c5e845ae3979c90e2  /tmp/livekit.tar.gz' | sha256sum --check
+          tar -xzf /tmp/livekit.tar.gz -C /tmp livekit-server
+          node -e 'console.log("QA_CHROMIUM="+require("/tmp/mylil-qa/node_modules/playwright").chromium.executablePath())' >> "$GITHUB_ENV"
+      - name: Media element ownership regression
+        run: QA_NODE_MODULES=/tmp/mylil-qa/node_modules node scripts/tests/media-tiles.cjs
+      - name: Production-build multiuser acceptance
+        env:
+          QA_NODE_MODULES: /tmp/mylil-qa/node_modules
+          QA_PYTHON: python
+          QA_LIVEKIT: /tmp/livekit-server
+          QA_OUTPUT: /tmp/mylil-multiplayer-evidence
+          QA_CITIES: ${{ matrix.city }}
+          QA_RENDERER: map
+        run: node scripts/tests/multiplayer-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: multiplayer-${{ matrix.city }}
+          path: |
+            /tmp/mylil-multiplayer-evidence/results.json
+            /tmp/mylil-multiplayer-evidence/*.txt
+            /tmp/mylil-multiplayer-evidence/*.jpg
+            /tmp/mylil-ui-evidence/*.json
+            /tmp/mylil-ui-evidence/*.jpg
+            /tmp/mylil-ui-evidence/*.txt
+            /tmp/mylil-media-ui-evidence/*.json
+            /tmp/mylil-media-ui-evidence/*.jpg
+            /tmp/mylil-media-ui-evidence/*.txt
+            /tmp/mylil-world-ui-evidence/*.json
+            /tmp/mylil-world-ui-evidence/*.jpg
+            /tmp/mylil-world-ui-evidence/*.txt
+            /tmp/mylil-lighting-evidence/*.json
+            /tmp/mylil-lighting-evidence/*.png
+  presentation:
+    name: Presentation (${{ matrix.check }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [layout, media, world, lighting, movement, outdoor-xp]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - name: Install test browser and pinned LiveKit release
+        run: |
+          npm install --prefix /tmp/mylil-qa --no-save playwright@1.62.1
+          /tmp/mylil-qa/node_modules/.bin/playwright install --with-deps chromium
+          curl --fail --location --retry 3 https://github.com/livekit/livekit/releases/download/v1.13.7/livekit_1.13.7_linux_amd64.tar.gz --output /tmp/livekit.tar.gz
+          echo '6634aeeb2fb1366b6723708ae4320b9d5408106a4c63457c5e845ae3979c90e2  /tmp/livekit.tar.gz' | sha256sum --check
+          tar -xzf /tmp/livekit.tar.gz -C /tmp livekit-server
+          node -e 'console.log("QA_CHROMIUM="+require("/tmp/mylil-qa/node_modules/playwright").chromium.executablePath())' >> "$GITHUB_ENV"
+      - name: Production presentation acceptance
+        env:
+          QA_NODE_MODULES: /tmp/mylil-qa/node_modules
+          QA_PYTHON: python
+          QA_LIVEKIT: /tmp/livekit-server
+          QA_OUTPUT: /tmp/mylil-presentation-evidence
+          QA_RENDERER: mixed
+          QA_CHECK: ${{ matrix.check }}
+        run: |
+          case "$QA_CHECK" in
+            layout) QA_SKIP_MEDIA=1 QA_EVENT_LAYOUT=1 node scripts/tests/multiplayer-browser.cjs ;;
+            media) QA_EVENT_MEDIA_UI=1 node scripts/tests/multiplayer-browser.cjs ;;
+            world) QA_SKIP_MEDIA=1 QA_WORLD_POLISH=1 node scripts/tests/multiplayer-browser.cjs ;;
+            lighting) node scripts/tests/auditorium-renderer.cjs ;;
+            movement) node scripts/tests/movement-camera.cjs ;;
+            outdoor-xp)
+              for width in 1440 390 820; do
+                QA_WIDTH="$width" QA_OUTPUT="/tmp/mylil-presentation-evidence/width-$width" node scripts/tests/outdoor-xp.cjs
+              done
+              for city in london madrid dubai mumbai new-york; do
+                QA_CITY="$city" QA_OUTPUT="/tmp/mylil-presentation-evidence/$city" node scripts/tests/outdoor-xp.cjs
+              done ;;
+            *) exit 1 ;;
+          esac
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: presentation-${{ matrix.check }}
+          path: |
+            /tmp/mylil-presentation-evidence/**/*.log
+            /tmp/mylil-presentation-evidence/**/*.json
+            /tmp/mylil-presentation-evidence/**/*.jpg
+            /tmp/mylil-presentation-evidence/*.json
+            /tmp/mylil-presentation-evidence/*.txt
+            /tmp/mylil-presentation-evidence/*.jpg
+            /tmp/mylil-presentation-evidence/*.png
+            /tmp/mylil-presentation-evidence/api.log
+            /tmp/mylil-presentation-evidence/web.log
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: pulseworld_test
+          POSTGRES_USER: pulseworld
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U pulseworld -d pulseworld_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql+psycopg://pulseworld:ci-only-password@localhost:5432/pulseworld_test
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      - run: alembic -c backend/alembic.ini upgrade head
+      - run: alembic -c backend/alembic.ini check
+      - run: python -m compileall -q backend
+      - run: python -m pytest backend/tests -q
+      - run: pip install pip-audit
+      - run: pip-audit -r backend/requirements.txt
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/consumer-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: node --test lib/*.test.mjs components/*.test.mjs
+      - name: Camera-relative projection regression
+        working-directory: .
+        run: node scripts/tests/camera-movement.cjs
+      - run: npm run build
+      - run: npm audit --audit-level=high
+  infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.8'
+      - run: terraform -chdir=infrastructure/terraform init -backend=false
+      - run: terraform -chdir=infrastructure/terraform validate
+      - run: cp .env.example .env
+      - run: docker compose --env-file .env.example -f infrastructure/compose.yaml config --quiet
+      - run: docker build -f infrastructure/Dockerfile.api -t pulseworld-api:ci .
+      - run: docker build -f infrastructure/Dockerfile.web -t pulseworld-web:ci .

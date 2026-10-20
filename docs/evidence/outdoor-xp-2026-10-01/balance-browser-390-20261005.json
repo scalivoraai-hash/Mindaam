@@ -1,0 +1,106 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "authenticated light walk",
+      "distance": 181.7895189512372,
+      "seconds": 8.04479999999702,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        559.1360530922334,
+        262.81027172360257
+      ],
+      "longTasks": [],
+      "acknowledgements": {
+        "count": 69,
+        "p50Ms": 9,
+        "p95Ms": 23,
+        "maxMs": 67,
+        "maxServerGapMs": 129.55045700073242
+      },
+      "mps": 22.59714585214108
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 182.07799851029648,
+      "seconds": 2.5591000000014903,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        559.0052972649881,
+        263.06741637090533
+      ],
+      "longTasks": [],
+      "acknowledgements": {
+        "count": 24,
+        "p50Ms": 8,
+        "p95Ms": 68,
+        "maxMs": 90,
+        "maxServerGapMs": 126.57666206359863
+      },
+      "mps": 71.1492315697669
+    },
+    {
+      "name": "native touch walk",
+      "mps": 21.758865921453825,
+      "seconds": 1.212
+    },
+    {
+      "name": "native touch run",
+      "mps": 69.19202039843182,
+      "seconds": 1.215
+    }
+  ],
+  "checks": [
+    "effective run faster than walk",
+    "measured walk approximately 3x",
+    "measured run approximately 3x",
+    "native touch walk effective speed",
+    "native touch run effective speed",
+    "bike XP label",
+    "bike no horizontal overflow",
+    "bike first tap single XP debit",
+    "bike header shows server-confirmed XP",
+    "bike rental avoids redundant wallet read",
+    "bike exit acknowledges first tap",
+    "bike delayed exit has no movement error",
+    "bike exit single request",
+    "bike exit stays on foot without stale errors",
+    "car XP label",
+    "car no horizontal overflow",
+    "car first tap single XP debit",
+    "car header shows server-confirmed XP",
+    "car rental avoids redundant wallet read",
+    "car exit acknowledges first tap",
+    "car delayed exit has no movement error",
+    "car exit single request",
+    "car exit stays on foot without stale errors",
+    "bus XP fare label",
+    "bus no horizontal overflow",
+    "bus first tap XP debit",
+    "bus header shows server-confirmed XP",
+    "bus retry cannot charge again",
+    "no browser errors"
+  ],
+  "city": "milton-keynes",
+  "viewport": 390,
+  "route": {
+    "x": 641.5337072394873,
+    "z": 100.76689545801202,
+    "direction": [
+      -0.45325855210252364,
+      0.8913790916024021
+    ],
+    "length": 262.1625426101101,
+    "asset": null
+  },
+  "improvement": {
+    "walk": 3.012096865169651,
+    "run": 3.0295824167746694
+  }
+}

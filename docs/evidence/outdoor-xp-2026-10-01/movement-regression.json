@@ -1,0 +1,217 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "preview",
+      "distance": 39.00000000000046,
+      "seconds": 3.0015,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        623.8566237074879,
+        135.53068003050572
+      ],
+      "mps": 12.993503248375966
+    },
+    {
+      "name": "authenticated default hold",
+      "distance": 199.69175640370804,
+      "seconds": 3.0009000000003727,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        551.0217108651239,
+        278.76795188163294
+      ],
+      "acknowledgements": {
+        "count": 27,
+        "p50Ms": 31,
+        "p95Ms": 68,
+        "maxMs": 97,
+        "maxServerGapMs": 157.853364944458
+      },
+      "mps": 66.54395561454338
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 211.03639991006065,
+      "seconds": 3.0005999999996273,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        545.8796541753209,
+        288.88032990488153
+      ],
+      "acknowledgements": {
+        "count": 27,
+        "p50Ms": 32,
+        "p95Ms": 105,
+        "maxMs": 108,
+        "maxServerGapMs": 167.11831092834473
+      },
+      "mps": 70.3314003566243
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 67.69976183893421,
+      "seconds": 3.0004000000003725,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        610.848211210686,
+        161.11304766770004
+      ],
+      "acknowledgements": {
+        "count": 27,
+        "p50Ms": 29,
+        "p95Ms": 108,
+        "maxMs": 113,
+        "maxServerGapMs": 170.34316062927246
+      },
+      "mps": 22.56357880246827
+    },
+    {
+      "name": "bike",
+      "distance": 59.09334182739274,
+      "seconds": 0.7034921646118164,
+      "browserObservationSeconds": 0.65,
+      "start": {
+        "x": 600.9067549105985,
+        "z": 180.66393367939637,
+        "mode": "bike",
+        "zone_id": "world",
+        "heading": 5.81276772141989,
+        "last_move": 1790866001.1346972,
+        "blocked": false
+      },
+      "end": {
+        "x": 574.1221923550133,
+        "z": 233.33850303724714,
+        "mode": "bike",
+        "zone_id": "world",
+        "heading": 5.81276772141989,
+        "last_move": 1790866001.8381894,
+        "blocked": false
+      },
+      "mps": 84.00000000000023
+    },
+    {
+      "name": "car",
+      "distance": 71.82080268859929,
+      "seconds": 0.5985066890716553,
+      "browserObservationSeconds": 0.651,
+      "start": {
+        "x": 582.1315559242959,
+        "z": 217.58727409829498,
+        "mode": "car",
+        "zone_id": "world",
+        "heading": 5.81276772141989,
+        "last_move": 1790866010.1158843,
+        "blocked": false
+      },
+      "end": {
+        "x": 549.5781628868174,
+        "z": 281.6068359570125,
+        "mode": "car",
+        "zone_id": "world",
+        "heading": 5.81276772141989,
+        "last_move": 1790866010.714391,
+        "blocked": false
+      },
+      "mps": 120.0000000000011
+    }
+  ],
+  "checks": [
+    "preview moves on measured road",
+    "short press remains walk",
+    "held input walks then runs",
+    "no browser errors",
+    "held input reaches running state",
+    "authenticated held movement exceeds preview pace",
+    "run is faster than preview baseline",
+    "actual bike faster than run",
+    "actual car faster than bike",
+    "remote sees walk and run and final authoritative position",
+    "real WebGL auditorium",
+    "small drag gives controlled camera angle",
+    "drag does not change rendered camera distance",
+    "wheel explicitly zooms",
+    "390 one finger rotates without zoom",
+    "390 pinch zooms without orbit",
+    "390 joystick does not rotate camera",
+    "820 one finger rotates without zoom",
+    "820 pinch zooms without orbit",
+    "820 joystick does not rotate camera",
+    "event panel drag and scroll do not rotate or zoom camera",
+    "camera browser has no runtime errors",
+    "keyboard short press walks",
+    "keyboard hold runs and release stops",
+    "fallback does not poll while entry is pending",
+    "socket grace begins after entry completes",
+    "slow fallback batches never overlap even after a sibling fails"
+  ],
+  "remote": {
+    "final": {
+      "x": 605.1816424805694,
+      "z": 172.25693202183524,
+      "mode": "walk",
+      "last_move": 1790866021.7049034,
+      "zone_id": "world",
+      "y": 0
+    },
+    "remote": {
+      "x": 605.1816424805694,
+      "z": 172.25693202183524,
+      "mode": "walk",
+      "speed": 0
+    }
+  },
+  "camera": {
+    "before": {
+      "yaw": 0,
+      "x": 0,
+      "y": 3.4902956884506438,
+      "z": 11.838436667855804
+    },
+    "after": {
+      "yaw": -0.05951571890388555,
+      "x": -0.5851960156907633,
+      "y": 3.4902957028257617,
+      "z": 11.821017269770447
+    },
+    "zoomed": {
+      "yaw": -0.05999999996348546,
+      "x": -0.5194196270212562,
+      "y": 3.2762545304987896,
+      "z": 10.646602830248822
+    },
+    "focus": {
+      "x": 0.5,
+      "y": 1.7,
+      "z": 2.789751613888644
+    }
+  },
+  "polling": {
+    "entryDelayMs": 4327,
+    "firstPollAfterEntryMs": 7663,
+    "maxConcurrentWorldRequests": 1,
+    "polls": [
+      {
+        "start": 1790866084896,
+        "end": 1790866091495
+      },
+      {
+        "start": 1790866093896,
+        "end": 1790866100497
+      }
+    ]
+  }
+}

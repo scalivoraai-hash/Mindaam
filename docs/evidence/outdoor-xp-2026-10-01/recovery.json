@@ -1,0 +1,1016 @@
+{
+  "releaseCommit": "fd0d1163d7b316829ecf7189d612cd7604c3199e",
+  "releaseBranch": "fix/outdoor-speed-xp-mobility-20261001",
+  "ciRun": 36884435751,
+  "ciConclusion": "success",
+  "jobs": [
+    {
+      "id": 110444016072,
+      "name": "backend",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016398,
+      "name": "infrastructure",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016423,
+      "name": "Multiplayer (london)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016455,
+      "name": "Multiplayer (dubai)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016484,
+      "name": "Presentation (movement)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016500,
+      "name": "Multiplayer (birmingham)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016524,
+      "name": "frontend",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016550,
+      "name": "Multiplayer (new-york)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016573,
+      "name": "Presentation (layout)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016623,
+      "name": "Presentation (outdoor-xp)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016626,
+      "name": "Presentation (lighting)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016655,
+      "name": "Presentation (world)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016692,
+      "name": "Presentation (media)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016701,
+      "name": "Multiplayer (madrid)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016732,
+      "name": "Multiplayer (mumbai)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110444016835,
+      "name": "Multiplayer (sydney)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "outdoorChecks": [
+    "effective run faster than walk PASS",
+    "measured walk approximately 3x PASS",
+    "measured run approximately 3x PASS",
+    "bike XP label PASS",
+    "bike no horizontal overflow PASS",
+    "bike first tap single XP debit PASS",
+    "car XP label PASS",
+    "car no horizontal overflow PASS",
+    "car first tap single XP debit PASS",
+    "bus XP fare label PASS",
+    "bus no horizontal overflow PASS",
+    "bus first tap XP debit PASS",
+    "bus retry cannot charge again PASS",
+    "no browser errors PASS",
+    "effective run faster than walk PASS",
+    "measured walk approximately 3x PASS",
+    "measured run approximately 3x PASS",
+    "native touch walk effective speed PASS",
+    "native touch run effective speed PASS",
+    "bike XP label PASS",
+    "bike no horizontal overflow PASS",
+    "bike first tap single XP debit PASS",
+    "car XP label PASS",
+    "car no horizontal overflow PASS",
+    "car first tap single XP debit PASS",
+    "bus XP fare label PASS",
+    "bus no horizontal overflow PASS",
+    "bus first tap XP debit PASS",
+    "bus retry cannot charge again PASS",
+    "no browser errors PASS",
+    "effective run faster than walk PASS",
+    "measured walk approximately 3x PASS",
+    "measured run approximately 3x PASS",
+    "native touch walk effective speed PASS",
+    "native touch run effective speed PASS",
+    "bike XP label PASS",
+    "bike no horizontal overflow PASS",
+    "bike first tap single XP debit PASS",
+    "car XP label PASS",
+    "car no horizontal overflow PASS",
+    "car first tap single XP debit PASS",
+    "bus XP fare label PASS",
+    "bus no horizontal overflow PASS",
+    "bus first tap XP debit PASS",
+    "bus retry cannot charge again PASS",
+    "no browser errors PASS",
+    "effective run faster than walk PASS",
+    "bike XP label PASS",
+    "bike no horizontal overflow PASS",
+    "bike first tap single XP debit PASS",
+    "car XP label PASS",
+    "car no horizontal overflow PASS",
+    "car first tap single XP debit PASS",
+    "bus XP fare label PASS",
+    "bus no horizontal overflow PASS",
+    "bus first tap XP debit PASS",
+    "bus retry cannot charge again PASS",
+    "no browser errors PASS",
+    "effective run faster than walk PASS",
+    "bike XP label PASS",
+    "bike no horizontal overflow PASS",
+    "bike first tap single XP debit PASS",
+    "car XP label PASS",
+    "car no horizontal overflow PASS",
+    "car first tap single XP debit PASS",
+    "bus XP fare label PASS",
+    "bus no horizontal overflow PASS",
+    "bus first tap XP debit PASS",
+    "bus retry cannot charge again PASS",
+    "no browser errors PASS",
+    "effective run faster than walk PASS",
+    "bike XP label PASS",
+    "bike no horizontal overflow PASS",
+    "bike first tap single XP debit PASS",
+    "car XP label PASS",
+    "car no horizontal overflow PASS",
+    "car first tap single XP debit PASS",
+    "bus XP fare label PASS",
+    "bus no horizontal overflow PASS",
+    "bus first tap XP debit PASS",
+    "bus retry cannot charge again PASS",
+    "no browser errors PASS",
+    "effective run faster than walk PASS",
+    "bike XP label PASS",
+    "bike no horizontal overflow PASS",
+    "bike first tap single XP debit PASS",
+    "car XP label PASS",
+    "car no horizontal overflow PASS",
+    "car first tap single XP debit PASS",
+    "bus XP fare label PASS",
+    "bus no horizontal overflow PASS",
+    "bus first tap XP debit PASS",
+    "bus retry cannot charge again PASS",
+    "no browser errors PASS",
+    "effective run faster than walk PASS",
+    "bike XP label PASS",
+    "bike no horizontal overflow PASS",
+    "bike first tap single XP debit PASS",
+    "car XP label PASS",
+    "car no horizontal overflow PASS",
+    "car first tap single XP debit PASS",
+    "bus XP fare label PASS",
+    "bus no horizontal overflow PASS",
+    "bus first tap XP debit PASS",
+    "bus retry cannot charge again PASS",
+    "no browser errors PASS"
+  ],
+  "routeMeasurements": [
+    {
+      "name": "authenticated light walk",
+      "distance": 184.70980981497883,
+      "seconds": 8.1795,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        557.8124062836214,
+        265.4133579409423
+      ],
+      "acknowledgements": {
+        "count": 65,
+        "p50Ms": 221,
+        "p95Ms": 311,
+        "maxMs": 336,
+        "maxServerGapMs": 218.71018409729004
+      },
+      "mps": 22.58204166696972
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 193.24941442718833,
+      "seconds": 2.7206999999999533,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        553.9417574615564,
+        273.02538294281385
+      ],
+      "acknowledgements": {
+        "count": 23,
+        "p50Ms": 181,
+        "p95Ms": 256,
+        "maxMs": 305,
+        "maxServerGapMs": 165.13633728027344
+      },
+      "mps": 71.02929923445865
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 185.1277680158615,
+      "seconds": 8.123800000000047,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        557.6229631546493,
+        265.78591714237257
+      ],
+      "acknowledgements": {
+        "count": 65,
+        "p50Ms": 207,
+        "p95Ms": 326,
+        "maxMs": 341,
+        "maxServerGapMs": 208.0228328704834
+      },
+      "mps": 22.788321723314265
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 194.8369929104453,
+      "seconds": 2.6569000000000234,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        553.2221739368829,
+        274.44051720906526
+      ],
+      "acknowledgements": {
+        "count": 23,
+        "p50Ms": 153,
+        "p95Ms": 289,
+        "maxMs": 298,
+        "maxServerGapMs": 227.67138481140137
+      },
+      "mps": 73.33245244850902
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 183.7654633283592,
+      "seconds": 8.110100000000093,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        558.2404394048315,
+        264.5715872275423
+      ],
+      "acknowledgements": {
+        "count": 64,
+        "p50Ms": 216,
+        "p95Ms": 309,
+        "maxMs": 329,
+        "maxServerGapMs": 218.26982498168945
+      },
+      "mps": 22.658840621984574
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 188.53325372610584,
+      "seconds": 2.57079999999993,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        556.0793976324181,
+        268.82149590123515
+      ],
+      "acknowledgements": {
+        "count": 22,
+        "p50Ms": 209,
+        "p95Ms": 249,
+        "maxMs": 309,
+        "maxServerGapMs": 211.3499641418457
+      },
+      "mps": 73.33641423919052
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 65.74820230007126,
+      "seconds": 2.8131999999999535,
+      "start": [
+        -114.34199363912512,
+        13.3938363250564
+      ],
+      "end": [
+        -81.09961891299166,
+        70.11923300289743
+      ],
+      "acknowledgements": {
+        "count": 22,
+        "p50Ms": 221,
+        "p95Ms": 341,
+        "maxMs": 353,
+        "maxServerGapMs": 229.99954223632812
+      },
+      "mps": 23.371321733283217
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 71.1226652562622,
+      "seconds": 0.9206999999999534,
+      "start": [
+        -114.34199363912512,
+        13.3938363250564
+      ],
+      "end": [
+        -78.38228360508364,
+        74.75614370851439
+      ],
+      "acknowledgements": {
+        "count": 9,
+        "p50Ms": 160,
+        "p95Ms": 285,
+        "maxMs": 285,
+        "maxServerGapMs": 227.77414321899414
+      },
+      "mps": 77.24846883487106
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 82.94153285967828,
+      "seconds": 3.535100000000093,
+      "start": [
+        307.25454612391053,
+        91.53519049571682
+      ],
+      "end": [
+        313.6335151183856,
+        174.23105875816762
+      ],
+      "acknowledgements": {
+        "count": 30,
+        "p50Ms": 217,
+        "p95Ms": 310,
+        "maxMs": 335,
+        "maxServerGapMs": 174.52645301818848
+      },
+      "mps": 23.462287590075555
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 90.33863338877144,
+      "seconds": 1.1678000000000466,
+      "start": [
+        307.25454612391053,
+        91.53519049571682
+      ],
+      "end": [
+        314.20242038571547,
+        181.6062498088669
+      ],
+      "acknowledgements": {
+        "count": 11,
+        "p50Ms": 168,
+        "p95Ms": 239,
+        "maxMs": 239,
+        "maxServerGapMs": 189.94426727294922
+      },
+      "mps": 77.3579665942523
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 185.0826164358069,
+      "seconds": 8.113899999999907,
+      "start": [
+        73.3484281382527,
+        -272.6453640567454
+      ],
+      "end": [
+        258.37285971708644,
+        -277.2859055826334
+      ],
+      "acknowledgements": {
+        "count": 65,
+        "p50Ms": 207,
+        "p95Ms": 317,
+        "maxMs": 345,
+        "maxServerGapMs": 190.2785301208496
+      },
+      "mps": 22.810561682521232
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 193.44406941301276,
+      "seconds": 2.6432999999999303,
+      "start": [
+        73.3484281382527,
+        -272.6453640567454
+      ],
+      "end": [
+        266.73168408467495,
+        -277.4955507157347
+      ],
+      "acknowledgements": {
+        "count": 23,
+        "p50Ms": 156,
+        "p95Ms": 283,
+        "maxMs": 295,
+        "maxServerGapMs": 172.99556732177734
+      },
+      "mps": 73.18279022926563
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 89.43214701017132,
+      "seconds": 3.8680999999999766,
+      "start": [
+        -37.19531414814249,
+        -28.970987808968665
+      ],
+      "end": [
+        14.222551394133827,
+        -102.14415243866942
+      ],
+      "acknowledgements": {
+        "count": 32,
+        "p50Ms": 166,
+        "p95Ms": 287,
+        "maxMs": 298,
+        "maxServerGapMs": 171.54932022094727
+      },
+      "mps": 23.12043303176543
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 94.92078267037874,
+      "seconds": 1.247899999999907,
+      "start": [
+        -37.19531414814249,
+        -28.970987808968665
+      ],
+      "end": [
+        17.378172049813482,
+        -106.63494075342535
+      ],
+      "acknowledgements": {
+        "count": 12,
+        "p50Ms": 223,
+        "p95Ms": 323,
+        "maxMs": 323,
+        "maxServerGapMs": 193.6185359954834
+      },
+      "mps": 76.06441435242073
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 98.97524758744484,
+      "seconds": 4.3104000000000235,
+      "start": [
+        -3.043924741802261,
+        -194.72836940847785
+      ],
+      "end": [
+        -87.84442713497397,
+        -245.76731952367595
+      ],
+      "acknowledgements": {
+        "count": 35,
+        "p50Ms": 231,
+        "p95Ms": 325,
+        "maxMs": 340,
+        "maxServerGapMs": 202.2705078125
+      },
+      "mps": 22.96196352715393
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 111.46215808514283,
+      "seconds": 1.4799000000000233,
+      "start": [
+        -3.043924741802261,
+        -194.72836940847785
+      ],
+      "end": [
+        -98.5430241009256,
+        -252.20649313040929
+      ],
+      "acknowledgements": {
+        "count": 14,
+        "p50Ms": 99,
+        "p95Ms": 211,
+        "maxMs": 211,
+        "maxServerGapMs": 191.78342819213867
+      },
+      "mps": 75.31735798712148
+    }
+  ],
+  "mainRun": 36886472154,
+  "mainRunStatus": "success",
+  "productionStatus": "SUCCESS",
+  "liveAuthenticatedStatus": "blocked: no identified authorized existing account",
+  "changesInContinuation": "No implementation or test assertions changed.",
+  "mainJobs": [
+    {
+      "id": 110450957363,
+      "name": "infrastructure",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957679,
+      "name": "Multiplayer (london)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957717,
+      "name": "Presentation (movement)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957721,
+      "name": "Multiplayer (madrid)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957738,
+      "name": "backend",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957747,
+      "name": "frontend",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957769,
+      "name": "Multiplayer (birmingham)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957779,
+      "name": "Multiplayer (sydney)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957785,
+      "name": "Presentation (world)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957827,
+      "name": "Presentation (outdoor-xp)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957844,
+      "name": "Multiplayer (new-york)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957927,
+      "name": "Multiplayer (mumbai)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450957992,
+      "name": "Presentation (lighting)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450958000,
+      "name": "Presentation (layout)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450958041,
+      "name": "Presentation (media)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110450958194,
+      "name": "Multiplayer (dubai)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "mainOutdoorChecksPassed": 106,
+  "mainRouteMeasurements": [
+    {
+      "name": "authenticated light walk",
+      "distance": 181.12178965549552,
+      "seconds": 8.046300000000018,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        559.4387071060194,
+        262.2150717905289
+      ],
+      "acknowledgements": {
+        "count": 69,
+        "p50Ms": 38,
+        "p95Ms": 108,
+        "maxMs": 150,
+        "maxServerGapMs": 210.1438045501709
+      },
+      "mps": 22.50994738643788
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 186.05415494138938,
+      "seconds": 2.649100000000006,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        557.2030703580969,
+        266.61167907852143
+      ],
+      "acknowledgements": {
+        "count": 24,
+        "p50Ms": 40,
+        "p95Ms": 110,
+        "maxMs": 136,
+        "maxServerGapMs": 147.67742156982422
+      },
+      "mps": 70.23296777826015
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 182.74555930815308,
+      "seconds": 8.107299999999988,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        558.7027196243077,
+        263.66246610848634
+      ],
+      "acknowledgements": {
+        "count": 70,
+        "p50Ms": 34,
+        "p95Ms": 119,
+        "maxMs": 165,
+        "maxServerGapMs": 155.4276943206787
+      },
+      "mps": 22.54086555427249
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 182.02357030070033,
+      "seconds": 2.6597000000000115,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        559.0299673164601,
+        263.01890020287635
+      ],
+      "acknowledgements": {
+        "count": 24,
+        "p50Ms": 44,
+        "p95Ms": 114,
+        "maxMs": 121,
+        "maxServerGapMs": 145.1280117034912
+      },
+      "mps": 68.43763217682428
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 182.2846972178957,
+      "seconds": 8.090200000000012,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        558.9116093080561,
+        263.2516632771184
+      ],
+      "acknowledgements": {
+        "count": 70,
+        "p50Ms": 34,
+        "p95Ms": 116,
+        "maxMs": 134,
+        "maxServerGapMs": 157.73749351501465
+      },
+      "mps": 22.531543993707874
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 183.61181033651673,
+      "seconds": 2.6562999999999883,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        558.3100839374407,
+        264.434624163252
+      ],
+      "acknowledgements": {
+        "count": 24,
+        "p50Ms": 51,
+        "p95Ms": 115,
+        "maxMs": 133,
+        "maxServerGapMs": 158.6287021636963
+      },
+      "mps": 69.12314510278114
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 66.25030682852261,
+      "seconds": 2.867599999999977,
+      "start": [
+        -114.34199363912512,
+        13.3938363250564
+      ],
+      "end": [
+        -80.84575422464127,
+        70.55243235365886
+      ],
+      "acknowledgements": {
+        "count": 26,
+        "p50Ms": 85,
+        "p95Ms": 163,
+        "maxMs": 176,
+        "maxServerGapMs": 180.9072494506836
+      },
+      "mps": 23.10305022615537
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 74.11027729511302,
+      "seconds": 1.0022000000000117,
+      "start": [
+        -114.34199363912512,
+        13.3938363250564
+      ],
+      "end": [
+        -76.87174315747622,
+        77.33375757618897
+      ],
+      "acknowledgements": {
+        "count": 10,
+        "p50Ms": 191,
+        "p95Ms": 230,
+        "maxMs": 230,
+        "maxServerGapMs": 195.62053680419922
+      },
+      "mps": 73.94759259141105
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 82.02872370529946,
+      "seconds": 3.645599999999977,
+      "start": [
+        307.25454612391053,
+        91.53519049571682
+      ],
+      "end": [
+        313.56331167395035,
+        173.32095325400493
+      ],
+      "acknowledgements": {
+        "count": 32,
+        "p50Ms": 51,
+        "p95Ms": 95,
+        "maxMs": 96,
+        "maxServerGapMs": 186.74302101135254
+      },
+      "mps": 22.50074712126947
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 85.96762756247828,
+      "seconds": 1.1216999999999535,
+      "start": [
+        307.25454612391053,
+        91.53519049571682
+      ],
+      "end": [
+        313.86624971610104,
+        177.2481904684747
+      ],
+      "acknowledgements": {
+        "count": 12,
+        "p50Ms": 135,
+        "p95Ms": 195,
+        "maxMs": 195,
+        "maxServerGapMs": 175.7659912109375
+      },
+      "mps": 76.64048102209311
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 181.341269827116,
+      "seconds": 8.092800000000047,
+      "start": [
+        73.3484281382527,
+        -272.6453640567454
+      ],
+      "end": [
+        254.63268928431899,
+        -277.19209950492456
+      ],
+      "acknowledgements": {
+        "count": 70,
+        "p50Ms": 51,
+        "p95Ms": 167,
+        "maxMs": 215,
+        "maxServerGapMs": 167.25778579711914
+      },
+      "mps": 22.40772907116387
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 181.0919943451859,
+      "seconds": 2.6115,
+      "start": [
+        73.3484281382527,
+        -272.6453640567454
+      ],
+      "end": [
+        254.38349216770774,
+        -277.18584946779396
+      ],
+      "acknowledgements": {
+        "count": 24,
+        "p50Ms": 122,
+        "p95Ms": 190,
+        "maxMs": 190,
+        "maxServerGapMs": 184.7696304321289
+      },
+      "mps": 69.34405297537273
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 87.24103281497996,
+      "seconds": 3.9139000000000235,
+      "start": [
+        -37.19531414814249,
+        -28.970987808968665
+      ],
+      "end": [
+        12.962798398789339,
+        -100.35138814655244
+      ],
+      "acknowledgements": {
+        "count": 34,
+        "p50Ms": 145,
+        "p95Ms": 228,
+        "maxMs": 251,
+        "maxServerGapMs": 223.42205047607422
+      },
+      "mps": 22.29005156365248
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 84.67869992379504,
+      "seconds": 1.1992000000000698,
+      "start": [
+        -37.19531414814249,
+        -28.970987808968665
+      ],
+      "end": [
+        11.489617976781904,
+        -98.25489362248086
+      ],
+      "acknowledgements": {
+        "count": 12,
+        "p50Ms": 61,
+        "p95Ms": 133,
+        "maxMs": 133,
+        "maxServerGapMs": 176.75089836120605
+      },
+      "mps": 70.6126583754087
+    },
+    {
+      "name": "authenticated light walk",
+      "distance": 93.09723250925688,
+      "seconds": 4.150400000000023,
+      "start": [
+        -3.043924741802261,
+        -194.72836940847785
+      ],
+      "end": [
+        -82.80823228974688,
+        -242.7361806716415
+      ],
+      "acknowledgements": {
+        "count": 37,
+        "p50Ms": 77,
+        "p95Ms": 161,
+        "maxMs": 172,
+        "maxServerGapMs": 182.1880340576172
+      },
+      "mps": 22.430906059477728
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 94.13956297907379,
+      "seconds": 1.333,
+      "start": [
+        -3.043924741802261,
+        -194.72836940847785
+      ],
+      "end": [
+        -83.70128534750398,
+        -243.2736832710207
+      ],
+      "acknowledgements": {
+        "count": 13,
+        "p50Ms": 55,
+        "p95Ms": 104,
+        "maxMs": 104,
+        "maxServerGapMs": 185.3485107421875
+      },
+      "mps": 70.62232781625941
+    }
+  ],
+  "productionDeployment": "c5b52edb-ad54-42ba-a2ea-3683c1e1b17d",
+  "productionCompletedAt": "2026-10-01T16:05:31.581Z",
+  "productionBackendTests": {
+    "passed": 243,
+    "seconds": 382.6
+  },
+  "health": {
+    "http": 200,
+    "body": {
+      "status": "ready",
+      "environment": "staging",
+      "release_ready": false
+    }
+  },
+  "publicLive": {
+    "cities": [
+      "milton-keynes",
+      "madrid"
+    ],
+    "viewport": 1363,
+    "renderer": "map fallback; WebGL disabled in cloud browser",
+    "ready": true,
+    "horizontalOverflow": false
+  }
+}

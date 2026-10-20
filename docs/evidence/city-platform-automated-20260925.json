@@ -1,0 +1,45 @@
+{
+  "checked_at_utc": "2026-09-25T02:28:46.836703+00:00",
+  "application_commit": "45c8f7b4f259ff0f33ae5e353e5682cd0135444e",
+  "railway_deployment": "1749f97d-4016-4031-bd03-38626fb8fdf3",
+  "deployment_status": "SUCCESS",
+  "automated": {
+    "railway_backend": {
+      "passed": 133,
+      "warnings": 1,
+      "seconds": 130.66
+    },
+    "local_targeted_api": {
+      "passed": 16
+    },
+    "frontend_units": {
+      "passed": 18
+    },
+    "camera_projection": {
+      "passed": 40
+    },
+    "next_production_build": "PASS"
+  },
+  "public_live": {
+    "login_page": "PASS",
+    "signed_out_admin_gate": "PASS",
+    "flat_destination_options": 17,
+    "three_mk_options_independent": true,
+    "current_label": "✓ London",
+    "other_option_suffix": "Explore Now",
+    "quiet_in_dropdown": false,
+    "city_switch_to_london": "PASS",
+    "horizontal_overflow": false,
+    "unavailable_3d_controls_hidden": true,
+    "readiness_http_status": 200
+  },
+  "not_verified": [
+    "authenticated controlled-user acceptance",
+    "real multi-user media",
+    "mobile/tablet touch and GPU rendering",
+    "super-admin owner setup and signed-in journey",
+    "PostgreSQL concurrency/load",
+    "backup recovery"
+  ],
+  "production_ready": false
+}

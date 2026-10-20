@@ -1,0 +1,151 @@
+{
+  "production": {
+    "commit": "5bf5bedde87cc9a5a5eda596d724decc36af6f44",
+    "deployment_id": "5d94830c-380b-4795-a4ef-3b6247820777",
+    "status": "SUCCESS",
+    "updated_at": "2026-10-05T19:24:24.932Z",
+    "health": {
+      "http_status": 200,
+      "status": "ready",
+      "environment": "staging",
+      "release_ready": false
+    }
+  },
+  "ci": {
+    "run_id": 37360651180,
+    "jobs": [
+      {
+        "name": "backend",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "infrastructure",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Presentation (outdoor-xp)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "frontend",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Presentation (lighting)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Multiplayer (madrid)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Multiplayer (new-york)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Multiplayer (mumbai)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Multiplayer (dubai)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Multiplayer (birmingham)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Multiplayer (sydney)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Presentation (world)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Presentation (movement)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Multiplayer (london)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Presentation (media)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Presentation (layout)",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "outdoor_assertions": 170,
+    "backend_tests": 245
+  },
+  "live": {
+    "city": "London",
+    "renderer": "map fallback; cloud browser lacks WebGL",
+    "authenticated": true,
+    "rental": "City Bike",
+    "before": {
+      "xp": 250,
+      "pc": 120
+    },
+    "after": {
+      "xp": 240,
+      "pc": 120
+    },
+    "ledger": "One -10 XP bike_rental_xp row",
+    "exit": "One click returned to WALK without No active vehicle error",
+    "refresh": "Persisted 240 XP and 120 PC",
+    "defect_found": "Header remained 250 before refresh while Wallet correctly displayed 240",
+    "additional_checks": [
+      "Events drawer opened and loaded; no current live London event to join",
+      "Existing Supreme business card opened; live connection remained active"
+    ]
+  },
+  "followup": {
+    "commit": "c1cd3c10f08784514978d20330b7abf9129717b5",
+    "run_id": 37363973776,
+    "local": {
+      "unit_tests": 46,
+      "typecheck": "pass",
+      "build": "pass",
+      "desktop_assertions": 27,
+      "mobile_assertions": 29,
+      "tablet_assertions": 29
+    },
+    "deployment": "pending",
+    "ci": "Completed: 3 passed (movement, Dubai, Sydney), 13 cancelled before execution due to hosted-runner acquisition failures",
+    "runner_annotation": "The job was not acquired by Runner of type hosted even after multiple attempts"
+  },
+  "main_ci_infrastructure_error": {
+    "run_id": 37362173653,
+    "passed": 14,
+    "unstarted_cancelled": [
+      "Presentation (outdoor-xp)",
+      "Presentation (media)"
+    ],
+    "annotation": "The job was not acquired by Runner of type hosted even after multiple attempts",
+    "workflow_error": "Internal server error. Correlation ID: 36985a1e-c973-45f0-8407-4216e1788ff7",
+    "failed_jobs_retried": true,
+    "retry_result": "Both retried jobs cancelled before execution again"
+  },
+  "new_feature_phases": "Not started; previous-release closure remains pending"
+}

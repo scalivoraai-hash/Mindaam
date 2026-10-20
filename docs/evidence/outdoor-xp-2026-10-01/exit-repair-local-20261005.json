@@ -1,0 +1,87 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "authenticated light walk",
+      "distance": 180.0145113592699,
+      "seconds": 7.98339999999851,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        559.9405904633389,
+        261.22806706868715
+      ],
+      "acknowledgements": {
+        "count": 68,
+        "p50Ms": 25,
+        "p95Ms": 86,
+        "maxMs": 101,
+        "maxServerGapMs": 180.08875846862793
+      },
+      "mps": 22.548602269622403
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 184.2438247927688,
+      "seconds": 2.6042000000029804,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        558.0236179800867,
+        264.99798863514286
+      ],
+      "acknowledgements": {
+        "count": 24,
+        "p50Ms": 33,
+        "p95Ms": 96,
+        "maxMs": 106,
+        "maxServerGapMs": 165.0547981262207
+      },
+      "mps": 70.74872313668611
+    }
+  ],
+  "checks": [
+    "effective run faster than walk",
+    "measured walk approximately 3x",
+    "measured run approximately 3x",
+    "bike XP label",
+    "bike no horizontal overflow",
+    "bike first tap single XP debit",
+    "bike exit acknowledges first tap",
+    "bike delayed exit has no movement error",
+    "bike exit single request",
+    "bike exit stays on foot without stale errors",
+    "car XP label",
+    "car no horizontal overflow",
+    "car first tap single XP debit",
+    "car exit acknowledges first tap",
+    "car delayed exit has no movement error",
+    "car exit single request",
+    "car exit stays on foot without stale errors",
+    "bus XP fare label",
+    "bus no horizontal overflow",
+    "bus first tap XP debit",
+    "bus retry cannot charge again",
+    "no browser errors"
+  ],
+  "city": "milton-keynes",
+  "viewport": 1440,
+  "route": {
+    "x": 641.5337072394873,
+    "z": 100.76689545801202,
+    "direction": [
+      -0.45325855210252364,
+      0.8913790916024021
+    ],
+    "length": 262.1625426101101,
+    "asset": null
+  },
+  "improvement": {
+    "walk": 3.005626226192262,
+    "run": 3.012528496727174
+  }
+}

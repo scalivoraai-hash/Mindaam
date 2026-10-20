@@ -1,0 +1,99 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "authenticated light walk",
+      "distance": 182.14128028424815,
+      "seconds": 8.079199999995529,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        558.9766142597487,
+        263.1238244210835
+      ],
+      "acknowledgements": {
+        "count": 70,
+        "p50Ms": 27,
+        "p95Ms": 85,
+        "maxMs": 111,
+        "maxServerGapMs": 179.08048629760742
+      },
+      "mps": 22.544469784675332
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 186.84418782773454,
+      "seconds": 2.63939999999851,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        556.8449811959073,
+        267.31589787508204
+      ],
+      "acknowledgements": {
+        "count": 24,
+        "p50Ms": 25,
+        "p95Ms": 91,
+        "maxMs": 94,
+        "maxServerGapMs": 171.0989475250244
+      },
+      "mps": 70.79040229894674
+    },
+    {
+      "name": "native touch walk",
+      "mps": 23.193005914416855,
+      "seconds": 1.208
+    },
+    {
+      "name": "native touch run",
+      "mps": 67.03040887923827,
+      "seconds": 1.238
+    }
+  ],
+  "checks": [
+    "effective run faster than walk",
+    "measured walk approximately 3x",
+    "measured run approximately 3x",
+    "native touch walk effective speed",
+    "native touch run effective speed",
+    "bike XP label",
+    "bike no horizontal overflow",
+    "bike first tap single XP debit",
+    "bike exit acknowledges first tap",
+    "bike delayed exit has no movement error",
+    "bike exit single request",
+    "bike exit stays on foot without stale errors",
+    "car XP label",
+    "car no horizontal overflow",
+    "car first tap single XP debit",
+    "car exit acknowledges first tap",
+    "car delayed exit has no movement error",
+    "car exit single request",
+    "car exit stays on foot without stale errors",
+    "bus XP fare label",
+    "bus no horizontal overflow",
+    "bus first tap XP debit",
+    "bus retry cannot charge again",
+    "no browser errors"
+  ],
+  "city": "milton-keynes",
+  "viewport": 390,
+  "route": {
+    "x": 641.5337072394873,
+    "z": 100.76689545801202,
+    "direction": [
+      -0.45325855210252364,
+      0.8913790916024021
+    ],
+    "length": 262.1625426101101,
+    "asset": null
+  },
+  "improvement": {
+    "walk": 3.005075384726004,
+    "run": 3.014303223654575
+  }
+}

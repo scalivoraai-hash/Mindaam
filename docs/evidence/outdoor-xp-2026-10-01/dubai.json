@@ -1,0 +1,73 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "authenticated light walk",
+      "distance": 182.11682405359502,
+      "seconds": 8.09889999999851,
+      "start": [
+        73.3484281382527,
+        -272.6453640567454
+      ],
+      "end": [
+        255.4079996979937,
+        -277.2115448297363
+      ],
+      "acknowledgements": {
+        "count": 70,
+        "p50Ms": 31,
+        "p95Ms": 82,
+        "maxMs": 111,
+        "maxServerGapMs": 168.11323165893555
+      },
+      "mps": 22.486612262607085
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 187.03924893458043,
+      "seconds": 2.6510999999996274,
+      "start": [
+        73.3484281382527,
+        -272.6453640567454
+      ],
+      "end": [
+        260.3288771047043,
+        -277.3349638601534
+      ],
+      "acknowledgements": {
+        "count": 24,
+        "p50Ms": 35,
+        "p95Ms": 62,
+        "maxMs": 85,
+        "maxServerGapMs": 150.6824493408203
+      },
+      "mps": 70.5515631000742
+    }
+  ],
+  "checks": [
+    "effective run faster than walk",
+    "bike XP label",
+    "bike no horizontal overflow",
+    "bike first tap single XP debit",
+    "car XP label",
+    "car no horizontal overflow",
+    "car first tap single XP debit",
+    "bus XP fare label",
+    "bus no horizontal overflow",
+    "bus first tap XP debit",
+    "bus retry cannot charge again",
+    "no browser errors"
+  ],
+  "city": "dubai",
+  "viewport": 1440,
+  "route": {
+    "x": 73.3484281382527,
+    "z": -272.6453640567454,
+    "direction": [
+      0.9996856276505397,
+      -0.0250728113490804
+    ],
+    "length": 259.6147594253697,
+    "asset": null
+  }
+}

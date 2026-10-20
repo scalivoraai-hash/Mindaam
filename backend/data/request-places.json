@@ -1,0 +1,204 @@
+[
+  {
+    "country": "GB",
+    "name": "United Kingdom",
+    "places": [
+      "Glasgow",
+      "Belfast",
+      "Sheffield",
+      "Leicester",
+      "Luton",
+      "Reading",
+      "Southampton",
+      "Aberdeen"
+    ]
+  },
+  {
+    "country": "US",
+    "name": "United States",
+    "places": [
+      "Chicago",
+      "Las Vegas",
+      "Boston",
+      "Washington DC",
+      "Seattle",
+      "Austin",
+      "Houston",
+      "Orlando",
+      "San Diego"
+    ]
+  },
+  {
+    "country": "CA",
+    "name": "Canada",
+    "places": [
+      "Montreal",
+      "Calgary",
+      "Ottawa",
+      "Quebec City"
+    ]
+  },
+  {
+    "country": "AE",
+    "name": "United Arab Emirates",
+    "places": [
+      "Sharjah",
+      "Ras Al Khaimah",
+      "Al Ain",
+      "Ajman"
+    ]
+  },
+  {
+    "country": "IN",
+    "name": "India",
+    "places": [
+      "Delhi",
+      "Chennai",
+      "Hyderabad",
+      "Pune",
+      "Goa",
+      "Kolkata",
+      "Jaipur"
+    ]
+  },
+  {
+    "country": "CN",
+    "name": "China",
+    "places": [
+      "Beijing",
+      "Shenzhen",
+      "Guangzhou",
+      "Chengdu",
+      "Hangzhou",
+      "Xi’an"
+    ]
+  },
+  {
+    "country": "JP",
+    "name": "Japan",
+    "places": [
+      "Osaka",
+      "Kyoto",
+      "Yokohama",
+      "Sapporo"
+    ]
+  },
+  {
+    "country": "AU",
+    "name": "Australia",
+    "places": [
+      "Brisbane",
+      "Gold Coast",
+      "Perth",
+      "Adelaide"
+    ]
+  },
+  {
+    "country": "FR",
+    "name": "France",
+    "places": [
+      "Lyon",
+      "Marseille",
+      "Nice",
+      "Bordeaux"
+    ]
+  },
+  {
+    "country": "DE",
+    "name": "Germany",
+    "places": [
+      "Munich",
+      "Hamburg",
+      "Frankfurt",
+      "Cologne"
+    ]
+  },
+  {
+    "country": "NL",
+    "name": "Netherlands",
+    "places": [
+      "Rotterdam",
+      "The Hague",
+      "Utrecht"
+    ]
+  },
+  {
+    "country": "ES",
+    "name": "Spain",
+    "places": [
+      "Valencia",
+      "Seville",
+      "Bilbao"
+    ]
+  },
+  {
+    "country": "IT",
+    "name": "Italy",
+    "places": [
+      "Venice",
+      "Florence",
+      "Naples"
+    ]
+  },
+  {
+    "country": "IE",
+    "name": "Ireland",
+    "places": [
+      "Cork",
+      "Galway",
+      "Limerick"
+    ]
+  },
+  {
+    "country": "SA",
+    "name": "Saudi Arabia",
+    "places": [
+      "AlUla",
+      "Dammam",
+      "Al Khobar"
+    ]
+  },
+  {
+    "country": "QA",
+    "name": "Qatar",
+    "places": [
+      "Al Wakrah",
+      "Al Khor"
+    ]
+  },
+  {
+    "country": "SG",
+    "name": "Singapore",
+    "places": [
+      "Sentosa",
+      "Jurong"
+    ]
+  },
+  {
+    "country": "KR",
+    "name": "South Korea",
+    "places": [
+      "Busan",
+      "Incheon",
+      "Jeju"
+    ]
+  },
+  {
+    "country": "TH",
+    "name": "Thailand",
+    "places": [
+      "Chiang Mai",
+      "Phuket",
+      "Pattaya"
+    ]
+  },
+  {
+    "country": "MY",
+    "name": "Malaysia",
+    "places": [
+      "Kuala Lumpur",
+      "George Town",
+      "Johor Bahru"
+    ]
+  }
+]

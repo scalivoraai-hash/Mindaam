@@ -1,0 +1,1 @@
+Event layout PASS: 390/820/1100, event controls, six host tabs, first-click lighting

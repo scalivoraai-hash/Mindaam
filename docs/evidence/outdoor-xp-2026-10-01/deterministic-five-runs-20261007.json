@@ -1,0 +1,478 @@
+{
+  "runs": [
+    {
+      "run": 1,
+      "baseline": false,
+      "speeds": [
+        {
+          "name": "authenticated light walk",
+          "distance": 180.73900153447806,
+          "seconds": 8.001100000000093,
+          "start": [
+            641.5337072394873,
+            100.76689545801202
+          ],
+          "end": [
+            559.6122090955128,
+            261.87386246293966
+          ],
+          "longTasks": [],
+          "acknowledgements": {
+            "count": 69,
+            "p50Ms": 8,
+            "p95Ms": 32,
+            "maxMs": 66,
+            "maxServerGapMs": 138.0763053894043
+          },
+          "mps": 22.58926916729899
+        },
+        {
+          "name": "authenticated explicit run",
+          "distance": 182.18550234124237,
+          "seconds": 2.559600000000093,
+          "start": [
+            641.5337072394873,
+            100.76689545801202
+          ],
+          "end": [
+            558.9565702342284,
+            263.1632430380778
+          ],
+          "longTasks": [],
+          "acknowledgements": {
+            "count": 24,
+            "p50Ms": 7,
+            "p95Ms": 42,
+            "maxMs": 68,
+            "maxServerGapMs": 126.63459777832031
+          },
+          "mps": 71.17733331037496
+        }
+      ],
+      "checks": [
+        "controlled server ticks preserve 3x outdoor contract",
+        "walk authoritative movement reaches mapped target",
+        "walk selected mode reaches server",
+        "run authoritative movement reaches mapped target",
+        "run selected mode reaches server",
+        "bike XP label",
+        "bike no horizontal overflow",
+        "bike first tap single XP debit",
+        "bike header shows server-confirmed XP",
+        "bike rental avoids redundant wallet read",
+        "bike exit acknowledges first tap",
+        "bike delayed exit has no movement error",
+        "bike exit single request",
+        "bike exit stays on foot without stale errors",
+        "car XP label",
+        "car no horizontal overflow",
+        "car first tap single XP debit",
+        "car header shows server-confirmed XP",
+        "car rental avoids redundant wallet read",
+        "car exit acknowledges first tap",
+        "car delayed exit has no movement error",
+        "car exit single request",
+        "car exit stays on foot without stale errors",
+        "bus XP fare label",
+        "bus no horizontal overflow",
+        "bus first tap XP debit",
+        "bus header shows server-confirmed XP",
+        "bus retry cannot charge again",
+        "no browser errors"
+      ],
+      "city": "milton-keynes",
+      "viewport": 1440,
+      "route": {
+        "x": 641.5337072394873,
+        "z": 100.76689545801202,
+        "direction": [
+          -0.45325855210252364,
+          0.8913790916024021
+        ],
+        "length": 262.1625426101101,
+        "asset": null
+      },
+      "startup_proxy_errors": 0
+    },
+    {
+      "run": 2,
+      "baseline": false,
+      "speeds": [
+        {
+          "name": "authenticated light walk",
+          "distance": 180.08690085391663,
+          "seconds": 7.970699999999954,
+          "start": [
+            641.5337072394873,
+            100.76689545801202
+          ],
+          "end": [
+            559.9077793058078,
+            261.2925935506669
+          ],
+          "longTasks": [],
+          "acknowledgements": {
+            "count": 69,
+            "p50Ms": 8,
+            "p95Ms": 13,
+            "maxMs": 70,
+            "maxServerGapMs": 132.6315402984619
+          },
+          "mps": 22.593611709626217
+        },
+        {
+          "name": "authenticated explicit run",
+          "distance": 186.703769996685,
+          "seconds": 2.6224000000001397,
+          "start": [
+            641.5337072394873,
+            100.76689545801202
+          ],
+          "end": [
+            556.9086267787136,
+            267.19073235640417
+          ],
+          "longTasks": [],
+          "acknowledgements": {
+            "count": 24,
+            "p50Ms": 8,
+            "p95Ms": 24,
+            "maxMs": 67,
+            "maxServerGapMs": 134.05132293701172
+          },
+          "mps": 71.1957634215509
+        }
+      ],
+      "checks": [
+        "controlled server ticks preserve 3x outdoor contract",
+        "walk authoritative movement reaches mapped target",
+        "walk selected mode reaches server",
+        "run authoritative movement reaches mapped target",
+        "run selected mode reaches server",
+        "bike XP label",
+        "bike no horizontal overflow",
+        "bike first tap single XP debit",
+        "bike header shows server-confirmed XP",
+        "bike rental avoids redundant wallet read",
+        "bike exit acknowledges first tap",
+        "bike delayed exit has no movement error",
+        "bike exit single request",
+        "bike exit stays on foot without stale errors",
+        "car XP label",
+        "car no horizontal overflow",
+        "car first tap single XP debit",
+        "car header shows server-confirmed XP",
+        "car rental avoids redundant wallet read",
+        "car exit acknowledges first tap",
+        "car delayed exit has no movement error",
+        "car exit single request",
+        "car exit stays on foot without stale errors",
+        "bus XP fare label",
+        "bus no horizontal overflow",
+        "bus first tap XP debit",
+        "bus header shows server-confirmed XP",
+        "bus retry cannot charge again",
+        "no browser errors"
+      ],
+      "city": "milton-keynes",
+      "viewport": 1440,
+      "route": {
+        "x": 641.5337072394873,
+        "z": 100.76689545801202,
+        "direction": [
+          -0.45325855210252364,
+          0.8913790916024021
+        ],
+        "length": 262.1625426101101,
+        "asset": null
+      },
+      "startup_proxy_errors": 0
+    },
+    {
+      "run": 3,
+      "baseline": false,
+      "speeds": [
+        {
+          "name": "authenticated light walk",
+          "distance": 180.8630545759464,
+          "seconds": 8.010800000000046,
+          "start": [
+            641.5337072394873,
+            100.76689545801202
+          ],
+          "end": [
+            559.5559809935522,
+            261.9844407503538
+          ],
+          "longTasks": [],
+          "acknowledgements": {
+            "count": 69,
+            "p50Ms": 8,
+            "p95Ms": 21,
+            "maxMs": 69,
+            "maxServerGapMs": 134.5672607421875
+          },
+          "mps": 22.577402328849224
+        },
+        {
+          "name": "authenticated explicit run",
+          "distance": 183.48564486744118,
+          "seconds": 2.5821000000000933,
+          "start": [
+            641.5337072394873,
+            100.76689545801202
+          ],
+          "end": [
+            558.3672695152693,
+            264.3221629020308
+          ],
+          "longTasks": [],
+          "acknowledgements": {
+            "count": 24,
+            "p50Ms": 9,
+            "p95Ms": 37,
+            "maxMs": 67,
+            "maxServerGapMs": 134.52959060668945
+          },
+          "mps": 71.0606269576835
+        }
+      ],
+      "checks": [
+        "controlled server ticks preserve 3x outdoor contract",
+        "walk authoritative movement reaches mapped target",
+        "walk selected mode reaches server",
+        "run authoritative movement reaches mapped target",
+        "run selected mode reaches server",
+        "bike XP label",
+        "bike no horizontal overflow",
+        "bike first tap single XP debit",
+        "bike header shows server-confirmed XP",
+        "bike rental avoids redundant wallet read",
+        "bike exit acknowledges first tap",
+        "bike delayed exit has no movement error",
+        "bike exit single request",
+        "bike exit stays on foot without stale errors",
+        "car XP label",
+        "car no horizontal overflow",
+        "car first tap single XP debit",
+        "car header shows server-confirmed XP",
+        "car rental avoids redundant wallet read",
+        "car exit acknowledges first tap",
+        "car delayed exit has no movement error",
+        "car exit single request",
+        "car exit stays on foot without stale errors",
+        "bus XP fare label",
+        "bus no horizontal overflow",
+        "bus first tap XP debit",
+        "bus header shows server-confirmed XP",
+        "bus retry cannot charge again",
+        "no browser errors"
+      ],
+      "city": "milton-keynes",
+      "viewport": 1440,
+      "route": {
+        "x": 641.5337072394873,
+        "z": 100.76689545801202,
+        "direction": [
+          -0.45325855210252364,
+          0.8913790916024021
+        ],
+        "length": 262.1625426101101,
+        "asset": null
+      },
+      "startup_proxy_errors": 0
+    },
+    {
+      "run": 4,
+      "baseline": false,
+      "speeds": [
+        {
+          "name": "authenticated light walk",
+          "distance": 180.51291615336112,
+          "seconds": 7.992600000000093,
+          "start": [
+            641.5337072394873,
+            100.76689545801202
+          ],
+          "end": [
+            559.7146842280075,
+            261.6723346812941
+          ],
+          "longTasks": [],
+          "acknowledgements": {
+            "count": 69,
+            "p50Ms": 8,
+            "p95Ms": 33,
+            "maxMs": 68,
+            "maxServerGapMs": 128.5381317138672
+          },
+          "mps": 22.58500564939557
+        },
+        {
+          "name": "authenticated explicit run",
+          "distance": 180.4788484322879,
+          "seconds": 2.53809999999986,
+          "start": [
+            641.5337072394873,
+            100.76689545801202
+          ],
+          "end": [
+            559.7301257139362,
+            261.6419674270317
+          ],
+          "longTasks": [],
+          "acknowledgements": {
+            "count": 24,
+            "p50Ms": 10,
+            "p95Ms": 65,
+            "maxMs": 78,
+            "maxServerGapMs": 127.62784957885742
+          },
+          "mps": 71.10785565277091
+        }
+      ],
+      "checks": [
+        "controlled server ticks preserve 3x outdoor contract",
+        "walk authoritative movement reaches mapped target",
+        "walk selected mode reaches server",
+        "run authoritative movement reaches mapped target",
+        "run selected mode reaches server",
+        "bike XP label",
+        "bike no horizontal overflow",
+        "bike first tap single XP debit",
+        "bike header shows server-confirmed XP",
+        "bike rental avoids redundant wallet read",
+        "bike exit acknowledges first tap",
+        "bike delayed exit has no movement error",
+        "bike exit single request",
+        "bike exit stays on foot without stale errors",
+        "car XP label",
+        "car no horizontal overflow",
+        "car first tap single XP debit",
+        "car header shows server-confirmed XP",
+        "car rental avoids redundant wallet read",
+        "car exit acknowledges first tap",
+        "car delayed exit has no movement error",
+        "car exit single request",
+        "car exit stays on foot without stale errors",
+        "bus XP fare label",
+        "bus no horizontal overflow",
+        "bus first tap XP debit",
+        "bus header shows server-confirmed XP",
+        "bus retry cannot charge again",
+        "no browser errors"
+      ],
+      "city": "milton-keynes",
+      "viewport": 1440,
+      "route": {
+        "x": 641.5337072394873,
+        "z": 100.76689545801202,
+        "direction": [
+          -0.45325855210252364,
+          0.8913790916024021
+        ],
+        "length": 262.1625426101101,
+        "asset": null
+      },
+      "startup_proxy_errors": 0
+    },
+    {
+      "run": 5,
+      "baseline": false,
+      "speeds": [
+        {
+          "name": "authenticated light walk",
+          "distance": 182.61291011516184,
+          "seconds": 8.08480000000028,
+          "start": [
+            641.5337072394873,
+            100.76689545801202
+          ],
+          "end": [
+            558.7628440054626,
+            263.5442253913371
+          ],
+          "longTasks": [],
+          "acknowledgements": {
+            "count": 70,
+            "p50Ms": 8,
+            "p95Ms": 36,
+            "maxMs": 84,
+            "maxServerGapMs": 134.7651481628418
+          },
+          "mps": 22.58718955511027
+        },
+        {
+          "name": "authenticated explicit run",
+          "distance": 186.1131231091137,
+          "seconds": 2.6171999999997206,
+          "start": [
+            641.5337072394873,
+            100.76689545801202
+          ],
+          "end": [
+            557.1763425317661,
+            266.664242070297
+          ],
+          "longTasks": [],
+          "acknowledgements": {
+            "count": 24,
+            "p50Ms": 9,
+            "p95Ms": 32,
+            "maxMs": 67,
+            "maxServerGapMs": 127.83479690551758
+          },
+          "mps": 71.11154023732752
+        }
+      ],
+      "checks": [
+        "controlled server ticks preserve 3x outdoor contract",
+        "walk authoritative movement reaches mapped target",
+        "walk selected mode reaches server",
+        "run authoritative movement reaches mapped target",
+        "run selected mode reaches server",
+        "bike XP label",
+        "bike no horizontal overflow",
+        "bike first tap single XP debit",
+        "bike header shows server-confirmed XP",
+        "bike rental avoids redundant wallet read",
+        "bike exit acknowledges first tap",
+        "bike delayed exit has no movement error",
+        "bike exit single request",
+        "bike exit stays on foot without stale errors",
+        "car XP label",
+        "car no horizontal overflow",
+        "car first tap single XP debit",
+        "car header shows server-confirmed XP",
+        "car rental avoids redundant wallet read",
+        "car exit acknowledges first tap",
+        "car delayed exit has no movement error",
+        "car exit single request",
+        "car exit stays on foot without stale errors",
+        "bus XP fare label",
+        "bus no horizontal overflow",
+        "bus first tap XP debit",
+        "bus header shows server-confirmed XP",
+        "bus retry cannot charge again",
+        "no browser errors"
+      ],
+      "city": "milton-keynes",
+      "viewport": 1440,
+      "route": {
+        "x": 641.5337072394873,
+        "z": 100.76689545801202,
+        "direction": [
+          -0.45325855210252364,
+          0.8913790916024021
+        ],
+        "length": 262.1625426101101,
+        "asset": null
+      },
+      "startup_proxy_errors": 0
+    }
+  ],
+  "backend_tests": 249,
+  "frontend_tests": 46,
+  "projection_checks": 40,
+  "production_verified": false
+}

@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {reconcileSessions} from './conversationState.ts';
+test('late HTTP waiting cannot replace realtime accepted or ended state',()=>{const accepted={id:'a',state:'accepted',revision:20};assert.deepEqual(reconcileSessions([accepted],[{id:'a',state:'pending',revision:10}]),[accepted]);assert.equal(reconcileSessions([{...accepted,state:'ended'}],[accepted])[0].state,'ended')});
+test('new consent after rejoining supersedes previous departure',()=>{assert.equal(reconcileSessions([{id:'a',state:'ended',revision:20}],[{id:'a',state:'accepted',revision:30}])[0].state,'accepted')});
+test('membership and new messages update at same session revision',()=>{const next={id:'a',state:'accepted',revision:20,members:[1,2,3],messages:['hello']};assert.deepEqual(reconcileSessions([{id:'a',state:'accepted',revision:20}], [next]),[next]);assert.deepEqual(reconcileSessions([next],[]),[])});

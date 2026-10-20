@@ -1,0 +1,73 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "authenticated light walk",
+      "distance": 80.29024758617977,
+      "seconds": 3.6094000000003725,
+      "start": [
+        307.25454612391053,
+        91.53519049571682
+      ],
+      "end": [
+        313.42960682332745,
+        171.58762632879166
+      ],
+      "acknowledgements": {
+        "count": 32,
+        "p50Ms": 33,
+        "p95Ms": 98,
+        "maxMs": 128,
+        "maxServerGapMs": 179.10218238830566
+      },
+      "mps": 22.24476300387086
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 85.73703311383838,
+      "seconds": 1.2032000000011176,
+      "start": [
+        307.25454612391053,
+        91.53519049571682
+      ],
+      "end": [
+        313.8485148758147,
+        177.01827901772992
+      ],
+      "acknowledgements": {
+        "count": 12,
+        "p50Ms": 37,
+        "p95Ms": 115,
+        "maxMs": 115,
+        "maxServerGapMs": 155.85637092590332
+      },
+      "mps": 71.25750757460001
+    }
+  ],
+  "checks": [
+    "effective run faster than walk",
+    "bike XP label",
+    "bike no horizontal overflow",
+    "bike first tap single XP debit",
+    "car XP label",
+    "car no horizontal overflow",
+    "car first tap single XP debit",
+    "bus XP fare label",
+    "bus no horizontal overflow",
+    "bus first tap XP debit",
+    "bus retry cannot charge again",
+    "no browser errors"
+  ],
+  "city": "madrid",
+  "viewport": 1440,
+  "route": {
+    "x": 307.25454612391053,
+    "z": 91.53519049571682,
+    "direction": [
+      0.07690922478210743,
+      0.9970380991433654
+    ],
+    "length": 112.22200947456231,
+    "asset": null
+  }
+}

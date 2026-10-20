@@ -1,0 +1,423 @@
+{
+  "commit": "bd7e33dedc537b655a394fe4577fdc33bd6b1e30",
+  "ci_run": 36628764796,
+  "browser": "Chromium 151 on Linux",
+  "media": "real LiveKit 1.13.7; synthetic camera/tone; decoded video and audio energy assertions",
+  "production_build": true,
+  "cities": [
+    {
+      "city": "mumbai",
+      "renderer": "existing-map-fallback",
+      "checks": {
+        "mutual_presence": true,
+        "walk_remote_updates": true,
+        "run_remote_mode": true,
+        "two_way_video_audio": true,
+        "join_no_position_change": true,
+        "walk_during_call": true,
+        "run_during_call": true,
+        "layout_preserves_position": true,
+        "car_remote_vehicle_identity": true,
+        "car_exit": true,
+        "bike_remote_vehicle_identity": true,
+        "bike_exit": true,
+        "reverse_car_remote_vehicle_identity": true,
+        "reverse_car_exit": true,
+        "reverse_bike_remote_vehicle_identity": true,
+        "reverse_bike_exit": true,
+        "event_speaker_two_receivers": true,
+        "event_late_join": true,
+        "event_touch_layout_continuity": true,
+        "event_camera_off_audio_continues": true,
+        "event_camera_returns": true,
+        "event_mute_unmute": true,
+        "event_rejoin": true,
+        "layout_390": true,
+        "layout_820": true,
+        "bus_first_tap": true,
+        "bus_single_charge": true,
+        "bus_remote_passenger": true,
+        "bus_destination_exit": true
+      },
+      "callBefore": [
+        {
+          "x": -13.605098657729991,
+          "z": 17.607528110935906,
+          "zone": "world"
+        },
+        {
+          "x": -12.844850167849659,
+          "z": 19.442930325978676,
+          "zone": "world"
+        }
+      ],
+      "callAfter": [
+        {
+          "x": -13.605098657729991,
+          "z": 17.607528110935906,
+          "zone": "world"
+        },
+        {
+          "x": -12.844850167849659,
+          "z": 19.442930325978676,
+          "zone": "world"
+        }
+      ],
+      "layoutBefore": {
+        "x": -13.785098657730002,
+        "z": 17.787528110935906,
+        "zone": "world"
+      },
+      "layoutAfter": {
+        "x": -13.785098657730002,
+        "z": 17.787528110935906,
+        "zone": "world"
+      }
+    },
+    {
+      "city": "madrid",
+      "renderer": "existing-map-fallback",
+      "checks": {
+        "mutual_presence": true,
+        "walk_remote_updates": true,
+        "run_remote_mode": true,
+        "two_way_video_audio": true,
+        "join_no_position_change": true,
+        "walk_during_call": true,
+        "run_during_call": true,
+        "layout_preserves_position": true,
+        "car_remote_vehicle_identity": true,
+        "car_exit": true,
+        "bike_remote_vehicle_identity": true,
+        "bike_exit": true,
+        "reverse_car_remote_vehicle_identity": true,
+        "reverse_car_exit": true,
+        "reverse_bike_remote_vehicle_identity": true,
+        "reverse_bike_exit": true,
+        "event_speaker_two_receivers": true,
+        "event_late_join": true,
+        "event_touch_layout_continuity": true,
+        "event_camera_off_audio_continues": true,
+        "event_camera_returns": true,
+        "event_mute_unmute": true,
+        "event_rejoin": true,
+        "layout_390": true,
+        "layout_820": true,
+        "bus_first_tap": true,
+        "bus_single_charge": true,
+        "bus_remote_passenger": true,
+        "bus_destination_exit": true
+      },
+      "callBefore": [
+        {
+          "x": 0,
+          "z": -0.6321739082336422,
+          "zone": "world"
+        },
+        {
+          "x": 0,
+          "z": 0.14234185409545821,
+          "zone": "world"
+        }
+      ],
+      "callAfter": [
+        {
+          "x": 0,
+          "z": -0.6321739082336422,
+          "zone": "world"
+        },
+        {
+          "x": 0,
+          "z": 0.14234185409545821,
+          "zone": "world"
+        }
+      ],
+      "layoutBefore": {
+        "x": -0.6058167743682861,
+        "z": -0.02635713386535571,
+        "zone": "world"
+      },
+      "layoutAfter": {
+        "x": -0.6058167743682861,
+        "z": -0.02635713386535571,
+        "zone": "world"
+      }
+    },
+    {
+      "city": "birmingham",
+      "renderer": "existing-map-fallback",
+      "checks": {
+        "mutual_presence": true,
+        "walk_remote_updates": true,
+        "run_remote_mode": true,
+        "two_way_video_audio": true,
+        "join_no_position_change": true,
+        "walk_during_call": true,
+        "run_during_call": true,
+        "layout_preserves_position": true,
+        "car_remote_vehicle_identity": true,
+        "car_exit": true,
+        "bike_remote_vehicle_identity": true,
+        "bike_exit": true,
+        "reverse_car_remote_vehicle_identity": true,
+        "reverse_car_exit": true,
+        "reverse_bike_remote_vehicle_identity": true,
+        "reverse_bike_exit": true,
+        "event_speaker_two_receivers": true,
+        "event_late_join": true,
+        "event_touch_layout_continuity": true,
+        "event_camera_off_audio_continues": true,
+        "event_camera_returns": true,
+        "event_mute_unmute": true,
+        "event_rejoin": true,
+        "layout_390": true,
+        "layout_820": true,
+        "bus_first_tap": true,
+        "bus_single_charge": true,
+        "bus_remote_passenger": true,
+        "bus_destination_exit": true
+      },
+      "callBefore": [
+        {
+          "x": 1.4699999999999998,
+          "z": 2.4355567321777367,
+          "zone": "world"
+        },
+        {
+          "x": 1.4699999999999998,
+          "z": 2.4988280372619656,
+          "zone": "world"
+        }
+      ],
+      "callAfter": [
+        {
+          "x": 1.4699999999999998,
+          "z": 2.4355567321777367,
+          "zone": "world"
+        },
+        {
+          "x": 1.4699999999999998,
+          "z": 2.4988280372619656,
+          "zone": "world"
+        }
+      ],
+      "layoutBefore": {
+        "x": 0.8426805019378663,
+        "z": 3.06287623023987,
+        "zone": "world"
+      },
+      "layoutAfter": {
+        "x": 0.8426805019378663,
+        "z": 3.06287623023987,
+        "zone": "world"
+      }
+    },
+    {
+      "city": "dubai",
+      "renderer": "existing-map-fallback",
+      "checks": {
+        "mutual_presence": true,
+        "walk_remote_updates": true,
+        "run_remote_mode": true,
+        "two_way_video_audio": true,
+        "join_no_position_change": true,
+        "walk_during_call": true,
+        "run_during_call": true,
+        "layout_preserves_position": true,
+        "car_remote_vehicle_identity": true,
+        "car_exit": true,
+        "bike_remote_vehicle_identity": true,
+        "bike_exit": true,
+        "reverse_car_remote_vehicle_identity": true,
+        "reverse_car_exit": true,
+        "reverse_bike_remote_vehicle_identity": true,
+        "reverse_bike_exit": true,
+        "event_speaker_two_receivers": true,
+        "event_late_join": true,
+        "event_touch_layout_continuity": true,
+        "event_camera_off_audio_continues": true,
+        "event_camera_returns": true,
+        "event_mute_unmute": true,
+        "event_rejoin": true,
+        "layout_390": true,
+        "layout_820": true,
+        "bus_first_tap": true,
+        "bus_single_charge": true,
+        "bus_remote_passenger": true,
+        "bus_destination_exit": true
+      },
+      "callBefore": [
+        {
+          "x": 0,
+          "z": 0.02327838134765642,
+          "zone": "world"
+        },
+        {
+          "x": 0,
+          "z": 0.03405541992187583,
+          "zone": "world"
+        }
+      ],
+      "callAfter": [
+        {
+          "x": 0,
+          "z": 0.02327838134765642,
+          "zone": "world"
+        },
+        {
+          "x": 0,
+          "z": 0.03405541992187583,
+          "zone": "world"
+        }
+      ],
+      "layoutBefore": {
+        "x": -0.5993454980850219,
+        "z": 1.2226238794326785,
+        "zone": "world"
+      },
+      "layoutAfter": {
+        "x": -0.5993454980850219,
+        "z": 1.2226238794326785,
+        "zone": "world"
+      }
+    },
+    {
+      "city": "new-york",
+      "renderer": "existing-map-fallback",
+      "checks": {
+        "mutual_presence": true,
+        "walk_remote_updates": true,
+        "run_remote_mode": true,
+        "two_way_video_audio": true,
+        "join_no_position_change": true,
+        "walk_during_call": true,
+        "run_during_call": true,
+        "layout_preserves_position": true,
+        "car_remote_vehicle_identity": true,
+        "car_exit": true,
+        "bike_remote_vehicle_identity": true,
+        "bike_exit": true,
+        "reverse_car_remote_vehicle_identity": true,
+        "reverse_car_exit": true,
+        "reverse_bike_remote_vehicle_identity": true,
+        "reverse_bike_exit": true,
+        "event_speaker_two_receivers": true,
+        "event_late_join": true,
+        "event_touch_layout_continuity": true,
+        "event_camera_off_audio_continues": true,
+        "event_camera_returns": true,
+        "event_mute_unmute": true,
+        "event_rejoin": true,
+        "layout_390": true,
+        "layout_820": true,
+        "bus_first_tap": true,
+        "bus_single_charge": true,
+        "bus_remote_passenger": true,
+        "bus_destination_exit": true
+      },
+      "callBefore": [
+        {
+          "x": 0,
+          "z": -0.376415954589843,
+          "zone": "world"
+        },
+        {
+          "x": 0,
+          "z": -0.2086022644042965,
+          "zone": "world"
+        }
+      ],
+      "callAfter": [
+        {
+          "x": 0,
+          "z": -0.376415954589843,
+          "zone": "world"
+        },
+        {
+          "x": 0,
+          "z": -0.2086022644042965,
+          "zone": "world"
+        }
+      ],
+      "layoutBefore": {
+        "x": -0.39734740734100343,
+        "z": 0.020931452751160373,
+        "zone": "world"
+      },
+      "layoutAfter": {
+        "x": -0.39734740734100343,
+        "z": 0.020931452751160373,
+        "zone": "world"
+      }
+    },
+    {
+      "city": "london",
+      "renderer": "existing-map-fallback",
+      "checks": {
+        "mutual_presence": true,
+        "walk_remote_updates": true,
+        "run_remote_mode": true,
+        "two_way_video_audio": true,
+        "join_no_position_change": true,
+        "walk_during_call": true,
+        "run_during_call": true,
+        "layout_preserves_position": true,
+        "car_remote_vehicle_identity": true,
+        "car_exit": true,
+        "bike_remote_vehicle_identity": true,
+        "bike_exit": true,
+        "reverse_car_remote_vehicle_identity": true,
+        "reverse_car_exit": true,
+        "reverse_bike_remote_vehicle_identity": true,
+        "reverse_bike_exit": true,
+        "event_speaker_two_receivers": true,
+        "event_late_join": true,
+        "event_touch_layout_continuity": true,
+        "event_camera_off_audio_continues": true,
+        "event_camera_returns": true,
+        "event_mute_unmute": true,
+        "event_rejoin": true,
+        "layout_390": true,
+        "layout_820": true,
+        "bus_first_tap": true,
+        "bus_single_charge": true,
+        "bus_remote_passenger": true,
+        "bus_destination_exit": true
+      },
+      "callBefore": [
+        {
+          "x": -24.68,
+          "z": -4.6,
+          "zone": "world"
+        },
+        {
+          "x": -24.68,
+          "z": -4.6,
+          "zone": "world"
+        }
+      ],
+      "callAfter": [
+        {
+          "x": -24.68,
+          "z": -4.6,
+          "zone": "world"
+        },
+        {
+          "x": -24.68,
+          "z": -4.6,
+          "zone": "world"
+        }
+      ],
+      "layoutBefore": {
+        "x": -24.98,
+        "z": -4.060000000000001,
+        "zone": "world"
+      },
+      "layoutAfter": {
+        "x": -24.98,
+        "z": -4.060000000000001,
+        "zone": "world"
+      }
+    }
+  ]
+}

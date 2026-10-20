@@ -1,0 +1,37 @@
+{
+  "results": [
+    {
+      "preset": "STANDARD",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 110,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "PURPLE WAVE",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 110,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "WARM",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 110,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "RAINBOW",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 110,
+      "textures": 1,
+      "geometries": 7
+    }
+  ],
+  "errors": []
+}

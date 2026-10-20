@@ -1,0 +1,73 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "authenticated light walk",
+      "distance": 86.46047477356349,
+      "seconds": 3.8275999999996273,
+      "start": [
+        -37.19531414814249,
+        -28.970987808968665
+      ],
+      "end": [
+        12.514026567146681,
+        -99.71273746022695
+      ],
+      "acknowledgements": {
+        "count": 34,
+        "p50Ms": 37,
+        "p95Ms": 92,
+        "maxMs": 124,
+        "maxServerGapMs": 182.50799179077148
+      },
+      "mps": 22.588691287901533
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 86.2437257782416,
+      "seconds": 1.2277000000011176,
+      "start": [
+        -37.19531414814249,
+        -28.970987808968665
+      ],
+      "end": [
+        12.389409513095751,
+        -99.53539396073315
+      ],
+      "acknowledgements": {
+        "count": 12,
+        "p50Ms": 31,
+        "p95Ms": 78,
+        "maxMs": 78,
+        "maxServerGapMs": 138.75794410705566
+      },
+      "mps": 70.24820866511614
+    }
+  ],
+  "checks": [
+    "effective run faster than walk",
+    "bike XP label",
+    "bike no horizontal overflow",
+    "bike first tap single XP debit",
+    "car XP label",
+    "car no horizontal overflow",
+    "car first tap single XP debit",
+    "bus XP fare label",
+    "bus no horizontal overflow",
+    "bus first tap XP debit",
+    "bus retry cannot charge again",
+    "no browser errors"
+  ],
+  "city": "mumbai",
+  "viewport": 1440,
+  "route": {
+    "x": -37.19531414814249,
+    "z": -28.970987808968665,
+    "direction": [
+      0.5749371703715029,
+      -0.8181975617937329
+    ],
+    "length": 120.06638612647006,
+    "asset": null
+  }
+}

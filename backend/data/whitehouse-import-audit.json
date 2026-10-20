@@ -1,0 +1,20 @@
+{
+  "retrieved": "2026-09-21",
+  "source_sha256": "2777cbf2566b3fc7cabe59fbbb585fdebf2f6d99787c220fbca89807ca2a6930",
+  "previous_buildings": 1245,
+  "current_buildings": 1247,
+  "added_buildings": [
+    {
+      "id": "1001547985100",
+      "type": "school"
+    },
+    {
+      "id": "480020521",
+      "type": "school"
+    }
+  ],
+  "scope": "Refresh within existing district; retain older mapped features outside downloaded bounds. No inferred buildings or address publication.",
+  "added_houses": 0,
+  "added_apartments": 0,
+  "note": "Fresh licensed data added two mapped school footprints; it did not supply additional houses/flats within this refresh. Existing mapped residential coverage was retained."
+}

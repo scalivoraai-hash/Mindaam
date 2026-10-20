@@ -1,0 +1,94 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "authenticated light walk",
+      "distance": 182.33074879215636,
+      "seconds": 8.07760000000149,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        558.8907360381847,
+        263.29271268754974
+      ],
+      "longTasks": [],
+      "acknowledgements": {
+        "count": 70,
+        "p50Ms": 9,
+        "p95Ms": 40,
+        "maxMs": 63,
+        "maxServerGapMs": 132.9629421234131
+      },
+      "mps": 22.57239140241194
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 181.67239133049534,
+      "seconds": 2.5581999999955296,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        559.1891421880223,
+        262.7058666114243
+      ],
+      "longTasks": [],
+      "acknowledgements": {
+        "count": 24,
+        "p50Ms": 9,
+        "p95Ms": 60,
+        "maxMs": 63,
+        "maxServerGapMs": 128.4623146057129
+      },
+      "mps": 71.01571078524464
+    }
+  ],
+  "checks": [
+    "effective run faster than walk",
+    "measured walk approximately 3x",
+    "measured run approximately 3x",
+    "bike XP label",
+    "bike no horizontal overflow",
+    "bike first tap single XP debit",
+    "bike header shows server-confirmed XP",
+    "bike rental avoids redundant wallet read",
+    "bike exit acknowledges first tap",
+    "bike delayed exit has no movement error",
+    "bike exit single request",
+    "bike exit stays on foot without stale errors",
+    "car XP label",
+    "car no horizontal overflow",
+    "car first tap single XP debit",
+    "car header shows server-confirmed XP",
+    "car rental avoids redundant wallet read",
+    "car exit acknowledges first tap",
+    "car delayed exit has no movement error",
+    "car exit single request",
+    "car exit stays on foot without stale errors",
+    "bus XP fare label",
+    "bus no horizontal overflow",
+    "bus first tap XP debit",
+    "bus header shows server-confirmed XP",
+    "bus retry cannot charge again",
+    "no browser errors"
+  ],
+  "city": "milton-keynes",
+  "viewport": 1440,
+  "route": {
+    "x": 641.5337072394873,
+    "z": 100.76689545801202,
+    "direction": [
+      -0.45325855210252364,
+      0.8913790916024021
+    ],
+    "length": 262.1625426101101,
+    "asset": null
+  },
+  "improvement": {
+    "walk": 3.008797209500036,
+    "run": 3.0238970114352464
+  }
+}

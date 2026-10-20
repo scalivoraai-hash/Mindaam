@@ -1,0 +1,79 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "authenticated light walk",
+      "distance": 180.9539128847572,
+      "seconds": 8.0325,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        559.5147986880609,
+        262.0654299471296
+      ],
+      "acknowledgements": {
+        "count": 68,
+        "p50Ms": 33,
+        "p95Ms": 92,
+        "maxMs": 130,
+        "maxServerGapMs": 202.06022262573242
+      },
+      "mps": 22.52772024709084
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 182.62919271625714,
+      "seconds": 2.592,
+      "start": [
+        641.5337072394873,
+        100.76689545801202
+      ],
+      "end": [
+        558.7554637772596,
+        263.5587393615072
+      ],
+      "acknowledgements": {
+        "count": 24,
+        "p50Ms": 106,
+        "p95Ms": 209,
+        "maxMs": 225,
+        "maxServerGapMs": 198.1186866760254
+      },
+      "mps": 70.45879348621031
+    }
+  ],
+  "checks": [
+    "effective run faster than walk",
+    "measured walk approximately 3x",
+    "measured run approximately 3x",
+    "bike XP label",
+    "bike no horizontal overflow",
+    "bike first tap single XP debit",
+    "car XP label",
+    "car no horizontal overflow",
+    "car first tap single XP debit",
+    "bus XP fare label",
+    "bus no horizontal overflow",
+    "bus first tap XP debit",
+    "bus retry cannot charge again",
+    "no browser errors"
+  ],
+  "city": "milton-keynes",
+  "viewport": 390,
+  "route": {
+    "x": 641.5337072394873,
+    "z": 100.76689545801202,
+    "direction": [
+      -0.45325855210252364,
+      0.8913790916024021
+    ],
+    "length": 262.1625426101101,
+    "asset": null
+  },
+  "improvement": {
+    "walk": 3.0028427474725476,
+    "run": 3.000183096055885
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "baseline": false,
+  "speeds": [
+    {
+      "name": "authenticated light walk",
+      "distance": 62.63070831298837,
+      "seconds": 2.820199999999255,
+      "start": [
+        -114.34199363912512,
+        13.3938363250564
+      ],
+      "end": [
+        -82.6758278388582,
+        67.42956124197258
+      ],
+      "acknowledgements": {
+        "count": 26,
+        "p50Ms": 39,
+        "p95Ms": 193,
+        "maxMs": 219,
+        "maxServerGapMs": 152.71496772766113
+      },
+      "mps": 22.207896004895012
+    },
+    {
+      "name": "authenticated explicit run",
+      "distance": 67.86743081375187,
+      "seconds": 0.9805999999996274,
+      "start": [
+        -114.34199363912512,
+        13.3938363250564
+      ],
+      "end": [
+        -80.02813428044514,
+        71.9476339915795
+      ],
+      "acknowledgements": {
+        "count": 10,
+        "p50Ms": 48,
+        "p95Ms": 89,
+        "maxMs": 89,
+        "maxServerGapMs": 168.46203804016113
+      },
+      "mps": 69.21010688739308
+    }
+  ],
+  "checks": [
+    "effective run faster than walk",
+    "bike XP label",
+    "bike no horizontal overflow",
+    "bike first tap single XP debit",
+    "car XP label",
+    "car no horizontal overflow",
+    "car first tap single XP debit",
+    "bus XP fare label",
+    "bus no horizontal overflow",
+    "bus first tap XP debit",
+    "bus retry cannot charge again",
+    "no browser errors"
+  ],
+  "city": "london",
+  "viewport": 1440,
+  "route": {
+    "x": -114.34199363912512,
+    "z": 13.3938363250564,
+    "direction": [
+      0.5056012721749776,
+      0.86276726501128
+    ],
+    "length": 87.68567192787282,
+    "asset": null
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "inputIntervalMs": 120,
+  "previewStep": 1.5,
+  "runMultiplier": 1.875,
+  "accelerationSeconds": 0.24,
+  "holdToRunMs": 350,
+  "joystickDeadzone": 0.12,
+  "joystickRunThreshold": 0.65,
+  "vehicleSpeeds": {
+    "bike": 84,
+    "ebike": 93,
+    "scooter": 34,
+    "car": 120
+  },
+  "normalWorldMultiplier": 3
+}
