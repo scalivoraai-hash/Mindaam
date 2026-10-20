@@ -1,5 +1,19 @@
 name: Validation
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - 'infrastructure/gcp/**'
+      - '.github/workflows/gcp-*.yml'
+      - 'docs/ADR-0022-gcp-automation.md'
+      - 'STATUS.md'
+      - 'ARCHITECTURE.md'
+  pull_request:
+    paths-ignore:
+      - 'infrastructure/gcp/**'
+      - '.github/workflows/gcp-*.yml'
+      - 'docs/ADR-0022-gcp-automation.md'
+      - 'STATUS.md'
+      - 'ARCHITECTURE.md'
 permissions:
   contents: read
 jobs:
