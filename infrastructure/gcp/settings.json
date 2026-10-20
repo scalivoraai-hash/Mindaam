@@ -1,0 +1,32 @@
+{
+  "repository": "scalivoraai-hash/Mindaam",
+  "repository_id": "1426335385",
+  "owner_id": "330771193",
+  "owner_email": "sain@scalivora.com",
+  "region": "europe-west2",
+  "zone": "europe-west2-b",
+  "domain": "mindaam.com",
+  "media_domain": "media.mindaam.com",
+  "turn_domain": "turn.mindaam.com",
+  "network": "mindaam",
+  "subnet": "mindaam-run",
+  "subnet_cidr": "10.92.0.0/24",
+  "media_private_ip": "10.92.0.10",
+  "vm_type": "e2-small",
+  "vm_disk_gb": 20,
+  "sql_tier": "db-f1-micro",
+  "sql_disk_gb": 10,
+  "sql_disk_limit_gb": 20,
+  "cloud_run_cpu": "1",
+  "cloud_run_memory": "1Gi",
+  "cloud_run_concurrency": 40,
+  "staging_max_instances": 1,
+  "production_max_instances": 2,
+  "budget_usd": 125,
+  "approval_above_usd": 150,
+  "images": {
+    "livekit": "livekit/livekit-server@sha256:6fd3b7088874c4d119160dd688798dfec852bc014786d392caad15f6f63912a3",
+    "caddy": "livekit/caddyl4@sha256:9dd090159a6042a907dbff0ce9dda27a21d2a559dc7b03b60a8e6b1b60b8348e",
+    "redis": "redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499"
+  }
+}

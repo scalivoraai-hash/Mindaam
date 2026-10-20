@@ -1,0 +1,96 @@
+name: Mindaam GCP deployment
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Resume at this step (foundation creates paid startup resources)
+        type: choice
+        options: [foundation, staging, verify, production, rollback]
+        required: true
+      release_sha:
+        description: Tested source SHA for verify/production/rollback; empty uses current main
+        type: string
+      review_object:
+        description: Private release-review object prepared after actual staging cost review (production only)
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: mindaam-gcp-release
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: github.repository == 'scalivoraai-hash/Mindaam' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s infrastructure/gcp/tests -v
+      - name: Require existing successful application CI with matching source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python infrastructure/gcp/source_gate.py
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      MINDAAM_PROJECT_ID: ${{ vars.MINDAAM_PROJECT_ID }}
+      MINDAAM_BUDGET_CONFIRMED: ${{ vars.MINDAAM_BUDGET_CONFIRMED }}
+      OPERATION: ${{ inputs.operation }}
+      RELEASE_SHA: ${{ inputs.release_sha || github.sha }}
+      REVIEW_OBJECT: ${{ inputs.review_object }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.MINDAAM_WIF_PROVIDER }}
+          service_account: ${{ vars.MINDAAM_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+        with:
+          version: '>= 550.0.0'
+      - name: Resume selected operation
+        run: python infrastructure/gcp/workflow.py
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: inputs.operation == 'staging' || inputs.operation == 'verify'
+        with:
+          node-version: '24'
+      - name: Install remote acceptance browser
+        if: inputs.operation == 'staging' || inputs.operation == 'verify'
+        run: |
+          npm install --prefix /tmp/mindaam-qa --no-save playwright@1.62.1
+          /tmp/mindaam-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Actual staging multiplayer, media and forced TURN over TLS
+        if: inputs.operation == 'staging' || inputs.operation == 'verify'
+        env:
+          QA_NODE_MODULES: /tmp/mindaam-qa/node_modules
+        run: |
+          node infrastructure/gcp/browser.cjs
+          QA_FORCE_TURN=1 node infrastructure/gcp/browser.cjs
+          python infrastructure/gcp/evidence.py --project "$MINDAAM_PROJECT_ID" --sha "$RELEASE_SHA"
+      - name: Persist non-secret evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gcp-${{ inputs.operation }}-${{ github.run_id }}
+          path: |
+            deployment-result.json
+            smoke-result.json
+            gcp-evidence/
+          retention-days: 14
+          if-no-files-found: ignore

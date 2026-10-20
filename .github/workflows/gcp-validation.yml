@@ -1,0 +1,29 @@
+name: GCP deployment validation
+on:
+  push:
+    paths: ['infrastructure/gcp/**', '.github/workflows/gcp-*.yml']
+  pull_request:
+    paths: ['infrastructure/gcp/**', '.github/workflows/gcp-*.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: |
+          python -m compileall -q infrastructure/gcp
+          python -m unittest discover -s infrastructure/gcp/tests -v
+          node --check infrastructure/gcp/browser.cjs
+      - name: Validate actual pinned media container configuration
+        run: python infrastructure/gcp/validate_containers.py
+      - name: Build new GCP image packaging
+        run: docker build -f infrastructure/gcp/Dockerfile -t mindaam-gcp-validation .
