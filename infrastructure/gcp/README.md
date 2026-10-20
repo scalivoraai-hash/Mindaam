@@ -8,7 +8,7 @@ Account: `sain@scalivora.com`. Dedicated project display name: **Mindaam Product
 
 When the owner says **“GCP access/setup completed — continue deployment”**:
 
-1. Read this file and `STATUS.md`; inspect the current branch and existing `gs://PROJECT-releases/foundation.json` / `releases/SHA/` records. Never restart the application project or repeat completed source development.
+1. Read this file and `docs/STATUS.md`; inspect the current branch and existing `gs://PROJECT-releases/foundation.json` / `releases/SHA/` records. Never restart the application project or repeat completed source development.
 2. Confirm the dedicated project ID and whether bootstrap completed. No Console retries from the known inaccessible agent browser.
 3. GitHub → Mindaam → Actions → **Mindaam GCP deployment** → Run workflow → `foundation`, main. This is the first paid-resource operation. It outputs actual media/turn DNS targets. Ask the owner for DNS actions only after those actual records exist.
 4. Once media/turn DNS resolve, run `staging`. It reuses successful application CI only when source/tests match, validates deployment guards, builds the existing unified application, pushes its immutable digest, creates the migration job, deploys staging, checks its real HTTPS URL, runs real browser/media tests (including forced TURN/TLS), measures bounded HTTP load and records Cloud Monitoring data. Use `verify` with its full release SHA to retry acceptance without rebuilding or reprovisioning.

@@ -7,7 +7,7 @@ from common import Blocked, SETTINGS, command
 
 def application_path(path):
     return not (path.startswith("infrastructure/gcp/") or path.startswith(".github/workflows/gcp-")
-                or path in {"STATUS.md", "ARCHITECTURE.md", "docs/ADR-0022-gcp-automation.md"})
+                or path in {"docs/STATUS.md", "docs/ARCHITECTURE.md", "STATUS.md", "ARCHITECTURE.md", "docs/ADR-0022-gcp-automation.md"})
 
 
 def main():

@@ -56,6 +56,7 @@ def bootstrap(c, budget_amount="125USD"):
     provider = f"projects/{c.number}/locations/global/workloadIdentityPools/{pool}/providers/github"
     member = f"principalSet://iam.googleapis.com/projects/{c.number}/locations/global/workloadIdentityPools/{pool}/attribute.repository_id/{SETTINGS['repository_id']}"
     c.gc("iam", "service-accounts", "add-iam-policy-binding", c.sa("deploy"), "--member=" + member, "--role=roles/iam.workloadIdentityUser", raw=True)
+    command(["gh", "variable", "set", "MINDAAM_BUDGET_CONFIRMED", "--repo", SETTINGS["repository"], "--body", "false"])
     for key, value in {"MINDAAM_PROJECT_ID": c.project, "MINDAAM_WIF_PROVIDER": provider, "MINDAAM_DEPLOY_SA": c.sa("deploy")}.items():
         command(["gh", "variable", "set", key, "--repo", SETTINGS["repository"], "--body", value])
     # Project-scoped alerts, not a hard spending cap. Currency must match billing.
@@ -65,6 +66,8 @@ def bootstrap(c, budget_amount="125USD"):
     import re
     if not re.fullmatch(r"[1-9][0-9]*(?:\.[0-9]{1,2})?[A-Z]{3}", budget_amount):
         raise Blocked("Invalid local-currency budget amount")
+    if budget_amount.endswith("USD") and float(budget_amount[:-3]) > SETTINGS["budget_usd"]:
+        raise Blocked("The startup budget warning cannot exceed $125 USD.")
     budgets = c.gc("billing", "budgets", "list", "--billing-account=" + account_id)
     existing = next((b for b in budgets if b.get("displayName") == "Mindaam startup " + c.project), None)
     if existing:

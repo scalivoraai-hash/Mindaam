@@ -67,8 +67,24 @@ def verify(c, sha):
     c.put_json(f"releases/{sha}/metrics.json", measured)
     if any(not result.get("timeSeries") for result in measured["series"].values()):
         raise Blocked("Cloud Monitoring data has not arrived for every required metric; resume verify after ingestion.")
+    utilization = {}
+    for metric, response in measured["series"].items():
+        if not any(word in metric for word in ("cpu/", "memory/", "memory_utilization")):
+            continue
+        samples = []
+        for series in response["timeSeries"]:
+            for point in series.get("points", [])[:5]:
+                value = point.get("value", {})
+                sample = value.get("doubleValue", value.get("distributionValue", {}).get("mean"))
+                if sample is not None:
+                    samples.append(float(sample))
+        if not samples:
+            raise Blocked("Required utilization samples are missing: " + metric)
+        utilization[metric] = statistics.median(samples)
+        if utilization[metric] > .90:
+            raise Blocked("Measured resource saturation exceeds 90%; investigate before production: " + metric)
     evidence = {**release, "verified_at": int(time.time()), "checks": {**browser["checks"], "performance": True},
-                "smoke": smoke, "http": http, "browser": browser,
+                "smoke": smoke, "http": http, "browser": browser, "median_utilization": utilization,
                 "resource_metrics_evidence": f"gs://{c.bucket}/releases/{sha}/metrics.json",
                 "limitations": "Three synthetic-capture browsers and bounded HTTP requests. Not physical-device or 500/1000 CCU certification."}
     c.put_json(f"releases/{sha}/staging-verified.json", evidence)

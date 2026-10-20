@@ -39,7 +39,10 @@ def measurements(project):
 def main():
     os.umask(0o077)
     project = metadata("project/project-id")
-    measurements(project)
+    try:
+        measurements(project)
+    except Exception:
+        print("Mindaam monitoring delivery failed; application reconciliation continues.")
     bucket = project + "-releases"
     def obj(key):
         return fetch(f"https://storage.googleapis.com/storage/v1/b/{bucket}/o/{urllib.parse.quote(key, safe='')}?alt=media")

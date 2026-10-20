@@ -43,6 +43,7 @@ def bucket(c, name):
         c.gc("storage", "buckets", "update", "gs://" + name, "--update-labels=" + LABELS, "--versioning")
     else:
         c.owned(resource, name)
+    c.gc("storage", "buckets", "update", "gs://" + name, "--uniform-bucket-level-access", "--public-access-prevention")
     lifecycle = {"rule": [{"action": {"type": "Delete"}, "condition": {"daysSinceNoncurrentTime": 7, "numNewerVersions": 3}}]}
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
         json.dump(lifecycle, f); f.flush()
@@ -161,9 +162,18 @@ def foundation(c):
         raise Blocked("Unexpected existing subnet range")
     for name, allow, source in [("mindaam-media-public", "tcp:80,tcp:443,tcp:7881,udp:3478,udp:50000-50200", "0.0.0.0/0"),
                                 ("mindaam-redis-private", "tcp:6379", SETTINGS["subnet_cidr"])]:
-        ensure(c, ["compute", "firewall-rules", "describe", name],
+        firewall = ensure(c, ["compute", "firewall-rules", "describe", name],
                ["compute", "firewall-rules", "create", name, "--network=mindaam", "--allow=" + allow,
                 "--source-ranges=" + source, "--target-service-accounts=" + c.sa("media"), "--description=" + DESCRIPTION], name=name, labels=False)
+        expected = {"tcp": [], "udp": []}
+        for entry in allow.split(","):
+            protocol, port = entry.split(":"); expected[protocol].append(port)
+        actual = {x["IPProtocol"]: set(x.get("ports", [])) for x in firewall.get("allowed", [])}
+        expected = {k: set(v) for k, v in expected.items() if v}
+        if (actual != expected or firewall.get("sourceRanges") != [source]
+                or firewall.get("targetServiceAccounts") != [c.sa("media")]
+                or firewall.get("direction") != "INGRESS" or firewall.get("disabled", False)):
+            raise Blocked("Existing firewall drifted from the restricted startup policy: " + name)
     address = ensure(c, ["compute", "addresses", "describe", "mindaam-media", "--region=" + c.region],
                      ["compute", "addresses", "create", "mindaam-media", "--region=" + c.region, "--description=" + DESCRIPTION], name="media IP", labels=False)
     bootstrap_secrets(c)
@@ -181,7 +191,7 @@ def foundation(c):
             or not sql_settings.get("backupConfiguration", {}).get("enabled")
             or sql_settings.get("ipConfiguration", {}).get("authorizedNetworks")):
         raise Blocked("Unexpected SQL size or public authorized networks; review before proceeding.")
-    c.file_command(["sql", "users", "set-password", "postgres", "--instance=mindaam-postgres"], {"password": c.secret_value("mindaam-postgres-password")}, sensitive=True)
+    c.file_command(["sql", "users", "set-password", "postgres", "--instance=mindaam-postgres"], {"--password": c.secret_value("mindaam-postgres-password")}, sensitive=True)
     for env in ("staging", "production"):
         name = "mindaam_" + env
         if c.gc("sql", "databases", "describe", name, "--instance=mindaam-postgres", missing=True) is None:
