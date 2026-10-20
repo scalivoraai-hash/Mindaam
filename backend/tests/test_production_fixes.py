@@ -1,4 +1,3 @@
-import time
 import asyncio,threading,time
 from backend.tests.test_core import system,register,onboard
 from backend.api import main

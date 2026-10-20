@@ -47,7 +47,7 @@ async function main(){
  await place();await page.getByRole('button',{name:'walk',exact:true}).click();await measure('authenticated light walk',route.direction.map(n=>n*.6));
  await place();const marker=frames.length;await input(...route.direction);await wait(160);await input(0,0);await wait(300);check('short press remains walk',frames.slice(marker).filter(f=>f.type==='motion').every(f=>f.position.mode==='walk'));
  if(!baseline){
-  await place();const marker=frames.length;await input(...route.direction);await wait(1000);await input(0,0);await wait(300);const moving=frames.slice(marker).filter(f=>f.type==='motion'&&f.position.speed>0);check('held input walks then runs',moving[0].position.mode==='walk'&&moving.some(f=>f.position.mode==='run'));
+  await place();const marker=frames.length;await input(...route.direction);await wait(1000);await input(0,0);await wait(300);const moving=frames.slice(marker).filter(f=>f.type==='motion'&&f.position.speed>0);console.log('Held input acknowledgements',JSON.stringify(moving.map(f=>({seq:f.seq,mode:f.position.mode,speed:f.position.speed}))));check('held input walks then runs',moving[0].position.mode==='walk'&&moving.some(f=>f.position.mode==='run'));
  }
  // Real rented vehicles, route collision and server time; no constant-only speed assertion.
  const listing=await api('/mobility');await api('/mobility/policy',{version:listing.policy.version,accepted:true});
