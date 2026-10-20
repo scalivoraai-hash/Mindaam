@@ -9,10 +9,11 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 os.chdir(root)
-subprocess.run(
-    [sys.executable, "-m", "alembic", "-c", "backend/alembic.ini", "upgrade", "head"],
-    check=True,
-)
+if os.getenv("RUN_MIGRATIONS_ON_START", "true").lower() == "true":
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "-c", "backend/alembic.ini", "upgrade", "head"],
+        check=True,
+    )
 children = []
 shutdown_requested = False
 

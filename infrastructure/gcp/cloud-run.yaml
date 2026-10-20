@@ -1,0 +1,59 @@
+# Render only after selecting a dedicated Mindaam project and a tested image digest.
+# No legacy Railway deployment is referenced by this manifest.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: mindaam-staging
+  labels:
+    application: mindaam
+    environment: staging
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: '0'
+        autoscaling.knative.dev/maxScale: '2'
+        run.googleapis.com/cpu-throttling: 'true'
+        run.googleapis.com/cloudsql-instances: '${SQL_CONNECTION}'
+        run.googleapis.com/network-interfaces: '[{"network":"mindaam","subnetwork":"mindaam-run"}]'
+        run.googleapis.com/vpc-access-egress: private-ranges-only
+    spec:
+      serviceAccountName: '${RUNTIME_SERVICE_ACCOUNT}'
+      containerConcurrency: 40
+      timeoutSeconds: 3600
+      containers:
+        - image: '${IMAGE_DIGEST}'
+          ports:
+            - containerPort: 3000
+          resources:
+            limits:
+              cpu: '1'
+              memory: 1Gi
+          env:
+            - {name: APP_ENV, value: staging}
+            - {name: PUBLIC_ORIGIN, value: '${STAGING_ORIGIN}'}
+            - {name: RUN_MIGRATIONS_ON_START, value: 'false'}
+            - {name: DB_POOL_SIZE, value: '3'}
+            - {name: DB_MAX_OVERFLOW, value: '2'}
+            - {name: LIVEKIT_URL, value: 'wss://media.mindaam.com'}
+            - {name: LIVEKIT_HOST_ALLOWLIST, value: 'media.mindaam.com'}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: {name: mindaam-staging-database-url, key: latest}
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef: {name: mindaam-staging-redis-url, key: latest}
+            - name: LIVEKIT_API_KEY
+              valueFrom:
+                secretKeyRef: {name: mindaam-staging-livekit-key, key: latest}
+            - name: LIVEKIT_API_SECRET
+              valueFrom:
+                secretKeyRef: {name: mindaam-staging-livekit-secret, key: latest}
+          startupProbe:
+            httpGet: {path: /api/health, port: 3000}
+            periodSeconds: 5
+            failureThreshold: 48
+          livenessProbe:
+            httpGet: {path: /api/health, port: 3000}
+            periodSeconds: 30
+            failureThreshold: 3

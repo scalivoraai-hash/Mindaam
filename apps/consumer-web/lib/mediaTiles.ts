@@ -43,7 +43,7 @@ export class MediaTiles {
     if(video&&!publication.isMuted){if(screen)sharedVideo=existing.element as HTMLVideoElement;else hasVideo=true}
    });
    tile.classList.toggle('has-video',hasVideo);tile.querySelectorAll('.media-avatar,.media-tile-status').forEach(el=>el.remove());
-   if(!hasVideo){const avatar=document.createElement('b');avatar.className='media-avatar';avatar.textContent=(participant.name||'Explorer').slice(0,2).toUpperCase();tile.append(avatar);const state=document.createElement('small');state.className='media-tile-status';state.textContent=kind==='voice'?'🎙 Voice connected':'🎥 Camera off';tile.append(state)}
+   if(!hasVideo){const avatar=document.createElement('b');avatar.className='media-avatar';avatar.textContent=(participant.name||'Explorer').slice(0,2).toUpperCase();tile.append(avatar);const state=document.createElement('small');state.className='media-tile-status';state.textContent=kind==='voice'?'🎙 Voice connected':participant.isCameraEnabled?'🎥 Video paused':'🎥 Camera off';tile.append(state)}
   });
   for(const [id,owned] of this.tracks)if(!wanted.has(id)){owned.track.detach(owned.element);owned.element.remove();this.tracks.delete(id)}
   for(const [id,tile] of this.tiles)if(!people.has(id)){tile.remove();this.tiles.delete(id)}

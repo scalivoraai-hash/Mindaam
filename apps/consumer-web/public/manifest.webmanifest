@@ -1,1 +1,25 @@
-{"id":"/","name":"MyLilWorlds","short_name":"MyLilWorlds","description":"Explore a shared virtual city and discover local rewards.","start_url":"/","scope":"/","display":"standalone","background_color":"#12262b","theme_color":"#12262b","icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"},{"src":"/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"}]}
+{
+  "id": "/",
+  "name": "Mindaam",
+  "short_name": "Mindaam",
+  "description": "A LIVING WORLD TOGETHER",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080f2c",
+  "theme_color": "#080f2c",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

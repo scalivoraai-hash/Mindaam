@@ -89,8 +89,10 @@ def check_city(city):
 @router.get("/config")
 def get_config(db=Depends(get_db)):
     import os
+    from .media_policy import settings
 
     return {
+        "media_policy": settings(db),
         "cities": CITIES,
         "environment": APP_ENV,
         "simulated_world": True,

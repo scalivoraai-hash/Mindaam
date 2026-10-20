@@ -1,0 +1,5 @@
+# Caddy must receive a valid certificate for media.mindaam.com.
+# Install as the VM's system service; keep 7880 bound to loopback.
+media.mindaam.com {
+  reverse_proxy 127.0.0.1:7880
+}

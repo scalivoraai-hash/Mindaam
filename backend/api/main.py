@@ -1,3 +1,4 @@
+import hashlib
 import asyncio
 import anyio
 import os
@@ -106,6 +107,8 @@ async def lifespan(app):
                 # SET LOCAL resets automatically at commit; runtime requests stay strict.
                 if db.bind.dialect.name=='postgresql':
                     db.connection().exec_driver_sql("SET LOCAL idle_in_transaction_session_timeout = '120s'")
+                    db.connection().exec_driver_sql("SET LOCAL lock_timeout = '120s'")
+                    db.connection().exec_driver_sql("SELECT pg_advisory_xact_lock(2052011101)")
                 expansion.seed_catalog(db)
                 from .world_content import seed_active
                 seed_active(db)
@@ -119,7 +122,7 @@ async def lifespan(app):
         await asyncio.gather(*tasks, return_exceptions=True)
 
 
-app = FastAPI(title="MyLilWorlds API", version="0.1.0-alpha", lifespan=lifespan)
+app = FastAPI(title="Mindaam API", version="0.1.0-alpha", lifespan=lifespan)
 for route in [
     core.router,
     world.router,
@@ -152,6 +155,8 @@ if os.getenv("REDIS_URL"):
 if APP_ENV in {"staging", "production"} and not redis_client:
     raise RuntimeError("Redis required outside local/test")
 
+from . import realtime_cache
+realtime_cache.configure(redis_client)
 
 @app.middleware("http")
 async def security(request: Request, call_next):
@@ -260,9 +265,10 @@ def ready():
     return {"status": "ready", "environment": APP_ENV, "release_ready": False}
 
 
-def realtime_state(token):
+def realtime_state(token, with_expiry=False):
     with SessionLocal.begin() as db:
         u = user_for_token(db, token)
+        expires_at=db.get(Session,hashlib.sha256(token.encode()).hexdigest()).expires_at
         p = db.get(Presence, u.id)
         result = (
             world.snapshot(db, u, p.city)
@@ -295,7 +301,7 @@ def realtime_state(token):
                     {"city": u.city, "x": p.x if p else 0, "z": p.z if p else 0}
                 ),
             )
-    return result
+    return (result,expires_at) if with_expiry else result
 
 
 class MotionInput(core.Strict):
@@ -342,13 +348,15 @@ async def realtime(socket: WebSocket):
         pending=asyncio.Queue(maxsize=2)
         async def send(value):
             async with send_lock:await socket.send_json(value)
-        initial_state=await run_in_threadpool(realtime_state,token)
+        state_cache=realtime_cache.StateCache()
+        def read_state():return state_cache.read(lambda:realtime_state(token,with_expiry=True))
+        initial_state=await run_in_threadpool(read_state)
         initial_state['movement_transport']='input-v1'
         await send(initial_state)
         async def states():
             while True:
                 await asyncio.sleep(.5)
-                result=await run_in_threadpool(realtime_state,token)
+                result=await run_in_threadpool(read_state)
                 result['movement_transport']='input-v1'
                 await send(result)
         async def receive_inputs():
@@ -409,3 +417,6 @@ app.include_router(oauth_router)
 
 from .collections import router as collections_router
 app.include_router(collections_router)
+
+from .media_policy import router as media_policy_router
+app.include_router(media_policy_router)

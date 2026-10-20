@@ -17,6 +17,8 @@ engine = create_engine(
     connect_args={"check_same_thread": False, "timeout": 30}
     if DATABASE_URL.startswith("sqlite")
     else {"connect_timeout": 5, "options": "-c statement_timeout=8000 -c lock_timeout=3000 -c idle_in_transaction_session_timeout=10000"},
+    pool_size=int(os.getenv("DB_POOL_SIZE", "5")),
+    max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "5")),
     pool_timeout=5,
     pool_pre_ping=True,
 )

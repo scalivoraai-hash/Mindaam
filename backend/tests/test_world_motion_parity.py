@@ -173,7 +173,7 @@ def test_coalesced_press_release_is_not_collapsed_to_only_stop(monkeypatch):
  seen=[]
  def motion(token,data):
   seen.append((data.seq,data.x));return {'type':'motion','seq':data.seq}
- monkeypatch.setattr(main,'realtime_state',lambda token:{'type':'state'})
+ monkeypatch.setattr(main,'realtime_state',lambda token,with_expiry=False:({'type':'state'},time.time()+60) if with_expiry else {'type':'state'})
  monkeypatch.setattr(main,'realtime_motion',motion)
  class Socket:
   cookies={};headers={}

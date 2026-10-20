@@ -161,6 +161,7 @@ jobs:
       - run: pip install -r backend/requirements.txt
       - run: alembic -c backend/alembic.ini upgrade head
       - run: alembic -c backend/alembic.ini check
+      - run: python scripts/audit-brand.py
       - run: python -m compileall -q backend
       - run: python -m pytest backend/tests -q
       - run: pip install pip-audit

@@ -1,2 +1,3 @@
-/** Original vector mark: compact, crisp and shared by the application shell. */
-export default function BrandMark(){return <svg className="brand-mark" viewBox="0 0 48 40" aria-hidden="true"><defs><linearGradient id="mlw-brand-gradient" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#46eaf3"/><stop offset=".35" stopColor="#75eeae"/><stop offset=".55" stopColor="#b2a4ff"/><stop offset=".8" stopColor="#ab52ed"/><stop offset="1" stopColor="#ff76b5"/></linearGradient></defs><path d="M6 32 16 9l8 15L33 9l9 23" fill="none" stroke="url(#mlw-brand-gradient)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+import {BRAND} from '@/lib/brand';
+/** The user's approved artwork, exported without redrawing the identity. */
+export default function BrandMark({wordmark=false}:{wordmark?:boolean}){return <img className={wordmark?'brand-wordmark':'brand-mark'} src={wordmark?BRAND.logo:BRAND.mark} alt={wordmark?`${BRAND.name} — ${BRAND.tagline}`:''} width={wordmark?351:108} height={wordmark?100:93}/>}

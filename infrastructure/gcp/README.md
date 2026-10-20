@@ -1,0 +1,32 @@
+# Mindaam GCP release configuration
+
+Status: configuration prepared, **not provisioned or release approved**. Google Cloud Console is currently inaccessible from the agent's session. Account: sain@scalivora.com; approved domain: mindaam.com. A dedicated project must be verified before applying anything. No existing Railway or original repository changes belong in this workflow.
+
+## Small staging candidate
+
+- Cloud Run: service mindaam-staging, min 0, max 2. Start 1 CPU / 1 GiB / concurrency 40, then measure. WebSockets keep an instance active and billed; min 0 does not imply free connected sessions. Timeout is 60 minutes; existing reconnect logic remains necessary.
+- Compute Engine: one small VM in the same region, initially e2-small for profiling, LiveKit OSS and bounded Redis. Do not claim this shared-core VM can handle 100 or 250 media participants until tested. Increase only when actual measurements justify it.
+- PostgreSQL: smallest appropriate Cloud SQL instance, initially db-f1-micro for staging measurement, PostgreSQL 16 with PostGIS, single zone, daily backups and deletion protection. Shared-core has no Cloud SQL SLA. No read replica/HA cluster. Keep max app database connections at 10 across two instances; account for migrations/maintenance separately.
+- Redis: required by the current deployment's distributed rate limits and state revisions. Bind only loopback/private VM IP; allow 6379 only from the dedicated Cloud Run subnet. No internet firewall rule. Use a generated secret password and 128 MiB noeviction policy; no durable data belongs here.
+- Artifact Registry: one regional Docker repository with cleanup of old untagged images. Secrets only in Secret Manager, access scoped to specific runtime identities. Never commit state/secret files.
+- Static assets: current app caching first. Add GCS/CDN only after measured transfer justifies the additional service and billing. No external load balancer/GKE/NAT gateway is required for this staging candidate.
+
+## Release sequence
+
+1. Run the read-only preflight after choosing the dedicated project. Confirm billing and apply the project label application=mindaam. Do not infer the project from an unrelated account resource. Select region with the owner/data residency context; europe-west2 is a candidate for UK users, not a selected live region.
+2. Enable only required APIs. Create separate runtime service accounts (no downloaded keys), regional Artifact Registry, dedicated VPC/subnet, SQL, and the single media VM. Attach only required Secret Manager versions. Enable backups before import; copy/restore existing data only with a separately verified source backup.
+3. Generate LiveKit and Redis secrets server-side. Render livekit.yaml and redis.conf into root-owned mode 0600 files under /run/mindaam. Pin container digests before release. Bootstrap via a restricted VM identity reading only these secrets. Never print values or put them in startup metadata. The configuration files here are templates, not working credentials.
+4. Reserve a regional static public IP for media. DNS `media.mindaam.com A <actual reserved VM address>` is necessary. The address cannot be supplied before provisioning. Expose TCP 80/443 for Caddy, TCP 7881, UDP 3478 and UDP 50000–50200 for media, and TCP 5349 for TURN/TLS. Do not expose 7880 or 6379. Use IAP for administration, with no public SSH rule.
+5. Issue a valid media.mindaam.com certificate. Caddy serves HTTPS; install the same valid certificate chain/private key into /etc/mindaam/tls for TURN and renew atomically with a LiveKit reload/restart during a controlled maintenance period. Test both direct UDP and forced TURN/TLS. Networks restricted to TCP 443 may require the official LiveKit Caddy layer-4 TURN multiplex setup and an additional TURN hostname; do not claim universal connectivity from a 5349-only test.
+6. Build the tested repository image and record its immutable digest. Run Alembic exactly once as a Cloud Run Job using the staging SQL secret, before service rollout. Never run migrations concurrently on scaling instances. PostGIS availability and migration check must pass.
+7. Render cloud-run.yaml with the verified project resources, image digest and actual run.app service origin. Exact PUBLIC_ORIGIN must match the browser origin for cookie/CSRF/WebSocket security. No allow-all origin workaround. The service must have public invocation configured only for this requested web app; backend endpoints retain application authentication. Do not expose secrets as ordinary environment values.
+8. Open the actual staging URL and test registration, login, two real browser media sessions, movement, event promotion/revocation, screen sharing, mobile/tablet, wallet and payment-provider readiness. Use Stripe test mode only for test transactions. Keep unavailable providers visibly unavailable.
+9. Record CPU/RAM/network, DB connections, active sockets/media, API p50/p95, world load, error rate and test duration. Begin with 2/10/25 users, stop on rising errors or saturation. Increase only after review. A test report, not an invented estimate, gates production.
+10. Record actual resource SKUs/region and idle/light-use/500/1000 CCU cost assumptions. Configure $50/$75/$100/$125 budget alerts from budget.json. Excluding credits exposes underlying burn. Alerts are not hard spending caps. Verify notification recipients. Resource ceilings remain the primary cost control.
+11. Only after staging gates and cost review pass, render a separate production service/database/secrets configuration, preserve the approved maximum, and map mindaam.com with HTTPS. Read the actual mapping's DNS records from GCP; never invent an apex target. Keep Railway operational.
+
+## Current measured spend and blockers
+
+No GCP resources have been provisioned by this work: current additional cloud spend is $0. Expected deployed idle/light-use/500/1000 CCU costs are **unmeasured**, not $0. Project/billing access, VM IP, actual service URL, DNS records, mail/Stripe settings, production backup source and real provider acceptance remain unverified. Do not apply a production label to the staging template.
+
+Official references: https://docs.cloud.google.com/run/docs/triggering/websockets , https://docs.livekit.io/transport/self-hosting/vm/ , https://docs.livekit.io/transport/self-hosting/ports-firewall/ , https://cloud.google.com/sql/pricing , https://docs.cloud.google.com/billing/docs/how-to/budgets .

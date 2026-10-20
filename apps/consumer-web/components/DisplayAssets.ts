@@ -1,10 +1,19 @@
 import * as T from 'three';
 import {box,mesh,material} from './WorldAssets';
 
-export function brandOnCanvas(c:CanvasRenderingContext2D,x:number,y:number,size=42){
-  const colour=c.createLinearGradient(x,y,x+size,y+size);colour.addColorStop(0,'#51eff1');colour.addColorStop(.38,'#87f3b0');colour.addColorStop(.65,'#ac89ff');colour.addColorStop(1,'#f369cf');
-  c.save();c.strokeStyle=colour;c.lineWidth=size*.19;c.lineCap='round';c.lineJoin='round';c.beginPath();c.moveTo(x,y+size*.7);c.lineTo(x+size*.25,y);c.lineTo(x+size*.5,y+size*.45);c.lineTo(x+size*.76,y);c.lineTo(x+size,y+size*.7);c.stroke();c.restore();
+import {BRAND} from '@/lib/brand';
+let approvedMark:HTMLImageElement|undefined;
+const waiting=new Map<HTMLCanvasElement,()=>void>();
+function brandImage(){
+ if(!approvedMark&&typeof Image!=='undefined'){approvedMark=new Image();approvedMark.onload=()=>{for(const draw of waiting.values())draw();waiting.clear();window.dispatchEvent(new Event('mindaam-brand-ready'))};approvedMark.src=BRAND.mark}
+ return approvedMark;
 }
+export function brandOnCanvas(c:CanvasRenderingContext2D,x:number,y:number,size=42){
+ const im=brandImage();const draw=()=>{if(im?.complete&&im.naturalWidth)c.drawImage(im,x,y,size,size*93/108)};
+ if(im?.complete)draw();else waiting.set(c.canvas,draw);
+}
+/** Refresh late-loaded approved artwork exactly once, and remove listeners on disposal. */
+export function brandTexture(texture:T.Texture){const refresh=()=>{texture.needsUpdate=true};window.addEventListener('mindaam-brand-ready',refresh,{once:true});texture.addEventListener('dispose',()=>{window.removeEventListener('mindaam-brand-ready',refresh);waiting.delete(texture.image) });return texture}
 
 export function billboardCanvas(headline?:string){
   const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=576;const c=canvas.getContext('2d')!;
@@ -13,7 +22,7 @@ export function billboardCanvas(headline?:string){
   c.strokeStyle='#76bde529';c.lineWidth=1;for(let y=400;y<576;y+=28){c.beginPath();c.moveTo(0,y);c.lineTo(1024,y);c.stroke()}
   // Original city illustration; no fabricated advertiser, reach or attendance claims.
   for(let i=0;i<10;i++){const x=660+i*35,h=80+(i*47)%160;c.fillStyle=i%2?'#6ac2d62a':'#8490d92f';c.fillRect(x,454-h,30,h);c.fillStyle='#b0e9ff55';for(let yy=460-h;yy<445;yy+=17)for(let xx=x+7;xx<x+27;xx+=10)c.fillRect(xx,yy,3,6)}
-  brandOnCanvas(c,60,49,45);c.fillStyle='#fff';c.font='bold 36px sans-serif';c.fillText('MyLilWorlds',126,87);
+  brandOnCanvas(c,60,49,45);c.fillStyle='#fff';c.font='bold 36px sans-serif';c.fillText('Mindaam',126,87);
   c.font='600 15px sans-serif';c.fillStyle='#a9d7ed';c.fillText('PEOPLE  ·  PLACES  ·  POSSIBILITIES',60,142);
   const lines=headline?wrap(c,headline,820,58):['YOUR BRAND','BELONGS HERE.'];
   c.font='800 68px sans-serif';lines.slice(0,3).forEach((line,i)=>{c.fillStyle=i===1?'#72f0e6':'#fff';c.fillText(line,60,243+i*76,890)});
@@ -46,9 +55,9 @@ export function premiumBus(number:string,destination:string,open=false,upper=fal
   for(const x of [-.9,.9]){box(g,'#e3faff',x,1.16,3.56,.38,.10,.03);box(g,'#fb8099',x,1.1,-3.54,.25,.12,.03);box(g,'#243b55',x*1.53,2.4,3.05,.15,.35,.12)}
   box(g,'#13273b',0,.76,3.55,1.5,.22,.03);
   const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=256;const c=canvas.getContext('2d')!;c.fillStyle='#0b182c';c.fillRect(0,0,1024,256);c.fillStyle='#f7e5a5';c.font='bold 87px sans-serif';c.fillText(number+'  '+destination,40,157,940);
-  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;twoSidedPanel(g,texture,2.22,.47,0,3.1,3.58,7.16);
-  const sideCanvas=document.createElement('canvas');sideCanvas.width=1024;sideCanvas.height=256;const sc=sideCanvas.getContext('2d')!;sc.fillStyle=navy;sc.fillRect(0,0,1024,256);brandOnCanvas(sc,75,70,95);sc.fillStyle='#f0f7ff';sc.font='bold 86px sans-serif';sc.fillText('MyLilWorlds',220,161,740);
-  const sideTex=new T.CanvasTexture(sideCanvas);sideTex.colorSpace=T.SRGBColorSpace;
+  const texture=brandTexture(new T.CanvasTexture(canvas));texture.colorSpace=T.SRGBColorSpace;twoSidedPanel(g,texture,2.22,.47,0,3.1,3.58,7.16);
+  const sideCanvas=document.createElement('canvas');sideCanvas.width=1024;sideCanvas.height=256;const sc=sideCanvas.getContext('2d')!;sc.fillStyle=navy;sc.fillRect(0,0,1024,256);brandOnCanvas(sc,75,70,95);sc.fillStyle='#f0f7ff';sc.font='bold 86px sans-serif';sc.fillText('Mindaam',220,161,740);
+  const sideTex=brandTexture(new T.CanvasTexture(sideCanvas));sideTex.colorSpace=T.SRGBColorSpace;
   for(const side of [-1,1]){const m=new T.Mesh(new T.PlaneGeometry(4.8,.87),new T.MeshBasicMaterial({map:sideTex,toneMapped:false}));m.position.set(side*1.269,1.82,-.25);m.rotation.y=side*Math.PI/2;g.add(m)}
   return g;
 }
@@ -58,8 +67,8 @@ export function stageDetails(g:T.Group){
   for(const x of [-8.3,8.3]){box(g,'#18263f',x,3.6,-10,.22,6.1,6.7);box(g,'#aa81e7',x-.12*Math.sign(x),3.2,-12.8,.1,5.5,.1);box(g,'#68dbea',x-.12*Math.sign(x),3.2,-7,.1,5.5,.1);for(let i=0;i<3;i++){box(g,'#151d2b',x,1.1+i*.8,-7.5,.65,.7,.65)}}
   box(g,'#273651',0,6.4,-9,17,.18,.22);
   for(let x=-7;x<=7;x+=2){box(g,'#131f32',x,6.05,-9,.3,.5,.4);box(g,x%4?'#b595ef':'#79dbeb',x,5.78,-8.98,.2,.025,.25)}
-  const canvas=billboardCanvas('LIVE TOGETHER.');const c=canvas.getContext('2d')!;c.fillStyle='#122348';c.fillRect(45,370,910,180);c.fillStyle='#c8ddf5';c.font='27px sans-serif';c.fillText('Music. Conversations. Shared moments.',60,422);c.font='bold 21px sans-serif';c.fillStyle='#9ce7ed';c.fillText('MYLILWORLDS LIVE',60,487);
-  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;const screen=twoSidedPanel(g,texture,11.4,6.4125,0,4.1,-13.15);screen.userData.eventVideoSurface=true;screen.userData.cityAction=()=>window.dispatchEvent(new CustomEvent('pulse-stage-view'));
+  const canvas=billboardCanvas('LIVE TOGETHER.');const c=canvas.getContext('2d')!;c.fillStyle='#122348';c.fillRect(45,370,910,180);c.fillStyle='#c8ddf5';c.font='27px sans-serif';c.fillText('Music. Conversations. Shared moments.',60,422);c.font='bold 21px sans-serif';c.fillStyle='#9ce7ed';c.fillText('MINDAAM LIVE',60,487);
+  const texture=brandTexture(new T.CanvasTexture(canvas));texture.colorSpace=T.SRGBColorSpace;const screen=twoSidedPanel(g,texture,11.4,6.4125,0,4.1,-13.15);screen.userData.eventVideoSurface=true;screen.userData.cityAction=()=>window.dispatchEvent(new CustomEvent('pulse-stage-view'));
   box(g,'#101b2b',0,4.1,-13.28,11.8,6.75,.15);
   for(const x of [-5.85,5.85])box(g,'#71cada',x,4.1,-13.12,.045,6.5,.04);
   // Reused acoustic panels, open ceiling ribs and two shadow-free stage lights.

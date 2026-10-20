@@ -109,9 +109,9 @@ def send_token(db, email, purpose):
     payload = json.dumps(
         {
             "to": user.email,
-            "subject": "Verify your MyLilWorlds email"
+            "subject": "Verify your Mindaam email"
             if purpose == "verify"
-            else "Reset your MyLilWorlds password",
+            else "Reset your Mindaam password",
             "body": f"Open this one-time link: {origin}/{path}#token={token}\n\nIf you did not request this, ignore this message. The link expires in "
             + ("60 minutes." if purpose == "verify" else "15 minutes."),
         }
@@ -246,9 +246,9 @@ def drain_outbox(limit=20):
                 )
                 msg = EmailMessage()
                 msg["To"] = payload["to"]
-                msg["From"] = os.getenv("SMTP_FROM", "noreply@pulseworld.local")
+                msg["From"] = os.getenv("SMTP_FROM", "Mindaam <noreply@mindaam.com>")
                 msg["Subject"] = payload["subject"]
-                msg["Message-ID"] = f"<{row.id}@pulseworld>"
+                msg["Message-ID"] = f"<{row.id}@mindaam.com>"
                 msg.set_content(payload["body"])
                 host = os.getenv("SMTP_HOST")
                 if host:

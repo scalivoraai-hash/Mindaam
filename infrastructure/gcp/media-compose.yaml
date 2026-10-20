@@ -1,0 +1,32 @@
+services:
+  livekit:
+    image: livekit/livekit-server:v1.13.7
+    command: --config /run/mindaam/livekit.yaml
+    restart: unless-stopped
+    network_mode: host
+    read_only: true
+    cap_drop: [ALL]
+    mem_limit: 1g
+    cpus: 1.5
+    security_opt: ['no-new-privileges:true']
+    volumes:
+      - /run/mindaam/livekit.yaml:/run/mindaam/livekit.yaml:ro
+      - /etc/mindaam/tls:/certs:ro
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  redis:
+    image: redis:7.4-alpine
+    command: ['redis-server', '/run/mindaam/redis.conf']
+    restart: unless-stopped
+    network_mode: host
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    mem_limit: 256m
+    cpus: 0.5
+    volumes:
+      - /run/mindaam/redis.conf:/run/mindaam/redis.conf:ro
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}

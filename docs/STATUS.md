@@ -129,3 +129,10 @@ Full production acceptance remains incomplete: production Stripe payment/webhook
 ## 2026-10-01: targeted outdoor speed and XP mobility
 
 ADR-0020 adds a shared outdoor-only 3× movement multiplier and the approved bike/car speed ceilings. Preview and indoor movement, polling safety, vehicle controls and bus routing remain unchanged. Car/bike/e-bike rentals and bus tickets now use configured numeric prices in XP through the existing atomic ledger; scooters/boats and all unrelated Credit uses remain unchanged. Explicit currency quotes reject stale Credit checkouts. No migration or production data conversion is required. Fixed-route baseline and initial after-change evidence are recorded; release gates and production verification remain pending until documented.
+
+
+## 2026-10-20: Independent Mindaam release candidate
+
+The 442-file source snapshot at Mindaam commit 68744eb passed all 16 baseline jobs. Approved logo/domain rebrand, media cost controls and cache optimization are now implemented in the independent Mindaam repository. Local frontend: 49 unit tests and production build pass. Focused backend policy/cache/event tests pass; full backend run exposed two outdated mocked function signatures, corrected and retested with their assertions preserved. The new revision still requires its full remote CI gates. Measured idle snapshot SQL reduction is 90% (920 to 92 statements over 20 samples); active/moving-world performance is not certified.
+
+GCP Console remains inaccessible (Site Unavailable); no project, staging service, production service, DNS target or billable resource was created. No GCP voice/video/Stripe or device acceptance is claimed. Original source repository and Railway remain untouched. See ADR-0021 and infrastructure/gcp/README.md.

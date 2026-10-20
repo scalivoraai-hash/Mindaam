@@ -1,10 +1,13 @@
+import time
 import asyncio,threading,time
 from backend.tests.test_core import system,register,onboard
 from backend.api import main
 
 def test_realtime_database_work_never_runs_on_event_loop(monkeypatch):
  loop_thread=threading.get_ident();seen=[]
- def state(token):seen.append(threading.get_ident());return {'type':'state'}
+ def state(token,with_expiry=False):
+  seen.append(threading.get_ident());value={'type':'state'}
+  return (value,time.time()+60) if with_expiry else value
  class Socket:
   cookies={}
   headers={}

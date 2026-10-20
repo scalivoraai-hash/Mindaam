@@ -83,3 +83,8 @@ Event audiences that have already accepted attendance connect as subscribe-only 
 ## 2026-10-01: targeted outdoor speed and XP mobility
 
 ADR-0020 adds a shared outdoor-only 3× movement multiplier and the approved bike/car speed ceilings. Preview and indoor movement, polling safety, vehicle controls and bus routing remain unchanged. Car/bike/e-bike rentals and bus tickets now use configured numeric prices in XP through the existing atomic ledger; scooters/boats and all unrelated Credit uses remain unchanged. Explicit currency quotes reject stale Credit checkouts. No migration or production data conversion is required. Fixed-route baseline and initial after-change evidence are recorded; release gates and production verification remain pending until documented.
+
+
+## 2026-10-20: Mindaam startup controls
+
+ADR-0021 documents the approved identity exports, centralized media policy, explicit camera activation, selective capped subscriptions, four-publisher stage, bounded event capacity and commit-aware Redis revision cache. This changes only the independent Mindaam repository. GCP templates are prepared; no GCP deployment or provider acceptance is yet verified.

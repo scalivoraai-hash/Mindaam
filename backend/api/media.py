@@ -1,3 +1,4 @@
+from . import media_policy
 import os
 import time
 from datetime import timedelta
@@ -178,6 +179,10 @@ def token(session_id: str, u=Depends(current_user), db=Depends(get_db)):
         raise HTTPException(403,'Mutual consent and active membership required')
     event=db.get(Event,s.event_id) if s.event_id else None
     attendee=db.get(Attendee,(s.event_id,u.id)) if event else None
+    from urllib.parse import urlparse
+    allowed_hosts={h.strip() for h in os.getenv('LIVEKIT_HOST_ALLOWLIST','').split(',') if h.strip()}
+    if allowed_hosts and urlparse(os.getenv('LIVEKIT_URL','')).hostname not in allowed_hosts:
+        raise HTTPException(503,'Media provider does not match this deployment')
     can_speak=not event or bool(attendee and attendee.role in ['host','cohost','speaker'])
     from .event_presentation import effective_share
     can_share=bool(event and effective_share(event,attendee))
@@ -214,6 +219,7 @@ def token(session_id: str, u=Depends(current_user), db=Depends(get_db)):
         "url": os.environ["LIVEKIT_URL"],
         "room": "pulse-" + s.id,
         "kind": s.kind,
+        "media_policy": media_policy.settings(db),
         "expires_at": event.ends_at if event else s.accepted_at + 600,
         "can_publish":can_publish,
         "can_speak":can_speak,

@@ -1,0 +1,1 @@
+Approved Mindaam identity supplied by the owner on 2026-10-20. `approved-logo.png` is the unmodified source. `logo.webp` and `mark.webp` are crops of that image; icons and social card are scaled exports on its original white background. No logo or wordmark was redrawn. Palette: `shared/brand.json`.

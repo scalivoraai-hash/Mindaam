@@ -49,7 +49,7 @@ def request_token(request, authorization=''):
 def check_browser_origin(request):
     expected = os.getenv('PUBLIC_ORIGIN', 'http://localhost:3000').rstrip('/')
     if request.headers.get('origin') != expected or request.headers.get('x-pulse-client') != 'web':
-        raise HTTPException(403, 'Reload MyLilWorlds and try again')
+        raise HTTPException(403, 'Reload Mindaam and try again')
 
 def login_result(db, user, request, response):
     token = session_token(db, user)

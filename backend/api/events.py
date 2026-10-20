@@ -44,7 +44,7 @@ class EventInput(Strict):
  city:str
  starts_at:float=Field(allow_inf_nan=False)
  ends_at:float|None=Field(default=None,allow_inf_nan=False)
- capacity:int=Field(default=100,ge=2,le=1000)
+ capacity:int=Field(default=50,ge=2,le=250)
  event_type:Literal['Social Hangout','Public Talk','Discussion','Networking','Audio Room','Video Meetup','Community Meetup','Gaming / Activity','Other']='Social Hangout'
  communication_mode:Literal['text','voice','liveface']='text'
  visibility:Literal['public','private']='public'
@@ -67,6 +67,10 @@ def listing(city:str|None=None,u=Depends(current_user),db=Depends(get_db)):
 def create(data:EventInput,u=Depends(current_user),db=Depends(get_db)):
  if not u.onboarded:raise HTTPException(409,'Complete your profile first')
  validate(data)
+ from .media_policy import settings
+ limits=settings(db)
+ if 'capacity' not in data.model_fields_set:data.capacity=limits['free_event_max_audience']
+ if data.capacity>limits['event_capacity_limit']:raise HTTPException(422,'This event exceeds the current tested capacity')
  if db.scalar(select(func.count()).select_from(Event).where(Event.host_id==u.id,Event.created_at>time.time()-3600))>=5:raise HTTPException(429,'Please wait before creating more events')
  e=Event(**data.model_dump(),host_id=u.id);p=db.get(Presence,u.id)
  if p and p.city==data.city:e.x,e.z=p.x,p.z
@@ -81,6 +85,8 @@ def edit(id:str,data:EventInput,u=Depends(current_user),db=Depends(get_db)):
  reserved=booking(db,id)
  if reserved and (data.city!=reserved.city or data.starts_at!=reserved.starts_at or data.ends_at!=reserved.ends_at or data.venue_experience_type!='auditorium'):raise HTTPException(409,'A reserved venue’s location and time cannot be changed')
  validate(data,86400 if reserved else 14400)
+ from .media_policy import settings
+ if data.capacity>settings(db)["event_capacity_limit"]:raise HTTPException(422,"This event exceeds the current tested capacity")
  if data.capacity<len(attendance(db,e)):raise HTTPException(409,'Capacity cannot be smaller than the joined group')
  for k,v in data.model_dump().items():setattr(e,k,v)
  return view(db,e,u)
@@ -96,7 +102,8 @@ def eligible(db,e,u):
  a=db.get(Attendee,(e.id,u.id))
  if a and a.state=='banned':raise HTTPException(403,'You have been removed from this event')
  if any(blocked(db,u.id,p.user_id) for p in attendance(db,e)):raise HTTPException(403,'Privacy settings prevent joining this event')
- if len(attendance(db,e))>=e.capacity and not (a and a.state=='active'):raise HTTPException(409,'Event is full')
+ from .media_policy import settings
+ if len(attendance(db,e))>=min(e.capacity,settings(db)['event_capacity_limit']) and not (a and a.state=='active'):raise HTTPException(409,'Event is full')
  return a
 @router.post('/{id}/join')
 def join(id:str,u=Depends(current_user),db=Depends(get_db)):
@@ -186,7 +193,8 @@ async def moderate(id:str,user_id:str,action:Literal['approve','decline','declin
   else:
    if a.state!='active' or e.status!='live':raise HTTPException(409,'Participant is not in the live event')
    if action=='cohost' and u.id!=e.host_id:raise HTTPException(403,'Only the creator can appoint co-hosts')
-   if action in ['speaker','cohost'] and sum(p.role in ['host','cohost','speaker'] for p in attendance(db,e))>=conversations.rules()['max_participants']:raise HTTPException(409,'The stage is full')
+   from .media_policy import settings
+   if action in ['speaker','cohost'] and a.role not in ['host','cohost','speaker'] and sum(p.role in ['host','cohost','speaker'] for p in attendance(db,e))>=settings(db)['auditorium_max_stage_video']:raise HTTPException(409,'The stage is full (host plus up to three guests)')
    a.role=action;a.hand=False;a.permission_dirty=True;a.permission_revision=(a.permission_revision or 0)+1
    p=db.get(Presence,user_id)
    if e.venue_experience_type=='auditorium' and p and p.zone_id=='event:'+id:
@@ -298,7 +306,7 @@ def auditorium_scene(db,p,u):
  if not e or e.status!='live' or not a or a.state!='active':
   exit_venue(p.zone_id[6:],u,db);return None
  from .civic import scene
- return {'id':e.id,'name':e.title,'template':'auditorium','notice':'MyLilWorlds Live Auditorium','event':view(db,e,u),'geography':{'city':p.city,'radius':40,'spawn':[0,8],'features':[]}}
+ return {'id':e.id,'name':e.title,'template':'auditorium','notice':'Mindaam Live Auditorium','event':view(db,e,u),'geography':{'city':p.city,'radius':40,'spawn':[0,8],'features':[]}}
 
 class ChatSetting(Strict):
  enabled:bool

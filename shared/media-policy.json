@@ -1,0 +1,20 @@
+{
+  "startup_cost_mode": true,
+  "default_video": false,
+  "avatar_video_max": 360,
+  "fullscreen_video_max": 720,
+  "allow_1080p": false,
+  "adaptive_stream": true,
+  "dynacast": true,
+  "auto_subscribe": false,
+  "max_visible_video_subscriptions": 4,
+  "auditorium_default_camera": false,
+  "auditorium_default_mic": false,
+  "auditorium_max_stage_video": 4,
+  "auditorium_max_screen_share": 1,
+  "free_event_max_audience": 50,
+  "standard_event_max_audience": 100,
+  "large_event_max_audience": 250,
+  "event_capacity_limit": 100,
+  "large_event_load_test_evidence": ""
+}
