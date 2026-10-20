@@ -1,8 +1,0 @@
-
-## 2026-10-20 — GCP automation continuation
-
-- Continue from remote application head `87ec2fb1c022abdf79fe6c975fedc69a1cf6bb18`, full Validation run `39431534357` (all 16 jobs PASS). No completed application/media/rebrand/snapshot development was repeated or reimplemented.
-- Added Mindaam-only keyless bootstrap, idempotent foundation/release scripts, GCP Docker packaging, runtime SQL role/migration job, VM reconciler, direct/forced-TURN staging acceptance, monitoring and release-cost evidence gates. Added separate deployment validation; existing application CI job definitions unchanged.
-- Production Cloud Run min0/max2; staging min0/max1; one e2-small media/Redis VM; db-f1-micro PostgreSQL, bounded disk and pools; no GKE/NAT/CDN/load balancer provisioned. Preserve existing 360p/720p, selective subscriptions, audience-off, host+3 and screen-share policy; preserve snapshot cache/SQL reduction.
-- Account-owner steps and exact resume sequence are in infrastructure/gcp/README.md. First owner action: create/select dedicated **Mindaam Production** using `sain@scalivora.com`, proposed ID `mindaam-production`. Bootstrap automates APIs/IAM/WIF/variables/budget after billing and owner authorization. DNS targets are emitted only after a real reserved IP exists.
-- **GCP deployment NOT PASS:** no real staging/production URLs, cloud configuration, DNS, cost measurements, physical-device acceptance or restore test yet. Infrastructure validation is not deployment. Google Console remains inaccessible from the agent environment; do not retry those pages. Old GitHub/Railway/database/domains/variables untouched.

@@ -5,15 +5,15 @@ on:
       - 'infrastructure/gcp/**'
       - '.github/workflows/gcp-*.yml'
       - 'docs/ADR-0022-gcp-automation.md'
-      - 'STATUS.md'
-      - 'ARCHITECTURE.md'
+      - 'docs/STATUS.md'
+      - 'docs/ARCHITECTURE.md'
   pull_request:
     paths-ignore:
       - 'infrastructure/gcp/**'
       - '.github/workflows/gcp-*.yml'
       - 'docs/ADR-0022-gcp-automation.md'
-      - 'STATUS.md'
-      - 'ARCHITECTURE.md'
+      - 'docs/STATUS.md'
+      - 'docs/ARCHITECTURE.md'
 permissions:
   contents: read
 jobs:

@@ -88,3 +88,7 @@ ADR-0020 adds a shared outdoor-only 3× movement multiplier and the approved bik
 ## 2026-10-20: Mindaam startup controls
 
 ADR-0021 documents the approved identity exports, centralized media policy, explicit camera activation, selective capped subscriptions, four-publisher stage, bounded event capacity and commit-aware Redis revision cache. This changes only the independent Mindaam repository. GCP templates are prepared; no GCP deployment or provider acceptance is yet verified.
+
+## GCP startup deployment automation (2026-10-20)
+
+ADR 0022 and `infrastructure/gcp/README.md` define the parallel Mindaam-only deployment. GitHub OIDC bootstrap, bounded Cloud Run/Cloud SQL, one LiveKit OSS/Caddy/Redis VM, private registry/storage/secrets, job-based migrations and actual-URL acceptance are automated without changing application/media/snapshot architecture. Production promotion requires the exact staging digest and actual cost/metrics evidence. GCP is not yet provisioned or verified; old Railway remains untouched.
