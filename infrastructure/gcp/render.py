@@ -85,3 +85,18 @@ def compose_config():
     services["caddy"]["tmpfs"] = ["/config:rw,noexec,nosuid,size=8m"]
     services["caddy"]["volumes"].append("/var/lib/mindaam/caddy:/data")
     return {"services": services}
+
+
+def postgres(c):
+    # Cloud SQL API exposes these fields consistently, including SDKs whose GA
+    # `instances create` CLI does not yet expose labels/auto-resize limits.
+    return {"name": "mindaam-postgres", "region": c.region, "databaseVersion": "POSTGRES_16",
+            "settings": {"tier": SETTINGS["sql_tier"], "edition": "ENTERPRISE", "availabilityType": "ZONAL",
+                         "userLabels": {"application": "mindaam", "managed_by": "mindaam-github"},
+                         "dataDiskType": "PD_SSD", "dataDiskSizeGb": str(SETTINGS["sql_disk_gb"]),
+                         "storageAutoResize": True, "storageAutoResizeLimit": str(SETTINGS["sql_disk_limit_gb"]),
+                         "deletionProtectionEnabled": True, "activationPolicy": "ALWAYS",
+                         "ipConfiguration": {"ipv4Enabled": True, "authorizedNetworks": [], "sslMode": "ENCRYPTED_ONLY"},
+                         "backupConfiguration": {"enabled": True, "startTime": "03:00", "pointInTimeRecoveryEnabled": True,
+                                                 "transactionLogRetentionDays": 7,
+                                                 "backupRetentionSettings": {"retentionUnit": "COUNT", "retainedBackups": 7}}}}

@@ -5,6 +5,8 @@ The owner reviews/runs this committed script; no service-account key is generate
 """
 import argparse
 import json
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 from common import Cloud, Blocked, SETTINGS, command, summary
 
 APIS = ["serviceusage.googleapis.com", "iam.googleapis.com", "iamcredentials.googleapis.com",
@@ -26,8 +28,18 @@ def bootstrap(c, budget_amount="125USD"):
     if str(repo["id"]) != SETTINGS["repository_id"] or str(repo["owner"]["id"]) != SETTINGS["owner_id"] or not repo["private"]:
         raise Blocked("GitHub identity/repository does not match the private Mindaam repository.")
     billing = c.require_project(bootstrap=True)
-    c.gc("projects", "update", c.project, "--update-labels=application=mindaam")
     c.gc("services", "enable", *APIS)
+    current = c.gc("projects", "describe", c.project)
+    labels = {**current.get("labels", {}), "application": "mindaam"}
+    token = command(["gcloud", "auth", "print-access-token"], sensitive=True)
+    request = Request(f"https://cloudresourcemanager.googleapis.com/v3/projects/{c.number}?updateMask=labels",
+                      data=json.dumps({"labels": labels}).encode(), method="PATCH",
+                      headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
+    try:
+        with urlopen(request, timeout=60) as response:
+            json.load(response)
+    except HTTPError as error:
+        raise Blocked("Project labeling failed: HTTP " + str(error.code)) from None
     identities = ["deploy", "staging", "production", "migrate", "media"]
     for name in identities:
         if c.gc("iam", "service-accounts", "describe", c.sa(name), missing=True) is None:

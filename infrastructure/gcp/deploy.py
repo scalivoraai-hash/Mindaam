@@ -13,9 +13,10 @@ import tempfile
 import time
 from pathlib import Path
 from urllib.parse import quote, urlsplit
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
+from urllib.error import HTTPError
 from common import Cloud, Blocked, SETTINGS, HERE, LABELS, command, summary
-from render import service
+from render import service, postgres
 
 DESCRIPTION = "Managed by Mindaam GitHub"
 OPTIONAL = ["SMTP_HOST", "SMTP_PORT", "SMTP_USERNAME", "SMTP_PASSWORD", "SMTP_FROM",
@@ -141,6 +142,33 @@ systemctl enable --now mindaam-reconcile.timer
 """
 
 
+def ensure_postgres(c):
+    existing = c.gc("sql", "instances", "describe", "mindaam-postgres", missing=True)
+    if existing is not None:
+        c.owned(existing, "PostgreSQL")
+    else:
+        token = command(["gcloud", "auth", "print-access-token"], sensitive=True)
+        request = Request(f"https://sqladmin.googleapis.com/sql/v1beta4/projects/{c.project}/instances",
+                          data=json.dumps(postgres(c)).encode(),
+                          headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
+        try:
+            with urlopen(request, timeout=60) as response:
+                operation = json.load(response)
+        except HTTPError as error:
+            # Payload has configuration only, but never echo authorization headers.
+            raise Blocked("Cloud SQL create failed: HTTP " + str(error.code)) from None
+        c.gc("sql", "operations", "wait", operation["name"], "--timeout=3600")
+    # A stopped workflow may leave the creation operation running; wait, don't duplicate.
+    pending = c.gc("sql", "operations", "list", "--instance=mindaam-postgres", "--filter=status!=DONE") or []
+    for operation in pending:
+        c.gc("sql", "operations", "wait", operation["name"], "--timeout=3600")
+    current = c.gc("sql", "instances", "describe", "mindaam-postgres")
+    c.owned(current, "PostgreSQL")
+    if current.get("state") != "RUNNABLE":
+        raise Blocked("Cloud SQL is not ready; inspect the recorded operation and resume foundation")
+    return current
+
+
 def foundation(c):
     c.require_project()
     if os.getenv("MINDAAM_BUDGET_CONFIRMED") != "true":
@@ -177,13 +205,7 @@ def foundation(c):
     address = ensure(c, ["compute", "addresses", "describe", "mindaam-media", "--region=" + c.region],
                      ["compute", "addresses", "create", "mindaam-media", "--region=" + c.region, "--description=" + DESCRIPTION], name="media IP", labels=False)
     bootstrap_secrets(c)
-    instance = ensure(c, ["sql", "instances", "describe", "mindaam-postgres"],
-        ["sql", "instances", "create", "mindaam-postgres", "--database-version=POSTGRES_16", "--edition=ENTERPRISE",
-         "--tier=" + SETTINGS["sql_tier"], "--region=" + c.region, "--availability-type=ZONAL",
-         "--storage-type=SSD", "--storage-size=" + str(SETTINGS["sql_disk_gb"]), "--storage-auto-increase",
-         "--storage-auto-increase-limit=" + str(SETTINGS["sql_disk_limit_gb"]), "--backup-start-time=03:00",
-         "--retained-backups-count=7", "--enable-point-in-time-recovery", "--retained-transaction-log-days=7",
-         "--deletion-protection", "--labels=" + LABELS], name="PostgreSQL")
+    instance = ensure_postgres(c)
     sql_settings = instance["settings"]
     if (sql_settings["tier"] != SETTINGS["sql_tier"] or sql_settings.get("availabilityType") != "ZONAL"
             or int(sql_settings.get("dataDiskSizeGb", 0)) > SETTINGS["sql_disk_limit_gb"]

@@ -54,7 +54,7 @@ No application source changes: LiveKit OSS only, selective subscriptions, adapti
 ## Operator commands and evidence
 
 - Local checks: `python3 -m unittest discover -s infrastructure/gcp/tests -v`; `python3 -m compileall -q infrastructure/gcp`; `node --check infrastructure/gcp/browser.cjs`.
-- The **GCP deployment validation** workflow additionally validates real pinned Caddy/LiveKit containers and builds the GCP packaging. Application CI jobs are unchanged; deployment/docs-only changes do not rerun the completed full suite.
+- The **GCP deployment validation** workflow additionally checks installed SDK flags, validates real pinned Caddy/LiveKit containers, builds GCP packaging and exercises the new migration job and restricted runtime role against disposable PostgreSQL. Project labels and Cloud SQL creation use the documented APIs to atomically apply labels and storage caps on CLI versions that lack those flags. Application CI jobs are unchanged; deployment/docs-only changes do not rerun the completed full suite.
 - Bootstrap: `python3 infrastructure/gcp/bootstrap.py --project ACTUAL_ID` (owner account only, no paid VM/SQL provisioning).
 - Review packet: `python3 infrastructure/gcp/review.py --project ACTUAL_ID --sha TESTED_SHA`. Save actual reviewed JSON outside source, then `--input /path/to/review.json` validates it and stores the private release gate object. This is evidence data, not application code or secrets.
 - The generated owner initial password is a specific Secret Manager value, accessible directly by the owner; never put it in an artifact/chat/log. Existing account behavior requires changing the initial password. Secrets are generated once and retained on resume.

@@ -11,7 +11,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import Cloud, Blocked, SETTINGS, command
 from deploy import ensure, release_gate, image_check, startup_script
-from render import service, caddy_config, compose_config
+from render import postgres, service, caddy_config, compose_config
 from source_gate import application_path
 
 
@@ -64,6 +64,16 @@ class DeploymentSafety(unittest.TestCase):
             self.assertNotIn('value',values['DATABASE_URL'])
             self.assertEqual(values['LIVEKIT_URL']['value'],'wss://media.mindaam.com')
             self.assertEqual(values['DB_POOL_SIZE']['value'],'3')
+
+    def test_sql_creation_atomically_labels_and_caps_storage(self):
+        settings=postgres(FakeCloud())["settings"]
+        self.assertEqual(settings["userLabels"]["application"],"mindaam")
+        self.assertEqual(settings["tier"],"db-f1-micro")
+        self.assertEqual(settings["storageAutoResizeLimit"],"20")
+        self.assertEqual(settings["availabilityType"],"ZONAL")
+        self.assertTrue(settings["deletionProtectionEnabled"])
+        self.assertEqual(settings["ipConfiguration"]["authorizedNetworks"],[])
+        self.assertTrue(settings["backupConfiguration"]["pointInTimeRecoveryEnabled"])
 
     def test_image_cannot_come_from_other_project_or_mutable_tag(self):
         c=FakeCloud(); image_check(c,'europe-west2-docker.pkg.dev/mindaam-production/mindaam/app@sha256:'+'a'*64)
