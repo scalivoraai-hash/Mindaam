@@ -30,8 +30,8 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
 
 class Cloud:
     def __init__(self, project):
-        if not re.fullmatch(r"mindaam-[a-z0-9-]{1,21}[a-z0-9]", project):
-            raise Blocked("Use the dedicated mindaam-* project ID, never an unrelated project.")
+        if project != "mindaam" and not re.fullmatch(r"mindaam-[a-z0-9-]{1,21}[a-z0-9]", project):
+            raise Blocked("Use the dedicated mindaam or mindaam-* project ID, never an unrelated project.")
         self.project = project
         self.region = SETTINGS["region"]
         self.zone = SETTINGS["zone"]
@@ -54,8 +54,11 @@ class Cloud:
         if project.get("lifecycleState") != "ACTIVE":
             raise Blocked("Dedicated project is not active.")
         if bootstrap:
-            if project.get("name") != "Mindaam Production":
-                raise Blocked("The selected project must be named Mindaam Production.")
+            allowed_names = {"Mindaam Production"}
+            if self.project == "mindaam":
+                allowed_names.add("Mindaam")
+            if project.get("name") not in allowed_names:
+                raise Blocked("The selected project must be named Mindaam Production (or Mindaam for project mindaam).")
         elif project.get("labels", {}).get("application") != "mindaam":
             raise Blocked("Project has not completed the Mindaam bootstrap.")
         billing = self.gc("billing", "projects", "describe", self.project)
@@ -108,3 +111,4 @@ def summary(message):
     if os.getenv("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
             f.write(message + "\n\n")
+

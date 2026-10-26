@@ -11,3 +11,10 @@ Startup resources: Cloud Run min0/max2 production and max1 staging; one small Cl
 The workflow validates infrastructure, reuses CI only with identical application/test bytes, builds/pushes GCP packaging, migrates in a single job, deploys staging, runs actual browser/media/forced-TURN checks and records metrics. Production uses the exact accepted digest, requires fresh cost/evidence, takes a SQL backup and verifies real URLs. Null prices, missing metrics or absent URLs cannot PASS. Resource limits constrain cost but cannot guarantee a dollar ceiling; $125 warnings and a >$150 estimate gate supplement them.
 
 Existing application CI job definitions remain byte-identical. Deployment/docs-only changes route to separate validation. Rollback restores traffic only; database restore is separately reviewed and has not been tested. Old GitHub/Railway/database/domains/variables are untouched. Operator and one-at-a-time owner instructions: infrastructure/gcp/README.md.
+
+
+## 2026-10-26: accept the existing dedicated project
+
+The owner confirmed project ID `mindaam`, display name `Mindaam`, number `157480611225`, and enabled billing. Accept this exact ID alongside the existing `mindaam-*` pattern in the shared Cloud validator. Permit display name `Mindaam` only for that exact ID; retain the existing `Mindaam Production` check for prefixed projects. Active lifecycle, billing, post-bootstrap ownership labels, resource ownership, and release gates remain unchanged.
+
+Reviewed all GCP scripts, workflows and deployment configuration: remaining `mindaam-production` values are service names or test fixtures, not fixed deployment project IDs. Bootstrap supplies the chosen project and derived identities to the workflow through repository variables. Added isolated mocked regressions for identity, safeguards, `95GBP`, and that variable wiring; all 16 deployment unit tests pass. No GCP deployment was performed.
