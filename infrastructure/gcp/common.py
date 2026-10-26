@@ -23,12 +23,23 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
         # An authentication/network/permission error must NEVER become 'not found'.
         missing = (any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
                    or re.search(r"\bnot found: 404\b", message) is not None)
-        failure = any(t in message.lower() for t in (
-            "permission", "403", "unauthenticated", "401", "unauthorized", "forbidden",
-            "credential", "authentication", "reauth", "access denied", "network", "connection",
-            "timed out", "timeout", "deadline_exceeded", "unavailable", "dns",
-            "name resolution", "ssl", "tls", "proxy", "transport",
-        ))
+        # Match failure statuses/phrases, not nouns in CLI context such as
+        # "using the credentials" or resource paths such as "compute.networks".
+        # Inspect the entire message so identity context cannot hide a later error.
+        failure = re.search(
+            r"\b(?:permission_denied|unauthenticated|unauthorized|forbidden|401|403|"
+            r"deadline_exceeded|unavailable|timeout|timed out)\b"
+            r"|permission(?:s)?[ _]+(?:denied|missing|required)"
+            r"|(?:access denied|reauth|could not refresh|invalid_grant)"
+            r"|(?:credential\w*|authentication|authorization|network|connection|dns|"
+            r"name resolution|ssl|tls|proxy|transport)[^\n.]{0,100}"
+            r"\b(?:fail\w*|error\w*|invalid|expired|revoked|denied|refused|reset|"
+            r"unreachable|required|unavailable|timed out)\b"
+            r"|\b(?:invalid|expired|revoked|missing|failed|unable|cannot|could not|no valid)"
+            r"[^\n.]{0,100}(?:credential\w*|authenticat\w*|authoriz\w*|"
+            r"connect\w*|resolv\w*|network|dns|ssl|tls|proxy|transport)",
+            message, re.IGNORECASE,
+        ) is not None
         if allow_missing and missing and not failure:
             return None
         detail = "Sensitive command failed; consult the provider audit log." if sensitive else message[-1800:]
