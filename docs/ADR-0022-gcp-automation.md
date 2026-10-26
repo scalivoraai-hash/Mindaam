@@ -18,3 +18,9 @@ Existing application CI job definitions remain byte-identical. Deployment/docs-o
 The owner confirmed project ID `mindaam`, display name `Mindaam`, number `157480611225`, and enabled billing. Accept this exact ID alongside the existing `mindaam-*` pattern in the shared Cloud validator. Permit display name `Mindaam` only for that exact ID; retain the existing `Mindaam Production` check for prefixed projects. Active lifecycle, billing, post-bootstrap ownership labels, resource ownership, and release gates remain unchanged.
 
 Reviewed all GCP scripts, workflows and deployment configuration: remaining `mindaam-production` values are service names or test fixtures, not fixed deployment project IDs. Bootstrap supplies the chosen project and derived identities to the workflow through repository variables. Added isolated mocked regressions for identity, safeguards, `95GBP`, and that variable wiring; all 16 deployment unit tests pass. No GCP deployment was performed.
+
+## 2026-10-26: first Foundation resource discovery
+
+Recognize the Storage CLI `not found: 404` response only for explicit missing-resource discovery. Bare 404 and unknown errors still fail. Authentication, permission and transport failure indicators take precedence, including mixed missing/error messages. Resource ownership, description checks and creation configuration are unchanged.
+
+Reviewed buckets, Artifact Registry, VPC, subnet, firewall rules, reserved media IP, Secret Manager, Cloud SQL and media VM discovery: each already uses the shared opt-in adapter. Added mocked regressions for missing/error classification, bucket create versus abort, and ownership refusal. All 22 GCP unit tests, Python compilation and browser-script syntax pass locally. Application CI reuse is checked against successful run 39431534357 (16 successful jobs); application/test files and CI job definitions remain unchanged. No cloud operation was executed.

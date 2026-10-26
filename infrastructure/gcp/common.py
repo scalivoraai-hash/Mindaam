@@ -21,7 +21,15 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
     if result.returncode:
         message = result.stderr
         # An authentication/network/permission error must NEVER become 'not found'.
-        if allow_missing and any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched")) and not any(t in message for t in ("PERMISSION_DENIED", "403", "UNAUTHENTICATED", "Permission", "permission", "401")):
+        missing = (any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
+                   or re.search(r"\bnot found: 404\b", message) is not None)
+        failure = any(t in message.lower() for t in (
+            "permission", "403", "unauthenticated", "401", "unauthorized", "forbidden",
+            "credential", "authentication", "reauth", "access denied", "network", "connection",
+            "timed out", "timeout", "deadline_exceeded", "unavailable", "dns",
+            "name resolution", "ssl", "tls", "proxy", "transport",
+        ))
+        if allow_missing and missing and not failure:
             return None
         detail = "Sensitive command failed; consult the provider audit log." if sensitive else message[-1800:]
         raise Blocked(detail)
