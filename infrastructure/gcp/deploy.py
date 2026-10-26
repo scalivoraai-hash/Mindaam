@@ -177,8 +177,8 @@ def foundation(c):
     bucket(c, c.assets)  # private immutable asset/archive preparation; current small assets stay in the app cache
     ensure(c, ["artifacts", "repositories", "describe", "mindaam", "--location=" + c.region],
            ["artifacts", "repositories", "create", "mindaam", "--repository-format=docker", "--location=" + c.region, "--labels=" + LABELS], name="mindaam")
-    cleanup = [{"id": "delete-untagged", "action": {"type": "Delete"}, "condition": {"tagState": "untagged", "olderThan": "604800s"}},
-               {"id": "keep-recent", "action": {"type": "Keep"}, "mostRecentVersions": {"keepCount": 5}}]
+    cleanup = [{"name": "delete-untagged", "action": {"type": "Delete"}, "condition": {"tagState": "untagged", "olderThan": "604800s"}},
+               {"name": "keep-recent", "action": {"type": "Keep"}, "mostRecentVersions": {"keepCount": 5}}]
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
         json.dump(cleanup, f); f.flush()
         c.gc("artifacts", "repositories", "set-cleanup-policies", "mindaam", "--location=" + c.region, "--policy=" + f.name, "--no-dry-run")

@@ -81,6 +81,8 @@ class MissingResources(unittest.TestCase):
 
     def test_first_foundation_creates_all_missing_resources(self):
         created, missing = set(), set()
+        policies, versions = [], set()
+        resuming = False
         resource = {
             'labels': {'application': 'mindaam'}, 'description': DESCRIPTION,
             'ipCidrRange': SETTINGS['subnet_cidr'], 'address': '192.0.2.1',
@@ -100,7 +102,35 @@ class MissingResources(unittest.TestCase):
                 data = {'billingEnabled': True}
             elif args[:2] == ['auth', 'print-access-token'] or args[:3] == ['secrets', 'versions', 'access']:
                 return subprocess.CompletedProcess([], 0, 'test-only-value', '')
+            elif args[:3] == ['artifacts', 'repositories', 'set-cleanup-policies']:
+                policy = json.loads(Path(next(a.split('=', 1)[1] for a in args if a.startswith('--policy='))).read_text())
+                self.assertEqual(policy, [
+                    {'name': 'delete-untagged', 'action': {'type': 'Delete'},
+                     'condition': {'tagState': 'untagged', 'olderThan': '604800s'}},
+                    {'name': 'keep-recent', 'action': {'type': 'Keep'},
+                     'mostRecentVersions': {'keepCount': 5}},
+                ])
+                self.assertIn('--no-dry-run', args)
+                policies.append(policy)
+            elif args[:3] == ['secrets', 'versions', 'add']:
+                self.assertFalse(resuming, 'Resume must not regenerate existing secrets')
+                versions.add(args[3])
+            elif args[:3] == ['secrets', 'versions', 'list']:
+                data = [{'state': 'ENABLED'}] if args[3] in versions else []
+            elif args[:3] == ['storage', 'buckets', 'add-iam-policy-binding']:
+                self.assertEqual(args[3], 'gs://mindaam-releases')
+                self.assertIn('--member=serviceAccount:mindaam-media@mindaam.iam.gserviceaccount.com', args)
+                self.assertIn('--role=roles/storage.objectViewer', args)
+                self.assertIn("--condition=title=mindaam-vm-only,expression=resource.name.startsWith('projects/_/buckets/mindaam-releases/objects/vm/')", args)
+                self.assertIn('--format=none', args)
+            elif args[:2] == ['secrets', 'add-iam-policy-binding']:
+                self.assertIn('--role=roles/secretmanager.secretAccessor', args)
+                member = next(a for a in args if a.startswith('--member='))
+                self.assertTrue(member.startswith('--member=serviceAccount:mindaam-'))
+                self.assertTrue(member.endswith('@mindaam.iam.gserviceaccount.com'))
+                self.assertIn('--format=none', args)
             elif 'create' in args:
+                self.assertFalse(resuming, 'Resume must not recreate existing resources')
                 i = args.index('create'); created.add(tuple(args[:i] + [args[i + 1]]))
             elif 'describe' in args:
                 i = args.index('describe'); key = tuple(args[:i] + [args[i + 1]])
@@ -132,6 +162,10 @@ class MissingResources(unittest.TestCase):
              patch.dict('os.environ', {'MINDAAM_BUDGET_CONFIRMED': 'true'}), \
              patch('deploy.summary'):
             foundation(Cloud('mindaam'))
+            resuming = True
+            foundation(Cloud('mindaam'))
+        self.assertEqual(len(policies), 2)
+        self.assertEqual(policies[0], policies[1])
         self.assertEqual(missing - {('storage', 'cat', 'gs://mindaam-releases/vm/current.json')}, created)
         for cli, name in DISCOVERY:
             parts = cli.split('.')
@@ -139,6 +173,17 @@ class MissingResources(unittest.TestCase):
             if cli == 'compute.networks.describe':
                 key = ('compute', 'networks', 'mindaam')
             self.assertIn(key, missing)
+
+    def test_foundation_refuses_unowned_registry_before_policy_update(self):
+        for labels in [{}, {'application': 'other'}]:
+            cloud = Cloud('mindaam')
+            with patch.object(cloud, 'require_project'), patch('deploy.bucket'), \
+                 patch.dict('os.environ', {'MINDAAM_BUDGET_CONFIRMED': 'true'}), \
+                 patch.object(cloud, 'gc', return_value={'labels': labels}) as gc:
+                with self.assertRaises(Blocked):
+                    foundation(cloud)
+            gc.assert_called_once_with('artifacts', 'repositories', 'describe', 'mindaam',
+                                       '--location=' + cloud.region, missing=True)
 
     def test_recognized_missing_requires_explicit_opt_in(self):
         for error in [STORAGE_MISSING, 'NOT_FOUND', 'resource was not found',
