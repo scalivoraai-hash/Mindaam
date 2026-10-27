@@ -169,6 +169,39 @@ def ensure_postgres(c):
     return current
 
 
+def firewall_ports(entries):
+    """Compare effective TCP/UDP access, including repeated protocol entries."""
+    ports = {}
+    for entry in entries:
+        protocol = {'6': 'tcp', '17': 'udp'}.get(entry['IPProtocol'], entry['IPProtocol'])
+        if protocol not in ('tcp', 'udp') or not entry.get('ports'):
+            raise Blocked('Unexpected protocol or unrestricted ports in firewall')
+        for value in entry['ports']:
+            if not isinstance(value, str) or not re.fullmatch(r'\d{1,5}(?:-\d{1,5})?', value):
+                raise Blocked('Invalid firewall port range')
+            bounds = [int(v) for v in value.split('-')]
+            first, last = bounds[0], bounds[-1]
+            if not 0 <= first <= last <= 65535:
+                raise Blocked('Invalid firewall port range')
+            ports.setdefault(protocol, set()).update(range(first, last + 1))
+    return ports
+
+
+def validate_firewall(c, firewall, name, allow, source):
+    expected = [{'IPProtocol': entry.split(':')[0], 'ports': [entry.split(':')[1]]}
+                for entry in allow.split(',')]
+    network = f'https://www.googleapis.com/compute/v1/projects/{c.project}/global/networks/mindaam'
+    if (firewall.get('description') != DESCRIPTION
+            or firewall.get('network') != network
+            or firewall_ports(firewall.get('allowed', [])) != firewall_ports(expected)
+            or set(firewall.get('sourceRanges', [])) != {source}
+            or set(firewall.get('targetServiceAccounts', [])) != {c.sa('media')}
+            or firewall.get('direction') != 'INGRESS'
+            or firewall.get('disabled', False) is not False
+            or any(firewall.get(key) for key in ('sourceTags', 'sourceServiceAccounts', 'targetTags', 'denied'))):
+        raise Blocked('Existing firewall drifted from the restricted startup policy: ' + name)
+
+
 def foundation(c):
     c.require_project()
     if os.getenv("MINDAAM_BUDGET_CONFIRMED") != "true":
@@ -193,15 +226,7 @@ def foundation(c):
         firewall = ensure(c, ["compute", "firewall-rules", "describe", name],
                ["compute", "firewall-rules", "create", name, "--network=mindaam", "--allow=" + allow,
                 "--source-ranges=" + source, "--target-service-accounts=" + c.sa("media"), "--description=" + DESCRIPTION], name=name, labels=False)
-        expected = {"tcp": [], "udp": []}
-        for entry in allow.split(","):
-            protocol, port = entry.split(":"); expected[protocol].append(port)
-        actual = {x["IPProtocol"]: set(x.get("ports", [])) for x in firewall.get("allowed", [])}
-        expected = {k: set(v) for k, v in expected.items() if v}
-        if (actual != expected or firewall.get("sourceRanges") != [source]
-                or firewall.get("targetServiceAccounts") != [c.sa("media")]
-                or firewall.get("direction") != "INGRESS" or firewall.get("disabled", False)):
-            raise Blocked("Existing firewall drifted from the restricted startup policy: " + name)
+        validate_firewall(c, firewall, name, allow, source)
     address = ensure(c, ["compute", "addresses", "describe", "mindaam-media", "--region=" + c.region],
                      ["compute", "addresses", "create", "mindaam-media", "--region=" + c.region, "--description=" + DESCRIPTION], name="media IP", labels=False)
     bootstrap_secrets(c)

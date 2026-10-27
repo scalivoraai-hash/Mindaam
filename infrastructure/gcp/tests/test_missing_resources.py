@@ -80,9 +80,20 @@ class MissingResources(unittest.TestCase):
                             Cloud('mindaam').gc(*cli.split('.'), resource, missing=True)
 
     def test_first_foundation_creates_all_missing_resources(self):
+        self.foundation_scenario()
+
+    def test_partial_foundation_keeps_media_and_creates_private_redis(self):
+        self.foundation_scenario(partial=True)
+
+    def foundation_scenario(self, partial=False):
         created, missing = set(), set()
         policies, versions = [], set()
         resuming = False
+        initial = {('compute', 'firewall-rules', 'mindaam-media-public'),
+                   ('secrets', 'mindaam-postgres-password')} if partial else set()
+        created.update(initial)
+        if partial:
+            versions.add('mindaam-postgres-password')
         resource = {
             'labels': {'application': 'mindaam'}, 'description': DESCRIPTION,
             'ipCidrRange': SETTINGS['subnet_cidr'], 'address': '192.0.2.1',
@@ -94,6 +105,8 @@ class MissingResources(unittest.TestCase):
 
         def run(args, **kwargs):
             args = args[1:]
+            if args[:2] == ['compute', 'firewall-rules']:
+                self.assertIn(args[2], ['describe', 'create'], 'Never modify an existing firewall')
             data = {}
             if args[:2] == ['projects', 'describe']:
                 data = {'lifecycleState': 'ACTIVE', 'projectNumber': '157480611225',
@@ -114,6 +127,7 @@ class MissingResources(unittest.TestCase):
                 policies.append(policy)
             elif args[:3] == ['secrets', 'versions', 'add']:
                 self.assertFalse(resuming, 'Resume must not regenerate existing secrets')
+                self.assertNotIn(args[3], versions, 'Never regenerate an existing secret')
                 versions.add(args[3])
             elif args[:3] == ['secrets', 'versions', 'list']:
                 data = [{'state': 'ENABLED'}] if args[3] in versions else []
@@ -131,7 +145,9 @@ class MissingResources(unittest.TestCase):
                 self.assertIn('--format=none', args)
             elif 'create' in args:
                 self.assertFalse(resuming, 'Resume must not recreate existing resources')
-                i = args.index('create'); created.add(tuple(args[:i] + [args[i + 1]]))
+                i = args.index('create'); key = tuple(args[:i] + [args[i + 1]])
+                self.assertNotIn(key, created, 'Never recreate an existing resource')
+                created.add(key)
             elif 'describe' in args:
                 i = args.index('describe'); key = tuple(args[:i] + [args[i + 1]])
                 if key not in created:
@@ -142,8 +158,9 @@ class MissingResources(unittest.TestCase):
                 if args[:2] == ['compute', 'firewall-rules']:
                     private = key[-1] == 'mindaam-redis-private'
                     data.update(allowed=([{'IPProtocol': 'tcp', 'ports': ['6379']}] if private else
-                        [{'IPProtocol': 'tcp', 'ports': ['80', '443', '7881']},
-                         {'IPProtocol': 'udp', 'ports': ['3478', '50000-50200']}]),
+                        [{'IPProtocol': protocol, 'ports': [port]} for protocol, port in
+                         [('tcp', '80'), ('tcp', '443'), ('tcp', '7881'), ('udp', '3478'), ('udp', '50000-50200')]]),
+                        network='https://www.googleapis.com/compute/v1/projects/mindaam/global/networks/mindaam',
                         sourceRanges=[SETTINGS['subnet_cidr'] if private else '0.0.0.0/0'],
                         targetServiceAccounts=[Cloud('mindaam').sa('media')], direction='INGRESS')
             elif 'list' in args:
@@ -166,13 +183,13 @@ class MissingResources(unittest.TestCase):
             foundation(Cloud('mindaam'))
         self.assertEqual(len(policies), 2)
         self.assertEqual(policies[0], policies[1])
-        self.assertEqual(missing - {('storage', 'cat', 'gs://mindaam-releases/vm/current.json')}, created)
+        self.assertEqual(missing - {('storage', 'cat', 'gs://mindaam-releases/vm/current.json')}, created - initial)
         for cli, name in DISCOVERY:
             parts = cli.split('.')
             key = tuple(parts[:-1] + [name]) if parts[-1] == 'describe' else tuple(parts + [name])
             if cli == 'compute.networks.describe':
                 key = ('compute', 'networks', 'mindaam')
-            self.assertIn(key, missing)
+            self.assertIn(key, missing | initial)
 
     def test_foundation_refuses_unowned_registry_before_policy_update(self):
         for labels in [{}, {'application': 'other'}]:
