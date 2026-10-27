@@ -1,0 +1,15 @@
+{
+  "results": [
+    {
+      "iteration": 0,
+      "milliseconds": 46953,
+      "canvasReused": true
+    },
+    {
+      "iteration": 1,
+      "milliseconds": 44890,
+      "canvasReused": true
+    }
+  ],
+  "errors": []
+}

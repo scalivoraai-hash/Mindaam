@@ -33,3 +33,9 @@ Initial published release: 543fd73405e23128a074570b18fb7fc9f713bdc1. GitHub comp
 The standalone auditorium fixture now declares a data favicon so Chromium does not request a nonexistent resource; application console/page error assertions remain enforced. The camera acceptance fixture now pays for the required arena reservation using its guarded disposable local database. The staging profile check selects its exact disposable peer when a retained QA host has other friends.
 
 Security sources: https://github.com/vercel/next.js/security/advisories/GHSA-2464-fhr4-w9xw and https://pillow.readthedocs.io/en/stable/releasenotes/13.0.0.html. Final CI and staging outcomes must still be read from the newest GitHub Actions run.
+
+## Scene-transition correction
+
+Commit a6150d5ad05aab0fb330ff71aac98f5c829dc344 passed 15 of 16 application CI jobs. Media acceptance reproduced a city-return readiness timeout after successful camera/screen-share checks. The capture showed the city eventually painted; this was not treated as a random test failure.
+
+The world now keeps one WebGL renderer and environment-lighting target across city/venue/appearance scene rebuilds. Scene disposal removes pointer handlers, shadow maps, render lists and scene-owned resources; component unmount releases the retained environment and GPU context. Media acceptance asserts the same canvas survives exit and re-entry, preserving its existing 60-second readiness deadline. Local full-London return checks passed twice in 46,953 ms and 44,890 ms with the same canvas and no page errors. These are software-rendered environment timings, not physical-device performance claims. See evidence/world-transitions.json. Final CI and live staging still determine release readiness.

@@ -92,6 +92,7 @@ docs/releases/evidence/combined-validation.json
 docs/releases/evidence/living-world-renderer.json
 docs/releases/evidence/profile-mobile.png
 docs/releases/evidence/profile-photos.png
+docs/releases/evidence/world-transitions.json
 infrastructure/gcp/acceptance-checks.json
 infrastructure/gcp/browser.cjs
 infrastructure/gcp/staging_trigger.py
