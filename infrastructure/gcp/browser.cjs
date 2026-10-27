@@ -111,7 +111,16 @@ async function diagnostics(error){
 }
 
 async function main(){
- const health=await fetch(origin+'/api/health').then(r=>r.json());assert.equal(health.environment,'staging');assert.equal(health.status,'ready');
+ const health=await until(async()=>{
+  try{
+   const response=await fetch(origin+'/api/health',{signal:AbortSignal.timeout(5000)});
+   if(!response.ok())return false;
+   if(!(response.headers.get('content-type')||'').toLowerCase().includes('application/json'))return false;
+   const value=await response.json();
+   return value?.environment==='staging'&&value?.status==='ready'?value:false;
+  }catch{return false}
+ },'Staging health JSON',120000);
+ assert.equal(health.environment,'staging');assert.equal(health.status,'ready');
  // 20 seconds of a sine wave, consumed by Chromium's fake microphone.
  const samples=48000*20,wav=Buffer.alloc(44+samples*2);wav.write('RIFF');wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(48000,24);wav.writeUInt32LE(96000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(samples*2,40);for(let i=0;i<samples;i++)wav.writeInt16LE(Math.round(8000*Math.sin(2*Math.PI*440*i/48000)),44+i*2);fs.writeFileSync('/tmp/mindaam-tone.wav',wav);
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--auto-select-desktop-capture-source=Entire screen','--use-file-for-fake-audio-capture=/tmp/mindaam-tone.wav','--disable-background-timer-throttling']});
