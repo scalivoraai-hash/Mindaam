@@ -58,7 +58,7 @@ def caddy_config(production_origin=None):
         apps["http"] = {"servers": {"app": {"listen": ["127.0.0.1:9080"], "routes": [{"handle": [{
             "handler": "reverse_proxy", "upstreams": [{"dial": upstream.hostname + ":443"}],
             "transport": {"protocol": "http", "tls": {"server_name": upstream.hostname}},
-            "headers": {"request": {"set": {"Host": [upstream.hostname]}}}}]}]}}}
+            "headers": {"request": {"set": {"Host": [upstream.hostname], "X-Forwarded-Proto": ["https"], "X-Forwarded-Host": [SETTINGS["domain"]]}}}}]}]}}}
     return {"logging": {"logs": {"default": {"level": "WARN"}}}, "storage": {"module": "file_system", "root": "/data"}, "apps": apps}
 
 

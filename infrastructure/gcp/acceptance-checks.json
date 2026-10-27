@@ -1,0 +1,23 @@
+[
+  "browser",
+  "signup",
+  "login",
+  "onboarding",
+  "session_persistence",
+  "world_entry",
+  "friends",
+  "events",
+  "multiplayer",
+  "movement",
+  "voice",
+  "video",
+  "screen_share",
+  "event_media",
+  "audience_restrictions",
+  "selective_subscription",
+  "no_world_media",
+  "self_hosted_media",
+  "responsive",
+  "startup_policy",
+  "turn_tls"
+]

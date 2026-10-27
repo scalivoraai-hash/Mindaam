@@ -6,26 +6,23 @@ import time
 from urllib.request import urlopen
 from urllib.parse import urlsplit
 from common import SETTINGS, Blocked
+from readiness import read_url, ready_tls
 
 
 def check(release):
     origin = release["origin"]
     parsed = urlsplit(origin)
-    if parsed.scheme != "https" or not (parsed.hostname == SETTINGS["domain"] or parsed.hostname.endswith(".run.app")):
+    if parsed.scheme != "https" or not (parsed.hostname == SETTINGS["domain"] or (parsed.hostname or "").endswith(".run.app")):
         raise Blocked("Refusing an unexpected application origin")
     start = time.monotonic()
-    with urlopen(origin + "/api/health", timeout=120) as r:
-        health = json.load(r)
+    health = read_url(origin + "/api/health", json_body=True)
     if health.get("status") != "ready" or health.get("environment") != release["environment"]:
         raise Blocked("Actual deployed health/environment failed")
-    with urlopen(origin, timeout=60) as r:
-        html = r.read().decode()
+    html = read_url(origin)
     if "Mindaam" not in html:
         raise Blocked("Mindaam page was not served")
     for host in (SETTINGS["media_domain"], SETTINGS["turn_domain"]):
-        with socket.create_connection((host, 443), timeout=20) as raw:
-            with ssl.create_default_context().wrap_socket(raw, server_hostname=host) as tls:
-                tls.getpeercert()  # verifies chain and hostname, never bypass TLS verification
+        ready_tls(host)
     return {"health": health, "origin": origin, "elapsed_seconds": round(time.monotonic() - start, 3), "tls": True}
 
 

@@ -1,0 +1,6 @@
+/* Shared, testable acceptance contracts. Never persist credentials or arbitrary API bodies. */
+const required=require('./acceptance-checks.json').filter(k=>k!=='turn_tls');
+function safeText(value,secrets=[]){let text=String(value||'');for(const secret of secrets)if(secret)text=text.split(secret).join('[REDACTED]');return text.replace(/(?:Bearer\s+|eyJ)[A-Za-z0-9_.\-+/=]+/gi,'[REDACTED]').replace(/\b(?:postgres(?:ql)?|redis):\/\/\S+/gi,'[REDACTED]').replace(/((?:password|token|secret|cookie|authorization|credential)[\w-]*["']?\s*[=:]\s*["']?)[^"'\s,;}]+/gi,'$1[REDACTED]').replace(/(https?:\/\/[^\s?#]+)[?#][^\s]*/g,'$1').slice(0,16000)}
+function safeUrl(value){try{const u=new URL(value);return u.origin+u.pathname}catch{return '[invalid URL]'}}
+function validatePolicy(p){const assert=require('assert/strict');for(const [key,value] of Object.entries({auto_subscribe:false,default_video:false,allow_1080p:false,avatar_video_max:360,fullscreen_video_max:720,adaptive_stream:true,dynacast:true,auditorium_default_camera:false,auditorium_default_mic:false}))assert.equal(p[key],value,key);assert.ok(p.max_visible_video_subscriptions<=4);return true}
+module.exports={required,safeText,safeUrl,validatePolicy};

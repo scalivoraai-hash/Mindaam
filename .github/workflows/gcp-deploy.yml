@@ -5,10 +5,10 @@ on:
       operation:
         description: Resume at this step (foundation creates paid startup resources)
         type: choice
-        options: [foundation, staging, verify, production, rollback]
+        options: [foundation, staging, verify, production, finalize, rollback]
         required: true
       release_sha:
-        description: Tested source SHA for verify/production/rollback; empty uses current main
+        description: Existing source SHA for resume/verify/production/finalize/rollback; empty uses current main
         type: string
       review_object:
         description: Private release-review object prepared after actual staging cost review (production only)

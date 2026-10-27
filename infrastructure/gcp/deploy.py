@@ -1,5 +1,6 @@
 """Resumable Mindaam-only provisioning and release operations. Never destroys resources."""
 import argparse
+import datetime
 import base64
 import hashlib
 import io
@@ -17,6 +18,7 @@ from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 from common import Cloud, Blocked, SETTINGS, HERE, LABELS, command, summary
 from render import service, postgres
+from readiness import ready_service
 
 DESCRIPTION = "Managed by Mindaam GitHub"
 OPTIONAL = ["SMTP_HOST", "SMTP_PORT", "SMTP_USERNAME", "SMTP_PASSWORD", "SMTP_FROM",
@@ -322,12 +324,13 @@ def deploy(c, env, image, sha):
     origin = "https://" + SETTINGS["domain"] if env == "production" else (previous or {}).get("status", {}).get("url", "https://not-yet-published.invalid")
     manifest = service(c, env, image, origin, optional_secrets(c, env))
     replace(c, manifest)
-    current = c.gc("run", "services", "describe", name, "--region=" + c.region)
+    current = ready_service(c, name)
     provider_origin = current["status"]["url"]
     # First staging revision stays IAM-private until exact CSRF/cookie origin is known.
     if env == "staging" and origin != provider_origin:
         replace(c, service(c, env, image, provider_origin, optional_secrets(c, env)))
         origin = provider_origin
+        current = ready_service(c, name)
     c.gc("run", "services", "add-iam-policy-binding", name, "--region=" + c.region,
          "--member=allUsers", "--role=roles/run.invoker", raw=True)
     if env == "production":
@@ -335,7 +338,7 @@ def deploy(c, env, image, sha):
         foundation = c.get_json("foundation.json")
         summary(f"Production custom-domain DNS: A `mindaam.com` → `{foundation['media_ip']}`. No existing domain is overwritten automatically.")
     release = {"sha": sha, "image": image, "environment": env, "origin": origin, "provider_origin": provider_origin,
-               "revision": c.gc("run", "services", "describe", name, "--region=" + c.region)["status"]["latestReadyRevisionName"], "deployed_at": int(time.time())}
+               "revision": current["status"]["latestReadyRevisionName"], "deployed_at": int(time.time())}
     c.put_json(f"releases/{sha}/{env}.json", release)
     Path("deployment-result.json").write_text(json.dumps(release, indent=2))
     summary(f"{env.title()} revision created: {provider_origin}. Deployment verification is still pending.")
@@ -346,15 +349,34 @@ def release_gate(c, image, sha):
     review = c.get_json(f"releases/{sha}/release-review.json")
     if not verified or verified.get("image") != image or verified.get("sha") != sha or time.time() - verified.get("verified_at", 0) > 7 * 86400:
         raise Blocked("Fresh staging acceptance for this exact image/source is required.")
-    required = ("browser", "multiplayer", "voice", "video", "screen_share", "event_media", "turn_tls", "startup_policy", "performance")
+    required = json.loads((HERE / "acceptance-checks.json").read_text()) + ["performance"]
     if not all(verified.get("checks", {}).get(k) is True for k in required):
         raise Blocked("Staging acceptance is incomplete.")
     if not review or review.get("sha") != sha or review.get("image") != image or time.time() - review.get("reviewed_at", 0) > 7 * 86400:
         raise Blocked("Actual resource cost review is required for this release.")
+    try:
+        pricing_date = datetime.date.fromisoformat(review.get('pricing_date', ''))
+    except (ValueError, TypeError):
+        raise Blocked('Cost review requires an ISO pricing_date') from None
+    if not 0 <= (datetime.date.today() - pricing_date).days <= 30:
+        raise Blocked('Cost pricing must be dated within the last 30 days')
+    inventory = review.get('inventory', {})
+    if inventory.get('project') != c.project or not all(inventory.get(k) for k in ('sql', 'vm', 'staging', 'production_limits')):
+        raise Blocked('Cost review requires actual project resource configuration')
+    expected_metrics = f'gs://{c.bucket}/releases/{sha}/metrics.json'
+    if review.get('resource_metrics_evidence') != expected_metrics:
+        raise Blocked('Review must reference this exact release metrics object')
     components = ("cloud_run", "compute_livekit", "postgresql", "redis", "storage", "network", "logging", "other")
+    def complete(value):
+        if isinstance(value, dict): return bool(value) and all(complete(v) for v in value.values())
+        if isinstance(value, list): return bool(value) and all(complete(v) for v in value)
+        return value is not None and value != ''
     for scenario in ("idle", "light"):
         model = review.get("costs", {}).get(scenario, {})
-        if not model.get("assumptions") or not model.get("pricing_sources") or set(model.get("usd", {})) != set(components):
+        sources = model.get('pricing_sources')
+        if (not complete(model.get("assumptions")) or not isinstance(sources, list) or not sources
+                or any(not isinstance(source, str) or not source.startswith('https://') for source in sources)
+                or set(model.get("usd", {})) != set(components)):
             raise Blocked("Cost model must itemize all resources, assumptions and pricing sources.")
         if any(not isinstance(n, (int, float)) or isinstance(n, bool) or not math.isfinite(n) or n < 0 for n in model["usd"].values()):
             raise Blocked("Invalid cost data")

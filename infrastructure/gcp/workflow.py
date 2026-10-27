@@ -7,6 +7,8 @@ from pathlib import Path
 from common import Cloud, Blocked, SETTINGS, command, summary
 from deploy import foundation, deploy, rollback, image_check
 from smoke import check
+from readiness import ready_service
+from finalize import finalize
 
 
 def staging_image(c, sha, *, build_allowed):
@@ -43,6 +45,8 @@ def main():
         raise Blocked('Release is not in Mindaam main history')
     if operation == 'foundation':
         foundation(c); return
+    if operation == 'finalize':
+        finalize(c, sha); return
     if operation == 'rollback':
         rollback(c, sha); return
     if operation == 'staging':
@@ -63,8 +67,9 @@ def main():
         release = c.get_json(f'releases/{sha}/staging.json')
         if not release:
             raise Blocked('No existing staging release for this SHA')
-        current = c.gc("run", "services", "describe", "mindaam-staging", "--region=" + c.region)
-        if current["status"]["latestReadyRevisionName"] != release["revision"]:
+        current = ready_service(c, "mindaam-staging")
+        if (current["status"]["latestReadyRevisionName"] != release["revision"]
+                or current["spec"]["template"]["spec"]["containers"][0]["image"] != release["image"]):
             raise Blocked("Requested staging revision is no longer current")
         Path('deployment-result.json').write_text(json.dumps(release, indent=2))
     elif operation == 'production':
@@ -79,13 +84,16 @@ def main():
     else:
         raise Blocked('Unknown operation')
     release = json.loads(Path('deployment-result.json').read_text())
-    result = check(release)
+    # Production provider readiness precedes owner-controlled DNS cutover.
+    result = check({**release, 'origin': release['provider_origin']} if operation == 'production' else release)
     Path('smoke-result.json').write_text(json.dumps(result, indent=2))
     if operation == 'production':
-        # Verify provider URL too; it serves the app but authenticated browser flows use mindaam.com.
-        check({**release, 'origin': release['provider_origin']})
-        c.put_json(f'releases/{sha}/production-verified.json', {**release, 'smoke': result})
-        summary('Production URL and health verified: ' + release['origin'] + '\nGCP production URL: ' + release['provider_origin'] + '\nMedia: https://' + SETTINGS['media_domain'])
+        c.put_json(f'releases/{sha}/production-provider-verified.json', {**release, 'smoke': result})
+        inventory = c.get_json('foundation.json')
+        summary('Production provider ready; apex is NOT yet verified. In GoDaddy set A @ to '
+                + inventory['media_ip'] + ' (remove conflicting @ A/AAAA or forwarding). '
+                + 'Leave media and turn records unchanged. www is not configured; do not point it here. '
+                + 'After propagation dispatch finalize for the same release SHA. Do not rerun production just to verify DNS.')
 
 
 if __name__ == '__main__':

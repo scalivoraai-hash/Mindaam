@@ -1,4 +1,5 @@
 import copy
+import datetime
 import json
 import math
 import subprocess
@@ -127,9 +128,9 @@ class DeploymentSafety(unittest.TestCase):
 
     def review(self):
         c=FakeCloud(); sha='a'*40; image='image-digest'
-        c.objects[f'releases/{sha}/staging-verified.json']={'sha':sha,'image':image,'verified_at':int(time.time()),'checks':{k:True for k in ['browser','multiplayer','voice','video','screen_share','event_media','turn_tls','startup_policy','performance']}}
+        c.objects[f'releases/{sha}/staging-verified.json']={'sha':sha,'image':image,'verified_at':int(time.time()),'checks':{k:True for k in json.loads((Path(__file__).resolve().parents[1]/'acceptance-checks.json').read_text())+['performance']}}
         components=['cloud_run','compute_livekit','postgresql','redis','storage','network','logging','other']
-        c.objects[f'releases/{sha}/release-review.json']={'sha':sha,'image':image,'reviewed_at':int(time.time()),'owner_approved':True,'resource_metrics_evidence':f'gs://{c.bucket}/releases/{sha}/metrics.json','costs':{scenario:{'assumptions':'test only','pricing_sources':['test only'],'usd':dict.fromkeys(components,1)} for scenario in ['idle','light']}}
+        c.objects[f'releases/{sha}/release-review.json']={'sha':sha,'image':image,'reviewed_at':int(time.time()),'owner_approved':True,'pricing_date':datetime.date.today().isoformat(),'inventory':{'project':c.project,**dict.fromkeys(['sql','vm','staging','production_limits'], {'fixture':True})},'resource_metrics_evidence':f'gs://{c.bucket}/releases/{sha}/metrics.json','costs':{scenario:{'assumptions':'test only','pricing_sources':['https://cloud.google.com/run/pricing'],'usd':dict.fromkeys(components,1)} for scenario in ['idle','light']}}
         return c,sha,image
 
 

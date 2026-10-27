@@ -120,7 +120,8 @@ class StagingResume(unittest.TestCase):
                 counts['service_creates'] += int(current is None)
                 manifests.append(manifest)
                 current = {**manifest, 'status': {'url': 'https://mindaam-staging-123.europe-west2.run.app',
-                    'latestReadyRevisionName': 'mindaam-staging-00001'}}
+                    'latestReadyRevisionName': 'mindaam-staging-00001', 'latestCreatedRevisionName': 'mindaam-staging-00001',
+                    'conditions': [{'type': 'Ready', 'status': 'True'}]}}
             elif a[:3] == ['run', 'services', 'add-iam-policy-binding']:
                 self.assertIsNotNone(current)
                 values = {e['name']: e.get('value') for e in current['spec']['template']['spec']['containers'][0]['env']}

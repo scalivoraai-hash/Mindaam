@@ -9,20 +9,41 @@ import json
 import time
 from pathlib import Path
 from common import Cloud, Blocked, SETTINGS
-from deploy import release_gate
+from deploy import release_gate, optional_secrets
+from readiness import ready_service
+
+
+def inventory(c):
+    sql = c.gc('sql', 'instances', 'describe', 'mindaam-postgres'); c.owned(sql, 'PostgreSQL')
+    vm = c.gc('compute', 'instances', 'describe', 'mindaam-media', '--zone=' + c.zone); c.owned(vm, 'media VM')
+    run = ready_service(c, 'mindaam-staging')
+    template = run.get('spec', {}).get('template', {})
+    return {'project': c.project, 'region': c.region, 'foundation': c.get_json('foundation.json'),
+            'sql': {k: sql.get(k) for k in ('name', 'region', 'databaseVersion', 'settings')},
+            'vm': {k: vm.get(k) for k in ('name', 'machineType', 'disks', 'networkInterfaces')},
+            'staging': {'name': run.get('metadata', {}).get('name'), 'annotations': run.get('metadata', {}).get('annotations'),
+                        'template_annotations': template.get('metadata', {}).get('annotations'),
+                        'containers': [{'image': x.get('image'), 'resources': x.get('resources')} for x in template.get('spec', {}).get('containers', [])]},
+            'production_limits': {'max_instances': SETTINGS['production_max_instances'],
+                                  'cpu': SETTINGS['cloud_run_cpu'], 'memory': SETTINGS['cloud_run_memory']}}
 
 
 def packet(c, sha):
     staged = c.get_json(f'releases/{sha}/staging-verified.json')
     if not staged:
         raise Blocked('Complete real staging acceptance first')
+    configured = {env: optional_secrets(c, env) for env in ('staging', 'production')}
     items = ('cloud_run','compute_livekit','postgresql','redis','storage','network','logging','other')
-    value = {'sha':sha,'image':staged['image'],'reviewed_at':None,'owner_approved':False,
+    value = {'sha':sha,'image':staged['image'],'reviewed_at':None,'owner_approved':False,'pricing_date':None,
              'resource_metrics_evidence':staged['resource_metrics_evidence'],
              'costs':{scenario:{'assumptions':{'connected_user_hours':None,'media_publisher_hours':None,'media_receiver_hours':None,'internet_egress_gib':None,'api_requests':None},
                                 'pricing_sources':[], 'usd':dict.fromkeys(items,None)} for scenario in ('idle','light')},
              'targets':{'preferred_light_usd':100,'warning_usd':125,'requires_new_approval_above_usd':150},
-             'inventory':c.get_json('foundation.json'),
+             'inventory':inventory(c),
+             'optional_providers': {env: {provider: all(key in configured[env] for key in keys)
+                 for provider, keys in {'stripe':['STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','STRIPE_SUBSCRIPTION_WEBHOOK_SECRET'],
+                 'smtp':['SMTP_HOST','SMTP_PORT','SMTP_USERNAME','SMTP_PASSWORD','SMTP_FROM'],
+                 'google_login':['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET']}.items()} for env in ('staging','production')},
              'pricing_references':['https://cloud.google.com/run/pricing','https://cloud.google.com/compute/all-pricing',
                                    'https://cloud.google.com/sql/pricing','https://cloud.google.com/storage/pricing',
                                    'https://cloud.google.com/secret-manager/pricing','https://cloud.google.com/stackdriver/pricing'],
@@ -37,6 +58,7 @@ def save(c, sha, value):
         raise Blocked('Review must reference this release\'s actual measurements')
     if not c.get_json(f'releases/{sha}/metrics.json'):
         raise Blocked('Actual metrics evidence is missing')
+    value['inventory'] = inventory(c)
     value['reviewed_at'] = int(time.time())
     old_get = c.get_json
     c.get_json = lambda key: value if key == f'releases/{sha}/release-review.json' else old_get(key)
@@ -44,6 +66,8 @@ def save(c, sha, value):
         release_gate(c, staged['image'], sha)
     finally:
         c.get_json = old_get
+    if sum(value['costs']['light']['usd'].values()) >= SETTINGS['budget_usd']:
+        print('Warning: light-use estimate is at or above $125/month; preferred target is below $100.')
     c.put_json(f'releases/{sha}/release-review.json', value)
     print('Reviewed cost evidence stored; production remains a separate explicit operation.')
 
