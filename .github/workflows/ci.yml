@@ -80,7 +80,9 @@ jobs:
   presentation:
     name: Presentation (${{ matrix.check }})
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Layout covers 16 viewports; browser installation and cleanup share this budget.
+    # Per-assertion and render-readiness deadlines remain unchanged.
+    timeout-minutes: ${{ matrix.check == 'layout' && 30 || 20 }}
     strategy:
       fail-fast: false
       matrix:
