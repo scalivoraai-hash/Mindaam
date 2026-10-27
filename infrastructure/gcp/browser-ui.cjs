@@ -1,9 +1,11 @@
 /* Shared bounded actionability checks; never inspect input values. */
 async function waitUI(page,timeout=60000){
  await page.bringToFront();
- // main.app replaces the splash only after the initial /me effect has settled.
+ // Authentication/onboarding controls are ready once the application shell replaces
+ // the initial splash. World-loading is intentionally NOT a global gate: it may stay
+ // mounted outside an active world and is validated by dedicated world-entry checks.
  await page.locator('main.app').waitFor({state:'visible',timeout});
- for(const selector of ['.splash','.world-loading'])await page.locator(selector).waitFor({state:'hidden',timeout});
+ await page.locator('.splash').waitFor({state:'hidden',timeout});
 }
 async function inspectControl(locator){
  const count=await locator.count(),elements=[];
