@@ -115,6 +115,9 @@ async function runCity(city){
   fixture('place',{city,users:users.map(u=>u.id)});await wait(1000);
   const event=await a.api('/events',{title:'Local QA event '+city,description:'Automated local acceptance only',city,starts_at:Date.now()/1000,communication_mode:'liveface',venue_experience_type:'auditorium',event_type:'Public Talk'});
   await reserveArena(a,event);const started=await a.api('/events/'+event.id+'/state/start',{});console.log('Event started',event.id);await b.api('/events/'+event.id+'/join',{});await b.api('/events/'+event.id+'/venue/enter',{});
+  // Venue state arrives separately from media state. Wait out the loading overlay
+  // before joining, so accessible controls are inspected in the settled event scene.
+  for(const u of [a,b])await u.page.locator('.in-auditorium .world-canvas[data-ready=true]').waitFor({timeout:60000});
   await controls(a,/Reconnect|Join LiveFace/);await until(()=>a.page.locator('.live-dock.is-connected').count(),'Host joined with devices off');check('event_devices_off_on_join',await a.page.getByRole('button',{name:'Camera On',exact:true}).count()===1&&await a.page.getByRole('button',{name:'Unmute',exact:true}).count()===1);await controls(a,/Camera On/);await controls(a,/Unmute/);await Promise.all([video(b,a.id),audio(b,a.id)]);
   const c=await user(city,2);users.push(c);await c.api('/events/'+event.id+'/join',{});await c.api('/events/'+event.id+'/venue/enter',{});
   await Promise.all([video(c,a.id),audio(c,a.id)]);check('event_speaker_two_receivers',true);check('event_late_join',true);for(const control of [/Expand/,/Full Screen/,/Exit Full Screen/,/Minimise/]){await controls(c,control);await audio(c,a.id)}check('event_touch_layout_continuity',true);
