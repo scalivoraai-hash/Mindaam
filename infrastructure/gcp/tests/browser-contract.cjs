@@ -9,7 +9,9 @@ assert.ok(validatePolicy(policy));assert.throws(()=>validatePolicy({...policy,au
 assert.throws(()=>validatePolicy({...policy,avatar_video_max:720}));
 for(const key of ['signup','login','onboarding','friends','events','selective_subscription','audience_restrictions'])assert.ok(required.includes(key));
 const script=fs.readFileSync(path.join(__dirname,'../browser.cjs'),'utf8');
-assert.ok(script.includes("getByRole('heading',{name:'Welcome back, '+name+'.'"));
+const flow=fs.readFileSync(path.join(__dirname,'../browser-flow.cjs'),'utf8');
+assert.ok(flow.includes("getByRole('heading',{name:'Welcome back, '+name+'.'"));
+assert.ok(script.includes('authenticateAndEnter(u,'));
 assert.ok(script.includes("await diagnostics(e);throw e"));
 assert.ok(!script.includes("res.status()+' '+await res.text()"));
 assert.ok(script.includes("local?.candidateType==='relay'"));
@@ -29,3 +31,14 @@ const media=read('apps/consumer-web/components/MediaPanel.tsx');
 for(const label of ['Camera On','Unmute','Full Screen','Expand','More media controls'])assert.ok(media.includes(label));
 const event=read('apps/consumer-web/components/EventScreenShare.tsx');
 assert.ok(event.includes('Share screen'));assert.ok(event.includes('Stop sharing'));
+
+const auth=read('apps/consumer-web/app/page.tsx');
+assert.match(auth,/<button className="text-button wide" onClick=\{\(\)=>setAuth/);
+for(const label of ['New here? Create an account','Username','Email address','Confirm password','Create your account','Let’s explore','Enter Mindaam'])assert.ok(auth.includes(label));
+for(const name of ['adult','terms','privacy'])assert.ok(auth.includes('name="'+name+'"'));
+assert.ok(flow.includes("getByRole('heading',{name:'Your Worlds',exact:true})"));
+assert.ok(!flow.includes('.first()'));assert.ok(!script.includes('.last()'));
+const ui=read('infrastructure/gcp/browser-ui.cjs');
+assert.ok(ui.includes('trial:true'));assert.ok(ui.includes('document.elementFromPoint'));
+const profile=read('apps/consumer-web/components/UserProfile.tsx');
+for(const label of ['Player profile','Follow','Unfollow','Avatar','Close profile'])assert.ok(profile.includes(label));

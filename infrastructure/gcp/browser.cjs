@@ -5,6 +5,8 @@ const release=JSON.parse(fs.readFileSync('deployment-result.json'));
 assert.equal(release.environment,'staging');
 const origin=release.origin;assert.match(origin,/^https:\/\/[a-z0-9.-]+\.run\.app$/);
 const out='gcp-evidence';fs.mkdirSync(out,{recursive:true});
+const {act,inspectControl,expectedAnonymous}=require('./browser-ui.cjs');
+const {authenticateAndEnter}=require('./browser-flow.cjs');
 const {required,safeText,safeUrl,validatePolicy}=require('./browser-contract.cjs');
 const activeUsers=[],sensitive=[],mode=process.env.QA_FORCE_TURN==='1'?'relay':'direct';let stage='initialization';
 const mixedRenderer=false,errors=[],wait=ms=>new Promise(r=>setTimeout(r,ms));let browser;
@@ -28,52 +30,18 @@ async function user(city,index){
   }});
  },{relay:process.env.QA_FORCE_TURN==='1'});
  const page=await context.newPage(),states=[],logs=[],inputs=[],failures=[],grants=[];
- const u={context,page,states,logs,inputs,failures,grants,touch,index};activeUsers.push(u);
+ const u={context,page,states,logs,inputs,failures,grants,touch,index,authExpected:false};activeUsers.push(u);
  page.setDefaultTimeout(60000);page.setDefaultNavigationTimeout(90000);
- page.on('response',async response=>{const url=safeUrl(response.url());if(response.status()>=400)failures.push({url,status:response.status()});if(/\/api\/media\/[^/]+\/token$/.test(new URL(url).pathname)&&response.ok()){try{const g=await response.json();sensitive.push(g.token);grants.push({host:new URL(g.url).hostname,policy:g.media_policy,can_speak:g.can_speak})}catch{}}if(failures.length>80)failures.shift()});
+ page.on('response',async response=>{const url=safeUrl(response.url());if(response.status()>=400)failures.push({url,status:response.status(),expected:expectedAnonymous(response,u)});if(/\/api\/media\/[^/]+\/token$/.test(new URL(url).pathname)&&response.ok()){try{const g=await response.json();sensitive.push(g.token);grants.push({host:new URL(g.url).hostname,policy:g.media_policy,can_speak:g.can_speak})}catch{}}if(failures.length>80)failures.shift()});
  page.on('requestfailed',request=>{failures.push({url:safeUrl(request.url()),error:safeText(request.failure()?.errorText,sensitive)});if(failures.length>80)failures.shift()});
  page.on('pageerror',e=>errors.push({index,error:safeText(e.message,sensitive)}));
  page.on('console',m=>{if(['warning','error'].includes(m.type())){logs.push(safeText(m.text(),sensitive));if(logs.length>80)logs.shift()}});
  page.on('websocket',ws=>{if(ws.url().endsWith('/api/realtime')){ws.on('framesent',frame=>{try{const d=JSON.parse(frame.payload.toString());if(d.type==='input'){inputs.push({at:Date.now(),...d});if(inputs.length>120)inputs.shift()}}catch{}});ws.on('framereceived',frame=>{try{const d=JSON.parse(frame.payload.toString());if(d.type==='state'){states.push(d);if(states.length>80)states.shift()}}catch{}})}});
  const api=async(route,data,method=data===undefined?'GET':'POST')=>{const res=await context.request.fetch(origin+'/api'+route,{method,data,headers:{Origin:origin,'X-Pulse-Client':'web'}});if(!res.ok())throw Error('API '+safeUrl(origin+'/api'+route)+' HTTP '+res.status());return res.json()};
  let name='gcpqa'+Date.now().toString(36)+index;const reusable=index===0&&!!process.env.QA_STAGING_HOST_IDENTIFIER;const password=reusable?process.env.QA_STAGING_HOST_PASSWORD:crypto.randomBytes(24).toString('base64url')+'!aA1';assert.ok(password,'Reusable staging host password is required');u.reusable=reusable;
- sensitive.push(password);u.api=api;stage='signup-'+index;
- await page.goto(origin,{waitUntil:'domcontentloaded'});
- if(reusable){
- sensitive.push(process.env.QA_STAGING_HOST_IDENTIFIER);await page.getByLabel('Email or username',{exact:true}).fill(process.env.QA_STAGING_HOST_IDENTIFIER);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Enter Mindaam',exact:true}).click();await until(async()=>{try{return (await api('/me')).onboarded}catch{return false}},'Funded host login');const account=await api('/me');u.id=account.id;name=account.username;assert.equal(account.onboarded,true);
- }else{
- await page.getByRole('button',{name:'New here? Create an account',exact:true}).click();
- await page.getByLabel('Username',{exact:true}).fill(name);
- await page.getByLabel('Email address',{exact:true}).fill(name+'@example.test');
- await page.getByLabel('Password',{exact:true}).fill(password);await page.getByLabel('Confirm password',{exact:true}).fill(password);
- for(const field of ['adult','terms','privacy'])await page.locator('input[name="'+field+'"]').check();
- await page.getByRole('button',{name:'Create your account',exact:true}).click();
- await page.getByRole('group',{name:'Choose your first free world'}).waitFor();
- const registered=await api('/me');u.id=registered.id;assert.equal(registered.onboarded,false);
- stage='onboarding-'+index;
- await page.getByRole('group',{name:'Choose your first free world'}).locator('select[name="city"]').selectOption(city);
- await page.getByRole('checkbox',{name:/as Starter World 1 of 4/}).check();
- await page.getByRole('checkbox',{name:'Music',exact:true}).check();
- await page.getByRole('button',{name:'Let’s explore',exact:true}).click();
- await page.getByRole('heading',{name:'Welcome back, '+name+'.',exact:true}).waitFor();
- assert.equal((await api('/me')).onboarded,true);
- }
- stage='login-session-'+index;
- await api('/auth/logout',{});await page.reload({waitUntil:'domcontentloaded'});
- await page.getByLabel('Email or username',{exact:true}).fill(name);await page.getByLabel('Password',{exact:true}).fill(password);
- await page.getByRole('button',{name:'Enter Mindaam',exact:true}).click();
- await page.getByRole('heading',{name:'Welcome back, '+name+'.',exact:true}).waitFor();
- await page.reload({waitUntil:'domcontentloaded'});
- await page.getByRole('heading',{name:'Welcome back, '+name+'.',exact:true}).waitFor();
- assert.equal((await api('/me')).id,u.id,'Browser cookie session persists across reload');
- stage='world-entry-'+index;
- const cities=await api('/cities'),destination=cities.find(c=>c.id===city);assert.ok(destination);
- await page.getByRole('region',{name:'Explore worlds'}).getByRole('button').filter({hasText:destination.name}).first().click();
- await page.getByRole('dialog',{name:'Choose a world'}).getByRole('button',{name:'Enter '+destination.name,exact:true}).click();
- await page.locator('.world-playing').waitFor();
- await page.locator('.world-canvas[data-ready="true"]').waitFor({timeout:90000});
- await until(()=>states.at(-1)?.city===city,'Authenticated realtime world state '+city,60000);
- u.username=name;return u;
+ sensitive.push(password);if(reusable)sensitive.push(process.env.QA_STAGING_HOST_IDENTIFIER);u.api=api;stage='signup-'+index;
+ await authenticateAndEnter(u,{origin,city,index,password,identifier:process.env.QA_STAGING_HOST_IDENTIFIER,name,reusable,until,setStage:value=>stage=value});
+ return u;
 }
 async function settled(users){
  await Promise.all(users.map(u=>move(u,0,0)));let stableSince=Date.now(),previous=JSON.stringify(users.map(position));
@@ -82,9 +50,12 @@ async function settled(users){
 }
 const position=u=>{const p=u.states.at(-1)?.position;return p&&{x:p.x,z:p.z,zone:p.zone_id}};
 const peer=(u,id)=>u.states.at(-1)?.players.find(p=>p.id===id);
-async function controls(u,which){const button=u.page.locator('.live-dock').getByRole('button',{name:which}).last();if(!(await button.isVisible())&&await u.page.getByRole('button',{name:'More media controls',exact:true}).count())await u.page.getByRole('button',{name:'More media controls',exact:true}).click();if(u.touch)await button.tap();else await button.click()}
+async function controls(u,which){
+ const name=which.source==='Reconnect|Join LiveFace'?/^(?:Reconnect|🎥 Join LiveFace)$/:new RegExp('^(?:'+which.source+')$');
+ await act(u,u.page.locator('.live-dock').getByRole('button',{name}),'LiveFace '+which.source);
+}
 async function video(u,id){return until(()=>u.page.locator('.remote-tile[data-peer-id="'+id+'"] video:not([hidden])').evaluateAll(v=>v.some(el=>el.videoWidth>0&&el.readyState>=2)),'Decoded remote video')}
-async function audio(u,id){const enable=u.page.getByRole('button',{name:/Audio is ready. Tap to listen/});if(await enable.count())await enable.click();return until(()=>u.page.locator('.remote-tile[data-peer-id="'+id+'"] audio').evaluateAll(async elements=>{
+async function audio(u,id){const enable=u.page.getByRole('button',{name:/Audio is ready. Tap to listen/});if(await enable.count())await act(u,enable,'Enable remote audio');return until(()=>u.page.locator('.remote-tile[data-peer-id="'+id+'"] audio').evaluateAll(async elements=>{
   const el=elements.find(e=>e.srcObject&&!e.muted);if(!el)return false;
   const ac=new AudioContext();await ac.resume();const source=ac.createMediaStreamSource(el.srcObject),analyser=ac.createAnalyser();source.connect(analyser);await new Promise(r=>setTimeout(r,180));const values=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(values);const rms=Math.sqrt(values.reduce((s,x)=>s+x*x,0)/values.length);source.disconnect();await ac.close();return rms>.002;
  }),'Non-silent remote audio')}
@@ -99,12 +70,12 @@ async function relay(u){return until(()=>u.page.evaluate(async()=>{
 }),'Selected TURN/TLS 443 candidate',45000)}
 async function diagnostics(error){
  for(const u of activeUsers){const prefix=path.join(out,mode+'-failure-'+u.index);
-  const data={stage,error:safeText(error.message,sensitive),url:safeUrl(u.page.url()),console:u.logs,network:u.failures,errors};
-  try{data.title=safeText(await u.page.title(),sensitive);data.body=safeText(await u.page.locator('body').innerText({timeout:4000}),sensitive);
+  const data={stage,error:safeText(error.message,sensitive),url:safeUrl(u.page.url()),control:u.failedControl|| (u.lastControl?{label:u.lastControl.label,...await inspectControl(u.lastControl.locator).catch(()=>({inspection_failed:true}))}:null),console:u.logs,network:u.failures,errors};
+  try{await u.page.bringToFront();data.auth_controls=await inspectControl(u.page.locator('.auth-card button, .auth-card a'));data.title=safeText(await u.page.title(),sensitive);data.body=safeText(await u.page.locator('body').innerText({timeout:4000}),sensitive);
    data.state=await u.page.evaluate(()=>({world:!!document.querySelector('.world-playing'),ready:document.querySelector('.world-canvas')?.getAttribute('data-ready'),welcome:!!document.querySelector('.welcome-home'),onboarding:!!document.querySelector('.onboarding'),media:window.__gcpPeers.map(p=>({connection:p.connectionState,ice:p.iceConnectionState,senders:p.getSenders().filter(s=>s.track?.readyState==='live').length}))}));
-   const me=await u.api?.('/me');if(me)data.user={id:me.id,onboarded:me.onboarded,city:me.city};
+   const response=await u.context.request.get(origin+'/api/me');const me=response.ok()?await response.json():null;data.auth={status:response.status(),expected_anonymous:response.status()===401&&u.authExpected===false};if(me)data.user={id:me.id,onboarded:me.onboarded,city:me.city};
   }catch{data.collection_incomplete=true}
-  await u.page.screenshot({path:prefix+'.jpg',type:'jpeg',quality:65,timeout:5000,mask:[u.page.locator('input,textarea,pre,code')]}).catch(()=>{});
+  await u.page.screenshot({path:prefix+'.jpg',type:'jpeg',quality:65,timeout:5000,mask:[u.page.locator('input,textarea,pre,code')]}).catch(()=>{data.screenshot_failed=true});
   fs.writeFileSync(prefix+'.json',JSON.stringify(data,null,2));
  }
  fs.writeFileSync(path.join(out,mode+'-failure.json'),JSON.stringify({stage,error:safeText(error.message,sensitive)},null,2));
@@ -136,11 +107,11 @@ async function main(){
   assert.equal(await a.page.evaluate(()=>window.__gcpPeers.length),0,'Ordinary world must not create media connections');
   await a.api('/social/'+b.id+'/friend',{});await b.api('/social/'+a.id+'/accept',{});
   for(const u of [a,b]){assert.equal(await u.page.evaluate(()=>window.__gcpPeers.length),0);assert.ok((await u.api('/friends')).some(p=>p.friend&&p.id===(u===a?b.id:a.id)))}
-  await a.page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'PEOPLE',exact:true}).click();
-  await a.page.getByRole('heading',{name:'Your people',exact:true}).waitFor();await a.page.getByRole('tab',{name:'Friends',exact:true}).click();
+  await act(a,a.page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'PEOPLE',exact:true}),'Acceptance control');
+  await a.page.getByRole('heading',{name:'Your people',exact:true}).waitFor();await act(a,a.page.getByRole('tab',{name:'Friends',exact:true}),'Acceptance control');
   stage='profiles';await b.api('/me/profile',{display_name:'Staging profile check',bio:'Automated staging acceptance',links:{instagram:{url:'@mindaamqa',visible:true},facebook:{url:'mindaamqa',visible:false}}},'PUT');
-  await a.page.locator('.friend-card').filter({hasText:b.username}).getByRole('button',{name:'View profile',exact:true}).click();const profile=a.page.getByRole('dialog',{name:'Player profile',exact:true});await profile.getByRole('heading',{name:'Staging profile check',exact:true}).waitFor();assert.equal(await profile.locator('a[href*="facebook.com"]').count(),0);await profile.getByRole('button',{name:'Follow',exact:true}).click();await profile.getByRole('button',{name:'Unfollow',exact:true}).waitFor();await profile.getByRole('button',{name:'Avatar',exact:true}).click();await profile.locator('.avatar-preview canvas').waitFor();assert.equal(await profile.getByText('3D preview is unavailable in this browser.',{exact:false}).count(),0);await profile.getByRole('button',{name:'Close profile',exact:true}).click();checks.profiles=true;checks.avatar_rendering=true;
-  await a.page.getByRole('button',{name:'Close panel',exact:true}).click();
+  await act(a,a.page.locator('.friend-card').filter({hasText:b.username}).getByRole('button',{name:'View profile',exact:true}),'Acceptance control');const profile=a.page.getByRole('dialog',{name:'Player profile',exact:true});await profile.getByRole('heading',{name:'Staging profile check',exact:true}).waitFor();assert.equal(await profile.locator('a[href*="facebook.com"]').count(),0);await act(a,profile.getByRole('button',{name:'Follow',exact:true}),'Player profile control');await profile.getByRole('button',{name:'Unfollow',exact:true}).waitFor();await act(a,profile.getByRole('button',{name:'Avatar',exact:true}),'Player profile control');await profile.locator('.avatar-preview canvas').waitFor();assert.equal(await profile.getByText('3D preview is unavailable in this browser.',{exact:false}).count(),0);await act(a,profile.getByRole('button',{name:'Close profile',exact:true}),'Player profile control');checks.profiles=true;checks.avatar_rendering=true;
+  await act(a,a.page.getByRole('button',{name:'Close panel',exact:true}),'Acceptance control');
   for(const key of ['browser','signup','login','onboarding','session_persistence','world_entry','friends','no_world_media'])checks[key]=true;
   stage='events-auditorium';
   // Public auditorium entry places real users together using application APIs.
@@ -162,10 +133,10 @@ async function main(){
   const c=await user('milton-keynes',2);users.push(c);await c.api('/events/'+event.id+'/join',{});await c.api('/events/'+event.id+'/venue/enter',{});await controls(c,/Expand/);await video(c,a.id);await audio(c,a.id);assert.equal(await sentTracks(c),0);
   await a.api('/events/'+event.id+'/people/'+b.id+'/speaker',{});await until(()=>b.page.getByRole('button',{name:'Camera On',exact:true}).count(),'Stage promotion');await controls(b,/Camera On/);await controls(b,/Unmute/);await controls(a,/Expand/);await video(a,b.id);await audio(a,b.id);
   await a.api('/events/'+event.id+'/people/'+b.id+'/audience',{});await until(async()=>await sentTracks(b)===0,'Revoked audience publishing');checks.event_media=true;checks.audience_restrictions=true;
-  await until(()=>b.page.getByRole('button',{name:'Camera On',exact:true}).count().then(n=>n===0),'Audience camera control removed');stage='screen-sharing';
-  await a.page.locator('.event-share-controls').getByRole('button',{name:'Share screen',exact:true}).click();
+  await until(async()=>await b.page.getByRole('button',{name:'Camera On',exact:true}).count()===0&&await b.page.getByRole('button',{name:'Unmute',exact:true}).count()===0,'Audience camera and microphone controls removed');stage='screen-sharing';
+  await act(a,a.page.locator('.event-share-controls').getByRole('button',{name:'Share screen',exact:true}),'Acceptance control');
   await until(()=>c.page.locator('.presentation-sources video[data-track-source="screen_share"]').evaluateAll(es=>es.some(e=>e.videoWidth>0&&e.readyState>=2)),'Actual decoded screen');checks.screen_share=true;
-  await audio(c,a.id);await a.page.getByRole('button',{name:'Stop sharing',exact:true}).click();
+  await audio(c,a.id);await act(a,a.page.getByRole('button',{name:'Stop sharing',exact:true}),'Acceptance control');
   stage='responsive-policy';
   for(const size of [{width:390,height:844},{width:820,height:1180},{width:1440,height:900}]){await c.page.setViewportSize(size);await video(c,a.id);assert.ok(await c.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));await screenshot(c,'viewport-'+size.width+(result.forced_turn?'-turn':''));}
   checks.responsive=true;
