@@ -101,7 +101,8 @@ def public_user(u):
 def display_profile(u):
     """Whitelist opt-in descriptive fields; never expose private identity or coordinates."""
     p = u.profile or {}
-    result = {}
+    result = {k:p[k] for k in ('display_name','bio','public_interests','languages','category','theme') if k in p}
+    result['links'] = {k:v['url'] for k,v in p.get('links', {}).items() if isinstance(v,dict) and v.get('visible') and v.get('url')}
     if p.get('show_location'):
         result['display_location'] = {k:p.get(k,'') for k in ('country','town','area')}
     if p.get('show_identity'):

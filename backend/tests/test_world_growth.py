@@ -30,7 +30,7 @@ def test_first_four_are_user_chosen_atomic_and_permanent(system):
  assert c.post('/api/onboarding',headers=h,json={'city':locked['id']}).status_code==403
  assert state(c,h)['starter_selected']==4
 
-def test_share_progress_idempotency_channels_cooldown_and_login_persistence(system):
+def test_share_progress_idempotency_channels_cooldown_and_login_persistence(system,monkeypatch):
  c,dbs=system;h,u=register(c,'shareworlds');onboard(c,h);four(c,h)
  inv=c.post('/api/growth/worlds/bristol/invite',headers=h).json()
  assert u['id'] not in inv['path']
@@ -38,11 +38,16 @@ def test_share_progress_idempotency_channels_cooldown_and_login_persistence(syst
  assert 'user_id' not in c.get('/api/growth/invites/'+inv['code']).json()
  def share(channel='whatsapp',id=None):return c.post('/api/growth/worlds/bristol/share',headers=h,json={'share_action_id':id or str(uuid.uuid4()),'channel':channel,'outcome':'copied' if channel=='copy' else 'handoff' if channel in {'email','sms'} else 'opened','invite_code':inv['code']})
  first=str(uuid.uuid4());assert share(id=first).json()['counted']
+ # Exercise the cooldown independently of slow CI/database response time.
+ from types import SimpleNamespace
+ from backend.api import growth
+ with dbs() as db:now=db.scalar(select(ShareAction.created_at).where(ShareAction.user_id==u['id']))
+ monkeypatch.setattr(growth,'time',SimpleNamespace(time=lambda:now))
  assert share(id=first).json()['duplicate']
  assert share().status_code==429
  for channel in ['facebook','x','copy']:
   with dbs.begin() as db:
-   for a in db.scalars(select(ShareAction).where(ShareAction.user_id==u['id'])):a.created_at=time.time()-10
+   for a in db.scalars(select(ShareAction).where(ShareAction.user_id==u['id'])):a.created_at=now-10
   r=share(channel);assert r.status_code==200,r.text
  s=state(c,h);w=next(w for w in s['worlds'] if w['id']=='bristol');assert w['access']=='owned' and w['shares']==4
  assert next(w for w in s['worlds'] if w['id']=='oxford')['shares']==0

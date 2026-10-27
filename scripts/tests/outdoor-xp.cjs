@@ -12,7 +12,7 @@ async function main(){
  execFileSync(python,['-m','scripts.tests.multiplayer_fixture','init'],{cwd:root,env,stdio:'pipe'});
  // Prove the 3x release contract using the real handler and controlled server ticks.
  execFileSync(python,['-m','pytest','backend/tests/test_outdoor_speed_contract.py','-q'],{cwd:root,env:{...env,APP_ENV:'test'},stdio:'inherit'});
- check('controlled server ticks preserve 3x outdoor contract',true);
+ check('controlled server ticks preserve outdoor walk/run contract',true);
  const diagnostics={errors:[],requests:[],sockets:[],processes:[]};let page,browser;
  const children=[];
  try{

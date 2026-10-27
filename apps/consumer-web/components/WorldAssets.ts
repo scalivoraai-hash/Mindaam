@@ -10,23 +10,35 @@ export function box(p:T.Object3D,c:string,x:number,y:number,z:number,w:number,h:
 export function oval(p:T.Object3D,c:string,x:number,y:number,z:number,w:number,h:number,d:number){const m=mesh(sphere,c,p,x,y,z);m.scale.set(w,h,d);return m;}
 const limbGeometry=new T.CapsuleGeometry(1,1,4,8);limbGeometry.userData.shared=true;
 function limb(p:T.Object3D,c:string,x:number,y:number,z:number,w:number,h:number,d:number){const m=mesh(limbGeometry,c,p,x,y,z);m.scale.set(w,h/3,d);return m;}
+// Cached, smooth human surfaces; city props keep their cheaper sphere geometry.
+const humanSphere=new T.SphereGeometry(1,20,12);
+const torsoGeometry=new T.LatheGeometry([new T.Vector2(0,-.4),new T.Vector2(.23,-.39),new T.Vector2(.24,-.23),new T.Vector2(.255,-.05),new T.Vector2(.32,.18),new T.Vector2(.30,.29),new T.Vector2(.15,.36),new T.Vector2(.09,.39),new T.Vector2(0,.39)],24);
+const headGeometry=humanSphere.clone();const hp=headGeometry.getAttribute('position');for(let i=0;i<hp.count;i++){const y=hp.getY(i);if(y<0)hp.setX(i,hp.getX(i)*(.83+.17*(y+1)))}headGeometry.computeVertexNormals();
+const anatomicalGeometry=new T.LatheGeometry([new T.Vector2(0,-.5),new T.Vector2(.72,-.5),new T.Vector2(.78,-.32),new T.Vector2(.97,.05),new T.Vector2(1,.30),new T.Vector2(.93,.5),new T.Vector2(0,.5)],12);
+for(const g of [humanSphere,torsoGeometry,headGeometry,anatomicalGeometry])g.userData.shared=true;
 export function human(a:Appearance={},calibrated=false){
+ const oval=(p:T.Object3D,c:string,x:number,y:number,z:number,w:number,h:number,d:number)=>{const m=mesh(Math.max(w,h,d)>.16?humanSphere:sphere,c,p,x,y,z);m.scale.set(w,h,d);return m;};
+ const limb=(p:T.Object3D,c:string,x:number,y:number,z:number,w:number,h:number,d:number)=>{const m=mesh(anatomicalGeometry,c,p,x,y,z);m.scale.set(w,h,d);return m;};
  const root=new T.Group(),body=new T.Group(),details=new T.Group(),far=new T.Group();root.add(body,far);body.add(details);far.visible=false;
  const skin=a.skin||'#bf855e',hair=a.hair||'#302821',shirt=a.color||'#ed945d',pants=a.pants||'#29485d';
  // Adult proportions: tapered torso, articulated limbs and a smaller shaped head.
- oval(body,shirt,0,1.57,0,.31,.42,.195);oval(details,shirt,0,1.89,-.09,.22,.12,.15);box(details,'#e6dccc',0,1.7,.192,.017,.4,.013);box(details,shirt,0,1.37,.185,.30,.12,.04);oval(body,pants,0,1.18,0,.245,.16,.165);
+ const torso=mesh(torsoGeometry,shirt,body,0,1.57,0);torso.scale.z=.64;oval(details,shirt,0,1.89,-.09,.22,.12,.15);box(details,'#e6dccc',0,1.7,.192,.017,.4,.013);box(details,shirt,0,1.37,.185,.30,.12,.04);oval(body,pants,0,1.18,0,.245,.16,.165);
  limb(body,skin,0,1.99,0,.082,.18,.077);const head=new T.Group();head.position.set(0,2.16,.015);body.add(head);
- oval(head,skin,0,0,0,.163,.205,.157);oval(head,skin,0,-.10,.035,.125,.09,.125);oval(head,hair,0,.14,-.022,.17,.10,.16);
+ const headSurface=mesh(headGeometry,skin,head);headSurface.scale.set(.163,.205,.157);oval(head,hair,0,.14,-.022,.17,.10,.16);
  if(a.style==='long'){oval(head,hair,-.14,-.025,-.05,.065,.22,.13);oval(head,hair,.14,-.025,-.05,.065,.22,.13)}
  if(a.style==='cap'){oval(head,shirt,0,.175,0,.18,.06,.17);oval(head,shirt,0,.16,.15,.16,.018,.12)}
- const face=new T.Group();head.add(face);for(const side of [-1,1]){oval(face,'#f3eee3',side*.06,.025,.143,.033,.018,.014);oval(face,'#283336',side*.06,.025,.155,.012,.013,.007);oval(face,hair,side*.06,.065,.143,.038,.009,.012);oval(face,skin,side*.162,0,0,.025,.047,.03)}oval(face,skin,0,-.015,.16,.026,.045,.035);oval(face,'#985e51',0,-.10,.14,.048,.008,.008);
+ const face=new T.Group(),eyes:T.Group[]=[];head.add(face);for(const side of [-1,1]){const eye=new T.Group();eye.position.set(side*.06,.025,.143);face.add(eye);eyes.push(eye);oval(eye,'#e8e0d6',0,0,0,.031,.016,.013);oval(eye,'#4e6c62',0,0,.012,.013,.013,.006);oval(eye,'#162229',0,0,.017,.006,.009,.003);oval(eye,'#fff8e9',-.003,.004,.02,.003,.003,.002);const brow=oval(face,hair,side*.06,.062,.143,.037,.007,.009);brow.rotation.z=-side*.08;oval(face,skin,side*.162,0,0,.025,.047,.03);oval(face,skin,side*.166,-.005,.018,.012,.029,.014)}
+ oval(face,skin,0,.003,.154,.018,.047,.023);oval(face,skin,0,-.029,.178,.026,.019,.026);for(const side of [-1,1])oval(face,skin,side*.019,-.038,.164,.012,.01,.015);
+ const mouth=new T.Group();mouth.position.set(0,-.09,.145);face.add(mouth);oval(mouth,'#77463f',0,0,0,.041,.004,.008);oval(mouth,'#b77b6a',0,-.008,0,.037,.006,.009);
+ const hairDetail=new T.Group();head.add(hairDetail);hairDetail.visible=a.style!=='cap';for(let i=0;i<5;i++){const lock=oval(hairDetail,hair,-.115+i*.055,.155+Math.sin(i*.6)*.025,-.015,.055,.067,.145);lock.rotation.z=-.18;}
+
  for(const side of [-1,1]){limb(details,'#e3decf',side*.15,1.82,.151,.035,.23,.015)}
  const legs:T.Group[]=[],knees:T.Group[]=[],arms:T.Group[]=[],elbows:T.Group[]=[];
- for(const side of [-1,1]){const leg=new T.Group();leg.position.set(side*.135,1.15,0);body.add(leg);limb(leg,pants,0,-.25,0,.11,.52,.115);const knee=new T.Group();knee.position.y=-.48;leg.add(knee);limb(knee,pants,0,-.22,0,.085,.48,.09);oval(knee,'#f3f1e6',0,-.59,.055,.115,.035,.205);oval(knee,'#36495b',0,-.54,.055,.108,.055,.19);legs.push(leg);knees.push(knee);
- const arm=new T.Group();arm.position.set(side*.34,1.86,0);arm.rotation.z=side*.10;body.add(arm);limb(arm,shirt,0,-.19,0,.093,.38,.09);const elbow=new T.Group();elbow.position.y=-.35;arm.add(elbow);limb(elbow,skin,0,-.15,.008,.064,.34,.062);oval(elbow,skin,0,-.37,.018,.065,.10,.04);arms.push(arm);elbows.push(elbow);}
+ for(const side of [-1,1]){const leg=new T.Group();leg.position.set(side*.135,1.15,0);body.add(leg);limb(leg,pants,0,-.25,0,.11,.52,.115);const knee=new T.Group();knee.position.y=-.48;leg.add(knee);oval(knee,pants,0,0,0,.092,.095,.095);limb(knee,pants,0,-.22,0,.085,.48,.09);limb(knee,pants,0,-.49,0,.063,.16,.065);oval(knee,'#f3f1e6',0,-.59,.055,.115,.035,.205);oval(knee,'#36495b',0,-.54,.055,.108,.055,.19);legs.push(leg);knees.push(knee);
+ const arm=new T.Group();arm.position.set(side*.34,1.86,0);arm.rotation.z=side*.10;body.add(arm);limb(arm,shirt,0,-.19,0,.093,.38,.09);const elbow=new T.Group();elbow.position.y=-.35;arm.add(elbow);oval(elbow,skin,0,0,0,.061,.065,.061);limb(elbow,skin,0,-.15,.008,.064,.34,.062);oval(elbow,skin,0,-.35,.018,.055,.068,.035);const handDetails=new T.Group();elbow.add(handDetails);handDetails.userData.nearOnly=true;for(let finger=0;finger<4;finger++)limb(handDetails,skin,(finger-1.5)*.023,-.414+Math.abs(finger-1.5)*.007,.02,.012,.09,.013);const thumb=limb(handDetails,skin,-side*.06,-.35,.037,.017,.075,.018);thumb.rotation.z=-side*.45;arms.push(arm);elbows.push(elbow);}
  // Low-detail silhouette shares cached geometries/materials.
  oval(far,shirt,0,1.55,0,.30,.43,.17);oval(far,skin,0,2.16,0,.16,.20,.15);for(const side of [-1,1])limb(far,pants,side*.135,.6,0,.10,1.15,.10);
- let detail=true;root.userData.setLOD=(distance:number)=>{detail=distance<35;face.visible=detail;details.visible=detail;body.visible=distance<75;far.visible=distance>=75};
+ let detail=true;root.userData.setLOD=(distance:number)=>{detail=distance<35;face.visible=detail;hairDetail.visible=detail&&a.style!=='cap';details.visible=detail;elbows.forEach(e=>e.children.forEach(c=>{if(c.userData.nearOnly)c.visible=detail}));body.visible=distance<75;far.visible=distance>=75};
  const gait=new Locomotion();
  root.userData.animate=(t:number,speed:number,mode?:string)=>{
   const {phase,run,weight,dt}=gait.update(t,speed,mode,calibrated),step=Math.sin(phase)*(.5+run*.27)*weight;
@@ -46,7 +58,9 @@ export function human(a:Appearance={},calibrated=false){
   body.rotation.z=Math.sin(phase)*(.018+run*.014)*weight;
   body.rotation.y=Math.sin(phase)*.025*weight;
   body.rotation.x+=((root.userData.emote==='collect'?.25:run*.15*weight)-body.rotation.x)*ease;
-  head.rotation.y=detail&&weight<.1?Math.sin(t*.7)*.035:0;
+  head.rotation.y=detail&&weight<.1?Math.sin(t*.7)*.055:Math.sin(phase)*.018*weight;
+  const blink=t%4.7;eyes.forEach(e=>e.scale.y=blink<.13?Math.max(.08,Math.abs(blink-.065)/.065):1);
+  mouth.scale.y=root.userData.speaking?1+Math.max(0,Math.sin(t*13))*.9:1;
   head.rotation.x=root.userData.speaking?Math.sin(t*7)*.035:-run*.06;
   if(root.userData.emote==='wave'){arms[1].rotation.z=-2.1+Math.sin(t*8)*.15;elbows[1].rotation.x=-.5}
  };

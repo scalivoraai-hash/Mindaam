@@ -1,0 +1,161 @@
+{
+  "results": [
+    {
+      "preset": "STANDARD",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        123.22884452284183,
+        123.22884452284183
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "CONCERT",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        123.24998829923622,
+        123.24998829923622
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "DJ PARTY",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        121.39872206989227,
+        121.39872206989227
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "CINEMA",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        37.021693441146574,
+        37.021693441146574
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "WARM",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        123.202308471378,
+        123.202308471378
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "COOL",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        123.24997362256096,
+        123.24997362256096
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "PURPLE WAVE",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        123.24999998541105,
+        123.24999998541105
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "BLUE WAVE",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        123.24999999999193,
+        123.24999999999193
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "RAINBOW",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        123.24999999999983,
+        123.24999999999983
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "SPOTLIGHT",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        123.24999999999983,
+        123.24999999999983
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "PULSE",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        121.39872207636377,
+        121.39872207636377
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "STANDARD 200%",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        289.9067492683935,
+        289.9067492683935
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "preset": "PULSE reduced effects",
+      "screens": 1,
+      "lights": 2,
+      "strengths": [
+        101.60420482825072,
+        101.60420482825072
+      ],
+      "drawCalls": 108,
+      "textures": 1,
+      "geometries": 7
+    }
+  ],
+  "errors": []
+}

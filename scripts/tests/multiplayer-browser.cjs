@@ -11,6 +11,13 @@ const fixture=(action,data={})=>JSON.parse(execFileSync(python,['-m','scripts.te
 function start(bin,args,log){const fd=fs.openSync(path.join(out,log),'w'),p=spawn(bin,args,{cwd:root,env,stdio:['ignore',fd,fd]});children.push(p);return p}
 async function until(fn,label,timeout=25000){const end=Date.now()+timeout;let error;while(Date.now()<end){try{const value=await fn();if(value)return value}catch(e){error=e}await wait(200)}throw Error(label+' timed out'+(error?' · '+error.message:''))}
 async function ready(url){return until(async()=>{try{return(await fetch(url,{signal:AbortSignal.timeout(3000)})).ok}catch{return false}},'Ready '+url,90000)}
+async function reserveArena(u,event){
+ const catalog=await u.api('/venue-rentals/'+event.city),cost=catalog.prices['1'];
+ assert.ok(catalog.enabled&&cost>0,'Local venue catalogue must be enabled');
+ fixture('venue_funds',{city:event.city,users:[u.id],event_id:event.id,cost});
+ const receipt=await u.api('/events/'+event.id+'/venue/booking',{request_id:crypto.randomUUID(),hours:1,expected_cost:cost,starts_at:Date.now()/1000});
+ assert.equal(receipt.cost,cost);return receipt;
+}
 async function user(city,index){
  const touch=index===2;const context=await browser.newContext({viewport:touch?{width:390,height:844}:{width:1100,height:760},isMobile:touch,hasTouch:touch,permissions:['camera','microphone']});
  if(mixedRenderer)await context.addInitScript(({observer})=>{const get=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){if((kind==='webgl'||kind==='webgl2')&&(!observer||!document.querySelector('.world-playing')))return null;return get.call(this,kind,...args)}},{observer:index===1});
@@ -107,7 +114,7 @@ async function runCity(city){
   // Actual LiveKit host + two independent participant contexts, including late join.
   fixture('place',{city,users:users.map(u=>u.id)});await wait(1000);
   const event=await a.api('/events',{title:'Local QA event '+city,description:'Automated local acceptance only',city,starts_at:Date.now()/1000,communication_mode:'liveface',venue_experience_type:'auditorium',event_type:'Public Talk'});
-  const started=await a.api('/events/'+event.id+'/state/start',{});console.log('Event started',event.id);await b.api('/events/'+event.id+'/join',{});await b.api('/events/'+event.id+'/venue/enter',{});
+  await reserveArena(a,event);const started=await a.api('/events/'+event.id+'/state/start',{});console.log('Event started',event.id);await b.api('/events/'+event.id+'/join',{});await b.api('/events/'+event.id+'/venue/enter',{});
   await controls(a,/Reconnect|Join LiveFace/);await until(()=>a.page.locator('.live-dock.is-connected').count(),'Host joined with devices off');check('event_devices_off_on_join',await a.page.getByRole('button',{name:'Camera On',exact:true}).count()===1&&await a.page.getByRole('button',{name:'Unmute',exact:true}).count()===1);await controls(a,/Camera On/);await controls(a,/Unmute/);await Promise.all([video(b,a.id),audio(b,a.id)]);
   const c=await user(city,2);users.push(c);await c.api('/events/'+event.id+'/join',{});await c.api('/events/'+event.id+'/venue/enter',{});
   await Promise.all([video(c,a.id),audio(c,a.id)]);check('event_speaker_two_receivers',true);check('event_late_join',true);for(const control of [/Expand/,/Full Screen/,/Exit Full Screen/,/Minimise/]){await controls(c,control);await audio(c,a.id)}check('event_touch_layout_continuity',true);
@@ -191,7 +198,7 @@ async function eventLayout(){
  const noOverflow=async(page)=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth);
  try{
   const event=await a.api('/events',{title:'Local QA · Ideas that bring people together',description:'Local responsive fixture',city:'london',starts_at:Date.now()/1000,communication_mode:'text',venue_experience_type:'auditorium',event_type:'Public Talk'});
-  await a.api('/events/'+event.id+'/state/start',{});await a.api('/events/'+event.id+'/venue/enter',{});
+  await reserveArena(a,event);await a.api('/events/'+event.id+'/state/start',{});await a.api('/events/'+event.id+'/venue/enter',{});
   for(const u of [b,c]){await u.api('/events/'+event.id+'/join',{});await u.api('/events/'+event.id+'/venue/enter',{});}
   for(const [index,u] of people.entries()){try{await u.page.locator('.in-auditorium .world-canvas[data-ready=true]').waitFor({timeout:60000})}catch(e){fs.writeFileSync(path.join(out,'venue-ready-'+index+'.json'),JSON.stringify({state:u.states.at(-1),body:await u.page.locator('body').innerText(),errors},null,2));await screenshot(u,'venue-ready-'+index);throw e}}
   const viewports=[...([320,360,375,390,393,412,430].map(width=>({width,height:844}))),...([768,820,834,1024].map(width=>({width,height:1180}))),{width:1366,height:768},{width:1440,height:900},{width:1920,height:1080},{width:844,height:390},{width:1180,height:820}];
@@ -242,7 +249,7 @@ async function eventMediaLayout(){
  const a=await user('london',0),b=await user('london',1),c=await user('london',2),users=[a,b,c],checks=[];const check=(name,v=true)=>{assert.ok(v,name);checks.push(name);console.log('MEDIA UI',name,'PASS')};
  try{
   const event=await a.api('/events',{title:'Local QA · Live stage presentation',description:'Local synthetic-media visual acceptance',city:'london',starts_at:Date.now()/1000,communication_mode:'liveface',venue_experience_type:'auditorium',event_type:'Public Talk'});
-  await a.api('/events/'+event.id+'/state/start',{});await a.api('/events/'+event.id+'/venue/enter',{});for(const u of [b,c]){await u.api('/events/'+event.id+'/join',{});await u.api('/events/'+event.id+'/venue/enter',{})}await b.page.bringToFront();
+  await reserveArena(a,event);await a.api('/events/'+event.id+'/state/start',{});await a.api('/events/'+event.id+'/venue/enter',{});for(const u of [b,c]){await u.api('/events/'+event.id+'/join',{});await u.api('/events/'+event.id+'/venue/enter',{})}await b.page.bringToFront();
   for(const [index,u] of users.entries()){try{await u.page.locator('.in-auditorium .world-canvas[data-ready=true]').waitFor({timeout:60000})}catch(e){fs.writeFileSync(path.join(out,'venue-ready-'+index+'.json'),JSON.stringify({state:u.states.at(-1),body:await u.page.locator('body').innerText(),errors},null,2));throw e}}await controls(a,/Reconnect|Join LiveFace/);await until(()=>a.page.locator('.live-dock.is-connected').count(),'Host joined with devices off');check('event_devices_off_on_join',await a.page.getByRole('button',{name:'Camera On',exact:true}).count()===1&&await a.page.getByRole('button',{name:'Unmute',exact:true}).count()===1);await controls(a,/Camera On/);await controls(a,/Unmute/);await b.page.bringToFront();const retried=new Set();await until(async()=>{for(const u of users){if(await u.page.locator('.live-dock.is-connected').count())continue;if(!retried.has(u.id)&&u.logs.some(line=>line.includes('join_failed'))){retried.add(u.id);console.log('MEDIA UI retry observed local transport failure',u.id);await controls(u,/Reconnect|Join LiveFace/)}}return(await Promise.all(users.map(u=>u.page.locator('.live-dock.is-connected').count()))).every(n=>n===1)},'Three fully connected media sessions',90000);await Promise.all([video(b,a.id),audio(b,a.id),video(c,a.id),audio(c,a.id)]);check('three-user-media');
   const tile=b.page.locator('.remote-tile[data-peer-id="'+a.id+'"]');await tile.locator('video').waitFor();await until(()=>tile.evaluate(el=>el.classList.contains('avatar-anchored')),'Actual projected camera tile');
   const before=await stableProjectedTile(tile,a.id),anchor=before.anchor;check('head-projection',Math.abs(before.x+before.width/2-anchor.x)<12&&before.width<=128&&before.height<=82);await screenshot(b,'avatar-video-desktop');

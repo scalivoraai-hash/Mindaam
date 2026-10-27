@@ -1,0 +1,35 @@
+{
+  "scope": "owner-revised procedural avatars and city upgrades",
+  "parent_sha": "9533e15f7dd9fd8e689845338ef4932365bbd795",
+  "frontend_build_exit": 0,
+  "frontend_unit_passed": 55,
+  "backend_full_run": {
+    "passed": 275,
+    "failed": 1,
+    "failure": "test-only undefined now; corrected to time.time()"
+  },
+  "corrected_growth_suite": {
+    "passed": 7,
+    "exit": 0
+  },
+  "gcp_automation_tests_passed": 59,
+  "browser_exit": 0,
+  "browser": [
+    "single_booking_debit",
+    "confirmed_receipt",
+    "mobile_no_overflow",
+    "profile_hidden_links",
+    "follow_unfollow_preserves_friendship",
+    "metadata_save",
+    "picture_and_cover_crop_upload",
+    "authenticated_photo_render"
+  ],
+  "remote_avatar_transitions": 5,
+  "remote_restyle_passed": true,
+  "mapped_city_neighbourhoods": 5,
+  "city_source_unchanged": true,
+  "renderer_presets": 14,
+  "full_device_fps_verified": false,
+  "live_staging_verified": false,
+  "note": "CI and live deployment status are recorded by GitHub Actions after publication; this file records local checks only."
+}

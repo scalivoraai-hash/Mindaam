@@ -1,0 +1,70 @@
+{
+  "results": [
+    {
+      "kind": "",
+      "mode": "walk",
+      "vehicles": 0,
+      "avatars": 1,
+      "attached": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "state": "WALKING"
+    },
+    {
+      "kind": "",
+      "mode": "run",
+      "vehicles": 0,
+      "avatars": 1,
+      "attached": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "state": "WALKING"
+    },
+    {
+      "kind": "car",
+      "mode": "car",
+      "vehicles": 1,
+      "avatars": 1,
+      "attached": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "state": "IN_CAR"
+    },
+    {
+      "kind": "bike",
+      "mode": "bike",
+      "vehicles": 1,
+      "avatars": 1,
+      "attached": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "state": "ON_BIKE"
+    },
+    {
+      "kind": "",
+      "mode": "walk",
+      "vehicles": 0,
+      "avatars": 1,
+      "attached": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "state": "WALKING"
+    }
+  ],
+  "errors": []
+}

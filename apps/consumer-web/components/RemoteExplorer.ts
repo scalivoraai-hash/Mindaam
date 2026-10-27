@@ -4,10 +4,12 @@ import {RemoteMotion} from '../lib/remoteMotion';
 
 /** A single transform owns both the remote driver and their existing vehicle mesh. */
 export function remoteExplorer(appearance:Record<string,string>){
- const root=new T.Group(),avatar=human(appearance,true),motion=new RemoteMotion();root.add(avatar);
+ const root=new T.Group(),motion=new RemoteMotion();let avatar=human(appearance,true);root.add(avatar);
+ const appearanceKey=(a:Record<string,string>)=>JSON.stringify(['color','skin','hair','style','pants'].map(k=>a?.[k]||''));let key=appearanceKey(appearance),lod=0;
  let vehicle:T.Group|null=null,kind='';
  root.userData.avatar=avatar;
  root.userData.update=(player:any,time:number,dt:number,bus?:T.Group)=>{
+  const nextKey=appearanceKey(player.avatar||appearance);if(nextKey!==key){root.remove(avatar);avatar=human(player.avatar||appearance,true);avatar.userData.setLOD(lod);root.add(avatar);root.userData.avatar=avatar;key=nextKey;}
   const next=player.vehicle?.kind||'';
   if(next!==kind){
    if(vehicle){vehicle.traverse(o=>{if(o instanceof T.Mesh&&!o.geometry.userData.shared)o.geometry.dispose();if(o instanceof T.Mesh&&o.userData.ownedMaterial)(o.material as T.Material).dispose()});root.remove(vehicle)}
@@ -40,7 +42,7 @@ export function remoteExplorer(appearance:Record<string,string>){
   }
   root.userData.person=player;root.userData.movementState=player.movement_state;
  };
- root.userData.setLOD=(distance:number)=>avatar.userData.setLOD(distance);
+ root.userData.setLOD=(distance:number)=>{lod=distance;avatar.userData.setLOD(distance)};
  root.userData.dispose=()=>root.traverse(o=>{if(o instanceof T.Mesh&&!o.geometry.userData.shared)o.geometry.dispose();if(o instanceof T.Mesh&&o.userData.ownedMaterial)(o.material as T.Material).dispose()});
  return root;
 }

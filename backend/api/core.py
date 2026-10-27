@@ -27,14 +27,7 @@ class Strict(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class ProfileFields(Strict):
-    identity: Literal['Male','Female','Transgender','Non-binary','Prefer not to say','Custom / Other'] = 'Prefer not to say'
-    custom_identity: str = Field(default='', max_length=60)
-    show_identity: bool = False
-    country: str = Field(default='', max_length=80)
-    town: str = Field(default='', max_length=80)
-    area: str = Field(default='', max_length=80)
-    show_location: bool = False
+from .profile_schema import ProfileFields, ProfileUpdate
 
 
 class Register(Strict):
@@ -207,8 +200,26 @@ def me(u=Depends(current_user)):
 
 
 @router.put('/me/profile')
-def update_profile(data: ProfileFields, u=Depends(current_user), db=Depends(get_db)):
-    u.profile = {k:v.strip() if isinstance(v,str) else v for k,v in data.model_dump().items()}
+def update_profile(data: ProfileUpdate, u=Depends(current_user), db=Depends(get_db)):
+    u = db.scalar(select(User).where(User.id==u.id).with_for_update().execution_options(populate_existing=True))
+    if u.suspended:raise HTTPException(403, 'Account unavailable')
+    # Merge explicit fields so old clients cannot erase newer profile preferences.
+    changes = data.model_dump(exclude_unset=True, exclude={'username'})
+    if data.username is not None:
+        name = data.username.strip()
+        if len(name) < 3:
+            raise HTTPException(422, 'Username must contain at least three characters')
+        existing = db.scalar(select(User.id).where(func.lower(func.trim(User.username)) == name.lower(), User.id != u.id))
+        if existing:
+            raise HTTPException(409, 'Username is already in use')
+        u.username = name
+        from sqlalchemy.exc import IntegrityError
+        try:
+            db.flush()
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(409, 'Username is already in use')
+    u.profile = {**(u.profile or {}), **{k:v.strip() if isinstance(v,str) else v for k,v in changes.items()}}
     db.add(Audit(actor_id=u.id, action='profile.updated', target=u.id))
     return public_user(u)
 
@@ -364,6 +375,8 @@ def referrals(u=Depends(current_user), db=Depends(get_db)):
 
 @router.get("/privacy/export")
 def export(u=Depends(current_user), db=Depends(get_db)):
+    import base64
+    from .profile_media import ProfilePhoto
     from .identity import commerce_export
     from .discovery import PassportStamp, CityInterest
     from .transit import Ticket
@@ -379,6 +392,7 @@ def export(u=Depends(current_user), db=Depends(get_db)):
         'gift_receipts':[serialize(r) for r in db.scalars(select(GiftDelivery).where((GiftDelivery.sender_id==u.id)|(GiftDelivery.recipient_id==u.id)))],
         'city_demand_shares':[serialize(r) for r in db.scalars(select(DemandShareAction).join(DemandShare).where(DemandShare.user_id==u.id))],
         'business_interactions':[serialize(r) for r in db.scalars(select(BusinessInteraction).where(BusinessInteraction.user_id==u.id))],
+        "profile_photos": [{"kind":p.kind,"mime":"image/jpeg","content":base64.b64encode(p.data).decode()} for p in db.scalars(select(ProfilePhoto).where(ProfilePhoto.user_id==u.id))],
         "commerce": commerce_export(db, u),
         "transport_tickets": [serialize(x) for x in db.scalars(select(Ticket).where(Ticket.user_id==u.id))],
         "advertising_enquiries": [serialize(x) for x in db.scalars(select(AdEnquiry).where(AdEnquiry.user_id==u.id))],
@@ -410,9 +424,12 @@ def export(u=Depends(current_user), db=Depends(get_db)):
 
 @router.delete("/me")
 def delete_me(u=Depends(current_user), db=Depends(get_db)):
+    u = db.scalar(select(User).where(User.id==u.id).with_for_update().execution_options(populate_existing=True))
     from .identity import anonymise_commerce
     from .discovery import PassportStamp, CityInterest
 
+    from .profile_media import ProfilePhoto
+    db.execute(delete(ProfilePhoto).where(ProfilePhoto.user_id==u.id))
     anonymise_commerce(db, u)
     from .mobility import finish as finish_rental
     from .business_spatial import BusinessInteraction,BusinessMember

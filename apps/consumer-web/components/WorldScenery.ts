@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {architectureRegion,regionalPalette} from '../lib/cityArchitecture';
 import {buildingStyle} from '../lib/buildingStyle';
 import {box, material, mesh, oval} from './WorldAssets';
 
@@ -18,11 +19,14 @@ const distance=(a:number[],b:number[])=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 const hash=(id:string)=>Array.from(id).reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7);
 
 /** Fixed-size atlases and shared materials, batched by the existing world tile renderer. */
-export function buildCityEnvironment(parent:T.Group,geo:Geography){
+export function buildCityEnvironment(parent:T.Group,geo:Geography,city=''){
+  const region=architectureRegion(city);
   const textures:T.Texture[]=[],materials:T.Material[]=[],buildings:T.Group[]=[];
   function atlas(index:number){
     const p={wall:'#ffffff',trim:'#f0f0ec'},canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
     const c=canvas.getContext('2d')!;c.fillStyle=p.wall;c.fillRect(0,0,256,256);
+    // Deterministic original masonry variation. No fetched or traced map imagery.
+    if(index!==2){for(let row=0;row<16;row++)for(let col=-1;col<9;col++){const shade=(row*17+col*31+index*11)%7;c.fillStyle=`rgba(90,70,50,${.025+Math.abs(shade)*.008})`;c.fillRect(col*32+(row%2)*16+1,row*16+1,30,14)}}
     // Shallow masonry joints, lintels and shaded glazed recesses.
     c.strokeStyle='#49352816';c.lineWidth=1;
     for(let y=0;y<256;y+=16){c.beginPath();c.moveTo(0,y);c.lineTo(256,y);c.stroke();for(let x=(y%32?16:0);x<256;x+=32){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+16);c.stroke()}}
@@ -33,7 +37,7 @@ export function buildCityEnvironment(parent:T.Group,geo:Geography){
       const reflection=c.createLinearGradient(x,40,x+72,190);reflection.addColorStop(0,'#b8d7dd');reflection.addColorStop(.45,'#4d7789');reflection.addColorStop(.5,'#3c6074');reflection.addColorStop(1,'#253d53');
       c.fillStyle=reflection;c.fillRect(x,index===1?60:42,index===2?114:67,index===1?113:144);
       c.fillStyle='#eaf6ee25';c.beginPath();c.moveTo(x,42);c.lineTo(x+36,42);c.lineTo(x,150);c.fill();
-      c.fillStyle=p.trim;c.fillRect(x+31,42,4,144);c.fillRect(x,114,67,4);
+      c.fillStyle='#13233138';c.fillRect(x+3,49,4,132);c.fillStyle=p.trim;c.fillRect(x+31,42,4,144);c.fillRect(x,114,67,4);
       c.fillStyle='#1b26344d';c.fillRect(x,42,67,8);
     }
     if(index===1){c.fillStyle='#485766';c.fillRect(15,174,220,8);c.fillStyle='#c3cfcd';c.fillRect(15,184,220,6)}
@@ -75,7 +79,7 @@ export function buildCityEnvironment(parent:T.Group,geo:Geography){
         roadStrip(shift(a),shift(b),.18,.16,material('#e4ddce'),.19);const pavement=(p:number[])=>[p[0]+nx*4.8*side,p[1]+nz*4.8*side];roadStrip(pavement(a),pavement(b),2.2,.14,material('#b9bbaf'),.13);
         for(let k=3;k<len;k+=3){const x=a[0]+(b[0]-a[0])*k/len+nx*4.8*side,z=a[1]+(b[1]-a[1])*k/len+nz*4.8*side;const seam=box(parent,'#a9a799',x,.211,z,2.2,.01,.025);seam.rotation.y=angle}
       }
-      for(let k=4;k<len;k+=8){const m=box(parent,'#f3ecd8',a[0]+(b[0]-a[0])*k/len,.146,a[1]+(b[1]-a[1])*k/len,.13,.018,3);m.rotation.y=angle}
+      for(let k=4;k<len;k+=8){const m=box(parent,region==='north-american'?'#d9bc72':'#f3ecd8',a[0]+(b[0]-a[0])*k/len,.146,a[1]+(b[1]-a[1])*k/len,.13,.018,3);m.rotation.y=angle}
       // Crossing marks appear only where the licensed map explicitly marks a crossing.
       if(f.tags.footway==='crossing'||f.tags.crossing){for(let k=-3;k<=3;k++){const m=box(parent,'#f5efdd',a[0]+nx*k,.16,a[1]+nz*k,.55,.02,2.8);m.rotation.y=angle}}
     }
@@ -84,7 +88,8 @@ export function buildCityEnvironment(parent:T.Group,geo:Geography){
   for(const f of geo.features){
     if(!f.tags.building||f.points.length<4)continue;
     const points=f.points.slice(0,-1),c=points.reduce((v,p)=>[v[0]+p[0]/points.length,v[1]+p[1]/points.length],[0,0]);
-    const style=buildingStyle(f.tags,f.id),n=style.hash,palette=palettes[style.palette],height=style.height;
+    const style=buildingStyle(f.tags,f.id),n=style.hash,palette=regionalPalette(city,style.palette,palettes[style.palette],f.tags),height=style.height;
+    if(region==='gulf'&&!f.tags['roof:shape'])style.roof='flat';
     const group=new T.Group();group.position.set(c[0],0,c[1]);parent.add(group);buildings.push(group);
     const shape=shapeFor(f,c),positions:number[]=[],uvs:number[]=[];
     for(const ring of [f.points,...(f.holes||[])]){

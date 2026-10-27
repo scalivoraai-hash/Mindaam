@@ -24,7 +24,7 @@ from . import (
     gameplay,
     subscriptions,
     events,
-    growth,transit,civic,operations,expansion,mobility,business_spatial,gifts,event_presentation,venue_rentals,credit_catalog,collectible_rotation,
+    growth,transit,civic,operations,expansion,mobility,business_spatial,gifts,event_presentation,event_tickets,event_engagement,event_creators,grand_arena,venue_rentals,credit_catalog,collectible_rotation,
 )
 from .auth import user_for_token
 from .models import Presence, Notification, MediaSession, Session, User
@@ -134,7 +134,7 @@ for route in [
     gameplay.router,
     subscriptions.router,
     events.router,
-    growth.router,transit.router,civic.router,operations.router,expansion.router,mobility.router,business_spatial.router,gifts.router,event_presentation.router,venue_rentals.router,credit_catalog.router,collectible_rotation.router,
+    growth.router,transit.router,civic.router,operations.router,expansion.router,mobility.router,business_spatial.router,gifts.router,event_presentation.router,event_tickets.router,event_engagement.router,event_creators.router,grand_arena.router,venue_rentals.router,credit_catalog.router,collectible_rotation.router,
 ]:
     app.include_router(route)
 app.add_middleware(
@@ -420,3 +420,9 @@ app.include_router(collections_router)
 
 from .media_policy import router as media_policy_router
 app.include_router(media_policy_router)
+
+from .public_profiles import router as public_profiles_router
+app.include_router(public_profiles_router)
+
+from .profile_media import router as profile_media_router
+app.include_router(profile_media_router)

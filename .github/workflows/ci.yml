@@ -120,7 +120,11 @@ jobs:
             layout) QA_SKIP_MEDIA=1 QA_EVENT_LAYOUT=1 node scripts/tests/multiplayer-browser.cjs ;;
             media) QA_EVENT_MEDIA_UI=1 node scripts/tests/multiplayer-browser.cjs ;;
             world) QA_SKIP_MEDIA=1 QA_WORLD_POLISH=1 node scripts/tests/multiplayer-browser.cjs ;;
-            lighting) node scripts/tests/auditorium-renderer.cjs ;;
+            lighting)
+              node scripts/tests/auditorium-renderer.cjs
+              QA_OUTPUT=/tmp/mylil-presentation-evidence/avatars node scripts/tests/remote-renderer.cjs
+              QA_OUTPUT=/tmp/mylil-presentation-evidence/cities node scripts/tests/city-upgrade-renderer.cjs
+              QA_OUTPUT=/tmp/mylil-presentation-evidence/weather node scripts/tests/living-world-renderer.cjs ;;
             movement) node scripts/tests/movement-camera.cjs ;;
             outdoor-xp)
               for width in 1440 390 820; do
@@ -139,6 +143,7 @@ jobs:
             /tmp/mylil-presentation-evidence/**/*.log
             /tmp/mylil-presentation-evidence/**/*.json
             /tmp/mylil-presentation-evidence/**/*.jpg
+            /tmp/mylil-presentation-evidence/**/*.png
             /tmp/mylil-presentation-evidence/*.json
             /tmp/mylil-presentation-evidence/*.txt
             /tmp/mylil-presentation-evidence/*.jpg

@@ -136,6 +136,10 @@ def test_auditorium_gifts_idempotent_and_chat_setting(system):
  c,dbs=system;a,b=pair(c)
  for h,u in [a,b]:c.post('/api/world/enter',headers=h,json={'city':'london'})
  event=c.post('/api/events',headers=a[0],json={'title':'Test auditorium','city':'london','starts_at':time.time()+60,'capacity':100,'venue_experience_type':'auditorium','communication_mode':'text'}).json();id=event['id']
+ from backend.api.economy import credit
+ with dbs.begin() as db:credit(db,a[1]['id'],100,'purchase','fixture','arena-gifts-booking')
+ reserved=c.post('/api/events/'+id+'/venue/booking',headers=a[0],json={'request_id':str(uuid.uuid4()),'hours':1,'expected_cost':100,'starts_at':time.time()-1})
+ assert reserved.status_code==200,reserved.text
  assert c.post('/api/events/'+id+'/join',headers=b[0]).json()['my_role']=='audience'
  event=c.post('/api/events/'+id+'/state/start',headers=a[0]).json()
  assert c.post('/api/events/'+id+'/venue/enter',headers=b[0]).status_code==200

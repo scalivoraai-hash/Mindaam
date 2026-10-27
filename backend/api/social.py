@@ -72,7 +72,7 @@ def social_action_sync(user_id, action, u, db):
     rooms = []
     list(db.scalars(select(User).where(User.id.in_([u.id,user_id])).order_by(User.id).with_for_update()))
     p = target_user(db, u, user_id)
-    if action not in {"wave", "follow", "friend", "accept", "decline", "cancel", "remove", "block", "unblock", "mute"}:
+    if action not in {"wave", "follow", "unfollow", "friend", "accept", "decline", "cancel", "remove", "block", "unblock", "mute"}:
         raise HTTPException(422, "Unknown social action")
     if action == "unblock":
         db.execute(
@@ -83,6 +83,18 @@ def social_action_sync(user_id, action, u, db):
         return {"ok": True}
     if action != "block" and blocked(db, u.id, p.id):
         raise HTTPException(403, "Interaction unavailable")
+    if action == 'unfollow':
+        db.execute(delete(Social).where(Social.actor==u.id, Social.target==p.id, Social.kind=='follow'))
+        return {'ok': True}
+    if action in {'friend', 'follow'}:
+        if p.privacy in {'Ghost Mode', 'Event Mode'} or (p.privacy == 'Friends Only' and not friends(db,u.id,p.id)):
+            raise HTTPException(404, 'Player unavailable')
+    if action == 'follow':
+        if db.scalar(select(Social.id).where(Social.actor==u.id,Social.target==p.id,Social.kind=='follow')):
+            return {'ok': True}
+        if db.scalar(select(func.count()).select_from(Audit).where(Audit.actor_id==u.id,Audit.action=='social.follow',Audit.created_at>time.time()-60)) >= 10:
+            raise HTTPException(429, 'Wait before following more people')
+        db.add(Audit(actor_id=u.id,action='social.follow',target=p.id))
     if action in {"decline","cancel","remove"}:
         if action=="remove":
             db.execute(delete(Social).where(Social.kind.in_(['friend','request']),or_(and_(Social.actor==u.id,Social.target==p.id),and_(Social.actor==p.id,Social.target==u.id))))

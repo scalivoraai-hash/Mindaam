@@ -36,9 +36,12 @@ async function user(city,index){
  page.on('console',m=>{if(['warning','error'].includes(m.type())){logs.push(safeText(m.text(),sensitive));if(logs.length>80)logs.shift()}});
  page.on('websocket',ws=>{if(ws.url().endsWith('/api/realtime')){ws.on('framesent',frame=>{try{const d=JSON.parse(frame.payload.toString());if(d.type==='input'){inputs.push({at:Date.now(),...d});if(inputs.length>120)inputs.shift()}}catch{}});ws.on('framereceived',frame=>{try{const d=JSON.parse(frame.payload.toString());if(d.type==='state'){states.push(d);if(states.length>80)states.shift()}}catch{}})}});
  const api=async(route,data,method=data===undefined?'GET':'POST')=>{const res=await context.request.fetch(origin+'/api'+route,{method,data,headers:{Origin:origin,'X-Pulse-Client':'web'}});if(!res.ok())throw Error('API '+safeUrl(origin+'/api'+route)+' HTTP '+res.status());return res.json()};
- const name='gcpqa'+Date.now().toString(36)+index; const password=crypto.randomBytes(24).toString('base64url')+'!aA1';
+ let name='gcpqa'+Date.now().toString(36)+index;const reusable=index===0&&!!process.env.QA_STAGING_HOST_IDENTIFIER;const password=reusable?process.env.QA_STAGING_HOST_PASSWORD:crypto.randomBytes(24).toString('base64url')+'!aA1';assert.ok(password,'Reusable staging host password is required');u.reusable=reusable;
  sensitive.push(password);u.api=api;stage='signup-'+index;
  await page.goto(origin,{waitUntil:'domcontentloaded'});
+ if(reusable){
+ sensitive.push(process.env.QA_STAGING_HOST_IDENTIFIER);await page.getByLabel('Email or username',{exact:true}).fill(process.env.QA_STAGING_HOST_IDENTIFIER);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Enter Mindaam',exact:true}).click();await until(async()=>{try{return (await api('/me')).onboarded}catch{return false}},'Funded host login');const account=await api('/me');u.id=account.id;name=account.username;assert.equal(account.onboarded,true);
+ }else{
  await page.getByRole('button',{name:'New here? Create an account',exact:true}).click();
  await page.getByLabel('Username',{exact:true}).fill(name);
  await page.getByLabel('Email address',{exact:true}).fill(name+'@example.test');
@@ -48,12 +51,13 @@ async function user(city,index){
  await page.getByRole('group',{name:'Choose your first free world'}).waitFor();
  const registered=await api('/me');u.id=registered.id;assert.equal(registered.onboarded,false);
  stage='onboarding-'+index;
- await page.getByLabel('Destination',{exact:true}).selectOption(city);
+ await page.getByRole('group',{name:'Choose your first free world'}).locator('select[name="city"]').selectOption(city);
  await page.getByRole('checkbox',{name:/as Starter World 1 of 4/}).check();
  await page.getByRole('checkbox',{name:'Music',exact:true}).check();
  await page.getByRole('button',{name:'Let’s explore',exact:true}).click();
  await page.getByRole('heading',{name:'Welcome back, '+name+'.',exact:true}).waitFor();
  assert.equal((await api('/me')).onboarded,true);
+ }
  stage='login-session-'+index;
  await api('/auth/logout',{});await page.reload({waitUntil:'domcontentloaded'});
  await page.getByLabel('Email or username',{exact:true}).fill(name);await page.getByLabel('Password',{exact:true}).fill(password);
@@ -119,11 +123,18 @@ async function main(){
   await a.api('/social/'+b.id+'/friend',{});await b.api('/social/'+a.id+'/accept',{});
   for(const u of [a,b]){assert.equal(await u.page.evaluate(()=>window.__gcpPeers.length),0);assert.ok((await u.api('/friends')).some(p=>p.friend&&p.id===(u===a?b.id:a.id)))}
   await a.page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'PEOPLE',exact:true}).click();
-  await a.page.getByRole('heading',{name:'Your people',exact:true}).waitFor();await a.page.getByRole('tab',{name:'Friends',exact:true}).click();await a.page.getByRole('button',{name:'Close panel',exact:true}).click();
+  await a.page.getByRole('heading',{name:'Your people',exact:true}).waitFor();await a.page.getByRole('tab',{name:'Friends',exact:true}).click();
+  stage='profiles';await b.api('/me/profile',{display_name:'Staging profile check',bio:'Automated staging acceptance',links:{instagram:{url:'@mindaamqa',visible:true},facebook:{url:'mindaamqa',visible:false}}},'PUT');
+  await a.page.getByRole('button',{name:'View profile',exact:true}).first().click();const profile=a.page.getByRole('dialog',{name:'Player profile',exact:true});await profile.getByRole('heading',{name:'Staging profile check',exact:true}).waitFor();assert.equal(await profile.locator('a[href*="facebook.com"]').count(),0);await profile.getByRole('button',{name:'Follow',exact:true}).click();await profile.getByRole('button',{name:'Unfollow',exact:true}).waitFor();await profile.getByRole('button',{name:'Avatar',exact:true}).click();await profile.locator('.avatar-preview canvas').waitFor();assert.equal(await profile.getByText('3D preview is unavailable in this browser.',{exact:false}).count(),0);await profile.getByRole('button',{name:'Close profile',exact:true}).click();checks.profiles=true;checks.avatar_rendering=true;
+  await a.page.getByRole('button',{name:'Close panel',exact:true}).click();
   for(const key of ['browser','signup','login','onboarding','session_persistence','world_entry','friends','no_world_media'])checks[key]=true;
   stage='events-auditorium';
   // Public auditorium entry places real users together using application APIs.
   event=await a.api('/events',{title:'GCP staging acceptance '+Date.now(),description:'Automated staging QA, synthetic devices. Not a public customer event.',city:'milton-keynes',starts_at:Date.now()/1000,communication_mode:'liveface',venue_experience_type:'auditorium',event_type:'Public Talk'});
+  const catalogue=await a.api('/venue-rentals/milton-keynes'),cost=catalogue.prices?.['1'];
+  const maxCost=Number(process.env.QA_STAGING_MAX_RESERVATION_PC||0);
+  assert.ok(a.reusable&&catalogue.enabled&&Number.isInteger(cost)&&cost>0&&cost<=maxCost&&catalogue.purchased_credits>=cost,'Paid venue acceptance requires a dedicated purchased-credit staging host and an explicit per-reservation PC limit. No test credits are fabricated.');
+  const reservation=await a.api('/events/'+event.id+'/venue/booking',{request_id:crypto.randomUUID(),hours:1,starts_at:Date.now()/1000,expected_cost:cost});assert.equal(reservation.cost,cost);checks.venue_booking=true;
   await a.api('/events/'+event.id+'/state/start',{});await b.api('/events/'+event.id+'/join',{});await b.api('/events/'+event.id+'/venue/enter',{});
   await until(()=>peer(a,b.id)&&peer(b,a.id),'Mutual realtime presence',60000);
   await until(()=>[a,b].every(u=>u.states.at(-1)?.scene?.id===event.id),'Both users entered auditorium',60000);checks.events=true;stage='movement';
@@ -156,8 +167,8 @@ async function main(){
   fs.writeFileSync(path.join(out,result.forced_turn?'relay.json':'direct.json'),JSON.stringify(result,null,2));
   if(result.forced_turn){const direct=JSON.parse(fs.readFileSync(path.join(out,'direct.json')));assert.equal(direct.sha,result.sha);assert.equal(direct.origin,origin);fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify(result,null,2));}
  }catch(e){await diagnostics(e);throw e}finally{
-  if(event&&users[0])await users[0].api('/events/'+event.id+'/state/end',{}).catch(()=>{});
-  for(const u of activeUsers){if(u.api)await u.api('/me',undefined,'DELETE').catch(()=>{});await u.context.close();}
+  if(event&&users[0])await users[0].api('/events/'+event.id+'/state/cancel',{}).catch(()=>{});
+  for(const u of activeUsers){if(u.api&&!u.reusable)await u.api('/me',undefined,'DELETE').catch(()=>{});if(u.api&&u.reusable)await u.api('/auth/logout',{}).catch(()=>{});await u.context.close();}
   await browser.close();
  }
 }

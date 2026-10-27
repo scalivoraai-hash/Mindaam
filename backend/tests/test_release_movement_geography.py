@@ -22,12 +22,15 @@ def test_all_districts_have_safe_spawns_and_collision_checked_running(city):
   assert math.hypot(nx-x,nz-z)<=step+.001
  assert not traversable(city,d['radius']+1,0)
 
-def test_run_faster_than_walk_with_server_time_and_diagonal_limits(system):
+def test_run_faster_than_walk_with_server_time_and_diagonal_limits(system,monkeypatch):
  c,dbs=system;h,u=register(c,'runner');onboard(c,h)
+ from types import SimpleNamespace
+ from backend.api import world
+ now=time.time();monkeypatch.setattr(world,'time',SimpleNamespace(time=lambda:now))
  distances={}
  for mode in ['walk','run']:
   with dbs.begin() as db:
-   p=db.get(Presence,u['id']);p.x=p.z=0;p.last_move=time.time()-5
+   p=db.get(Presence,u['id']);p.x=p.z=0;p.last_move=now-5
   r=c.post('/api/world/move',headers=h,json={'dx':1,'dz':1,'mode':mode})
   assert r.status_code==200
   distances[mode]=math.hypot(r.json()['x'],r.json()['z'])
@@ -37,7 +40,7 @@ def test_run_faster_than_walk_with_server_time_and_diagonal_limits(system):
  assert distances['walk']==pytest.approx(WALK_SPEED/MOVEMENT['accelerationSeconds']*dt*dt)
  assert distances['run']/distances['walk']>1.7
  with dbs.begin() as db:
-  p=db.get(Presence,u['id']);p.x=p.z=0;p.motion_speed=RUN_SPEED;p.last_move=time.time()-.3
+  p=db.get(Presence,u['id']);p.x=p.z=0;p.motion_speed=RUN_SPEED;p.last_move=now-.3
  r=c.post('/api/world/move',headers=h,json={'dx':1,'dz':.5,'mode':'run'})
  assert math.hypot(r.json()['x'],r.json()['z'])==pytest.approx(RUN_SPEED*.3)
  assert c.post('/api/world/move',headers=h,json={'dx':1,'dz':0,'mode':'car'}).status_code==403

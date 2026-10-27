@@ -1,0 +1,640 @@
+{
+  "milton-keynes-centre": {
+    "id": "grand-arena:milton-keynes-centre",
+    "name": "Mindaam Grand Arena",
+    "x": -61.839803562052694,
+    "z": 13.48161741094058,
+    "half": 13,
+    "entrance": [
+      -51.45807589051317,
+      28.186029352735144
+    ],
+    "heading": 0.6147602061118936,
+    "version": 1,
+    "source_hash": "20b5cbc66fd3adbf184e486c70c5dad811a8b6a865f9d9ffadec624a051c7f33"
+  },
+  "milton-keynes-willen": {
+    "id": "grand-arena:milton-keynes-willen",
+    "name": "Mindaam Grand Arena",
+    "x": -298.55948133965427,
+    "z": -68.8746135591234,
+    "half": 13,
+    "entrance": [
+      -301.19987033491356,
+      -86.67990338978086
+    ],
+    "heading": -2.994373156474319,
+    "version": 1,
+    "source_hash": "ac076a28dac934121da7ccb65392412387412e7805b9ead0e0025cd967db5569"
+  },
+  "milton-keynes": {
+    "id": "grand-arena:milton-keynes",
+    "name": "Mindaam Grand Arena",
+    "x": 53.66198415151119,
+    "z": -133.60302514455444,
+    "half": 13,
+    "entrance": [
+      38.5479960378778,
+      -143.3788812861386
+    ],
+    "heading": -2.144924696763207,
+    "version": 1,
+    "source_hash": "5f9236c55ffaf1d309904ee5a540b06f52fefa2ff7ad5c34efa1c8bdaded19d0"
+  },
+  "london": {
+    "id": "grand-arena:london",
+    "name": "Mindaam Grand Arena",
+    "x": -333.1520286782727,
+    "z": -0.607219482727432,
+    "half": 13,
+    "entrance": [
+      -316.9092571695682,
+      -8.364304870681858
+    ],
+    "heading": 2.016340716249964,
+    "version": 1,
+    "source_hash": "3dfcfa3facf821b7204b3163d88f6d3e9c5fc898388a57aa29e8e5ae4cce4cea"
+  },
+  "birmingham": {
+    "id": "grand-arena:birmingham",
+    "name": "Mindaam Grand Arena",
+    "x": 110.26592371190614,
+    "z": 146.70109488471527,
+    "half": 13,
+    "entrance": [
+      101.94773092797654,
+      130.7383987211788
+    ],
+    "heading": -2.6612063151230836,
+    "version": 1,
+    "source_hash": "61b92d781b2ee13debe84f63412fc0ca6a858a1c26a46601aba3a13362c0b15f"
+  },
+  "manchester": {
+    "id": "grand-arena:manchester",
+    "name": "Mindaam Grand Arena",
+    "x": -146.59838376046474,
+    "z": 121.60546302729514,
+    "half": 13,
+    "entrance": [
+      -138.97772094011617,
+      105.29824075682379
+    ],
+    "heading": 2.7044305556795014,
+    "version": 1,
+    "source_hash": "9ef9bda70cb9d48606ed66ec38c59b7ee5dd4b44f0ea241a07ae57aeda47506b"
+  },
+  "liverpool": {
+    "id": "grand-arena:liverpool",
+    "name": "Mindaam Grand Arena",
+    "x": -29.014440067330554,
+    "z": -158.6700430771098,
+    "half": 13,
+    "entrance": [
+      -39.64236001683264,
+      -173.19751076927747
+    ],
+    "heading": -2.509988750773179,
+    "version": 1,
+    "source_hash": "ab2fc3be95ce8442a4a23f57b8c7691b4182d2e66aee653cd3ad1e7e308ac97c"
+  },
+  "leeds": {
+    "id": "grand-arena:leeds",
+    "name": "Mindaam Grand Arena",
+    "x": 333.3286822745924,
+    "z": 197.14567125267803,
+    "half": 13,
+    "entrance": [
+      315.3521705686481,
+      196.2264178131695
+    ],
+    "heading": -1.6218881876024192,
+    "version": 1,
+    "source_hash": "fb1f8842c1d05e9d9f2a8d2d8c5ec38ed2d1452f95ddae9c451c99b1fc4dcc3f"
+  },
+  "bristol": {
+    "id": "grand-arena:bristol",
+    "name": "Mindaam Grand Arena",
+    "x": -298.97987220692596,
+    "z": -39.78058467918884,
+    "half": 13,
+    "entrance": [
+      -289.7512180517315,
+      -24.32639616979721
+    ],
+    "heading": 0.5383301243208405,
+    "version": 1,
+    "source_hash": "456bed17a8fe91ddbaa812e0617c6c6ec40141bd8150eb179b94ea4f4130daa1"
+  },
+  "oxford": {
+    "id": "grand-arena:oxford",
+    "name": "Mindaam Grand Arena",
+    "x": 373.5021595273305,
+    "z": 336.6852774864432,
+    "half": 13,
+    "entrance": [
+      332.65,
+      299.86
+    ],
+    "heading": -2.304399778757656,
+    "version": 1,
+    "extended_plaza": true,
+    "source_hash": "9fca0aa64be8a547dde83460804e28280f1a13a12fde8f7b520e33c983b27dd4"
+  },
+  "cambridge": {
+    "id": "grand-arena:cambridge",
+    "name": "Mindaam Grand Arena",
+    "x": 585.8688756144704,
+    "z": -295.203033982693,
+    "half": 13,
+    "entrance": [
+      348.32000000000005,
+      -260.99
+    ],
+    "heading": -1.427754724000288,
+    "version": 1,
+    "extended_plaza": true,
+    "source_hash": "8e5fc11df65ee017bac96c511486f7b927cb30952ee703a3971be5135236a83e"
+  },
+  "york": {
+    "id": "grand-arena:york",
+    "name": "Mindaam Grand Arena",
+    "x": -160.4697513949527,
+    "z": 144.6722798419305,
+    "half": 13,
+    "entrance": [
+      -156.39743784873818,
+      162.20556996048265
+    ],
+    "heading": 0.22821548734302774,
+    "version": 1,
+    "source_hash": "d4d44e061deb8ce864cfdda92663dc28e045f297374eaf40a27cba563fb17168"
+  },
+  "brighton": {
+    "id": "grand-arena:brighton",
+    "name": "Mindaam Grand Arena",
+    "x": 336.4066319164432,
+    "z": -446.1784889685915,
+    "half": 13,
+    "entrance": [
+      289.08,
+      -346.88
+    ],
+    "heading": -0.4447609604209554,
+    "version": 1,
+    "extended_plaza": true,
+    "source_hash": "b651f27c487ffbb67708f34d3d0fdf76c9122d37f8420086bf51c6a058d88584"
+  },
+  "newcastle": {
+    "id": "grand-arena:newcastle",
+    "name": "Mindaam Grand Arena",
+    "x": 408.5783773292836,
+    "z": -574.8491384512372,
+    "half": 13,
+    "entrance": [
+      341.84000000000003,
+      -344.315
+    ],
+    "heading": -0.28179112232636994,
+    "version": 1,
+    "extended_plaza": true,
+    "source_hash": "d42f2de020efa14169886469c95f354ec7a691ac0f06182bfe3cbdf7a10a8e20"
+  },
+  "nottingham": {
+    "id": "grand-arena:nottingham",
+    "name": "Mindaam Grand Arena",
+    "x": 66.52349931337625,
+    "z": 99.79253300242081,
+    "half": 13,
+    "entrance": [
+      48.543374828344064,
+      98.9468832506052
+    ],
+    "heading": -1.6177941681009271,
+    "version": 1,
+    "source_hash": "1c9489ae8dbe8369a6a55ff9591a2be3e14480e7eaeaf6983306e1dd1a9765b4"
+  },
+  "cardiff": {
+    "id": "grand-arena:cardiff",
+    "name": "Mindaam Grand Arena",
+    "x": -78.4028066513509,
+    "z": -54.37230232486307,
+    "half": 13,
+    "entrance": [
+      -74.02632666283772,
+      -36.912450581215765
+    ],
+    "heading": 0.24559939551144752,
+    "version": 1,
+    "source_hash": "a699da1c4cee09aba0c67ef4a0601082cdd3aae64affcbab6d32554d0d26da6a"
+  },
+  "edinburgh": {
+    "id": "grand-arena:edinburgh",
+    "name": "Mindaam Grand Arena",
+    "x": 190.9892089371026,
+    "z": 71.43921284858878,
+    "half": 13,
+    "entrance": [
+      192.41855223427564,
+      53.496053212147196
+    ],
+    "heading": 3.062101002149019,
+    "version": 1,
+    "source_hash": "939da7982881b57d83b7180083a58679a75a7da6386313401bd0a9dabf8e39d1"
+  },
+  "paris": {
+    "id": "grand-arena:paris",
+    "name": "Mindaam Grand Arena",
+    "x": -218.8844563821284,
+    "z": -33.83746256413196,
+    "half": 13,
+    "entrance": [
+      -210.1398640955321,
+      -49.57061564103299
+    ],
+    "heading": 2.6343022382464945,
+    "version": 1,
+    "source_hash": "7a06e1d622367593321f9103b345cbd0b7ccadfe3424fe9308bdfbf515be6995"
+  },
+  "berlin": {
+    "id": "grand-arena:berlin",
+    "name": "Mindaam Grand Arena",
+    "x": -289.9559492275905,
+    "z": 113.75051462956745,
+    "half": 13,
+    "entrance": [
+      -272.0527373068976,
+      111.88637865739186
+    ],
+    "heading": 1.6745454601314336,
+    "version": 1,
+    "source_hash": "e27085d4ee068dda2fe4c2eca24f1bde6283b8039e70d2fb541a231919ff691e"
+  },
+  "amsterdam": {
+    "id": "grand-arena:amsterdam",
+    "name": "Mindaam Grand Arena",
+    "x": -29.332673937734874,
+    "z": -8.98602752899976,
+    "half": 13,
+    "entrance": [
+      -12.27941848443372,
+      -3.2252568822499397
+    ],
+    "heading": 1.245021649250816,
+    "version": 1,
+    "source_hash": "17ab51cd194b05ae6d31ed82e3deee012a9bd7af4417b0f0eb69154be12d9cc4"
+  },
+  "madrid": {
+    "id": "grand-arena:madrid",
+    "name": "Mindaam Grand Arena",
+    "x": -261.3625554412977,
+    "z": 170.98160377137697,
+    "half": 13,
+    "entrance": [
+      -243.3925138603244,
+      169.94352594284425
+    ],
+    "heading": 1.628499333616049,
+    "version": 1,
+    "source_hash": "2971d8dfbbb8752155cad0c4113a7f4c30d5bec4d1d6dc0aee218e81a63ecfb8"
+  },
+  "barcelona": {
+    "id": "grand-arena:barcelona",
+    "name": "Mindaam Grand Arena",
+    "x": 457.74829862844547,
+    "z": 452.091498101648,
+    "half": 13,
+    "entrance": [
+      343.91,
+      339.66
+    ],
+    "heading": -2.3499772114363444,
+    "version": 1,
+    "extended_plaza": true,
+    "source_hash": "895c9c28aae6533afae1abe473e224e5cd60796610429ef27941dbc95be189e9"
+  },
+  "rome": {
+    "id": "grand-arena:rome",
+    "name": "Mindaam Grand Arena",
+    "x": -27.22527230219232,
+    "z": 114.23371171619347,
+    "half": 13,
+    "entrance": [
+      -44.82006807554808,
+      110.43592792904836
+    ],
+    "heading": -1.7833819178168928,
+    "version": 1,
+    "source_hash": "2ac840998c042278459ce1db9c2262cf906495427d00de06c4d798e4c9a29b3d"
+  },
+  "milan": {
+    "id": "grand-arena:milan",
+    "name": "Mindaam Grand Arena",
+    "x": 62.479650803855876,
+    "z": 291.5819654122932,
+    "half": 13,
+    "entrance": [
+      44.47991270096397,
+      291.4848663530733
+    ],
+    "heading": -1.576190745136446,
+    "version": 1,
+    "source_hash": "ec4a6c5e1aeda83b078b1d78477ca6c74c14d068053aa6585a7298cee14bdc9f"
+  },
+  "dublin": {
+    "id": "grand-arena:dublin",
+    "name": "Mindaam Grand Arena",
+    "x": 134.87744792335425,
+    "z": 169.0798622533805,
+    "half": 13,
+    "entrance": [
+      129.21686198083856,
+      151.99309056334513
+    ],
+    "heading": -2.8216870057472563,
+    "version": 1,
+    "source_hash": "8599597215ae4323f4571a471b9f48a4d6818fbf150154e2c5a32a3ea4afc23a"
+  },
+  "new-york": {
+    "id": "grand-arena:new-york",
+    "name": "Mindaam Grand Arena",
+    "x": 498.2463733762518,
+    "z": 393.5291637391328,
+    "half": 13,
+    "entrance": [
+      344.90999999999997,
+      347.835
+    ],
+    "heading": -1.8604167979936186,
+    "version": 1,
+    "extended_plaza": true,
+    "source_hash": "e242cc1f8c958ce844260f4ce71aa6b3bc49696221856f66c0ba8327337c3463"
+  },
+  "los-angeles": {
+    "id": "grand-arena:los-angeles",
+    "name": "Mindaam Grand Arena",
+    "x": -126.75477571828182,
+    "z": 44.63683108414186,
+    "half": 13,
+    "entrance": [
+      -112.50494392957046,
+      55.63420777103547
+    ],
+    "heading": 0.9135168778147364,
+    "version": 1,
+    "source_hash": "b12813830ada8d80a40fc8636df0d133a1043909f276d571316c47538578bf52"
+  },
+  "miami": {
+    "id": "grand-arena:miami",
+    "name": "Mindaam Grand Arena",
+    "x": -153.51398853145545,
+    "z": -39.765953682180424,
+    "half": 13,
+    "entrance": [
+      -135.52974713286386,
+      -40.5189884205451
+    ],
+    "heading": 1.6126438029298558,
+    "version": 1,
+    "source_hash": "efa032c56a941ead147a404acbcf2e95804fbfbde6ac7fb9bcbd99e43a7a34d9"
+  },
+  "toronto": {
+    "id": "grand-arena:toronto",
+    "name": "Mindaam Grand Arena",
+    "x": -181.9413563545217,
+    "z": 150.86128732586107,
+    "half": 13,
+    "entrance": [
+      -176.82158908863042,
+      168.11782183146528
+    ],
+    "heading": 0.2884133986184958,
+    "version": 1,
+    "source_hash": "689f3f99e5a01847d1cdd8c07f782f0c88f5bd4bc140a9f97970cbc17b450413"
+  },
+  "vancouver": {
+    "id": "grand-arena:vancouver",
+    "name": "Mindaam Grand Arena",
+    "x": -29.617764514001266,
+    "z": -65.33107679678923,
+    "half": 13,
+    "entrance": [
+      -16.685691128500316,
+      -77.85151919919731
+    ],
+    "heading": 2.3400233932054815,
+    "version": 1,
+    "source_hash": "8a878c45f50ad419e659c0487e269f88e671aa6c6728069af3be1c08ee6c4bb1"
+  },
+  "dubai": {
+    "id": "grand-arena:dubai",
+    "name": "Mindaam Grand Arena",
+    "x": 0.6205413307875132,
+    "z": -75.97204394836058,
+    "half": 13,
+    "entrance": [
+      1.4076353326968796,
+      -57.98926098709015
+    ],
+    "heading": 0.04374139168511806,
+    "version": 1,
+    "source_hash": "313d5b259600b1c353d92a0bf346d2c67890701ed09f380f09bf699907b49380"
+  },
+  "abu-dhabi": {
+    "id": "grand-arena:abu-dhabi",
+    "name": "Mindaam Grand Arena",
+    "x": 14.746042498198507,
+    "z": -32.34262969661643,
+    "half": 13,
+    "entrance": [
+      4.192760624549627,
+      -46.924407424154104
+    ],
+    "heading": -2.5151168749282213,
+    "version": 1,
+    "source_hash": "4ee75df870cac87961ac4ee7bebb4711a1c61940fc9d5f4212b18822bca6d40d"
+  },
+  "riyadh": {
+    "id": "grand-arena:riyadh",
+    "name": "Mindaam Grand Arena",
+    "x": 4.26074958302801,
+    "z": 61.94241722702003,
+    "half": 13,
+    "entrance": [
+      2.201437395757003,
+      44.06060430675501
+    ],
+    "heading": -3.02693536631682,
+    "version": 1,
+    "source_hash": "63cd330336c1a3612e348f5497add598fae112e805a28766a06831e1cc538f64"
+  },
+  "jeddah": {
+    "id": "grand-arena:jeddah",
+    "name": "Mindaam Grand Arena",
+    "x": 42.12120970850056,
+    "z": 24.896023764042422,
+    "half": 13,
+    "entrance": [
+      38.617802427125135,
+      7.240255941010606
+    ],
+    "heading": -2.9457086203798415,
+    "version": 1,
+    "source_hash": "a4cd26c31afd18f0b20bdfcfeb140b306c23d5914f8cf33740ac900ce44e5542"
+  },
+  "doha": {
+    "id": "grand-arena:doha",
+    "name": "Mindaam Grand Arena",
+    "x": 136.76640939299458,
+    "z": 109.94400477125706,
+    "half": 13,
+    "entrance": [
+      136.36410234824865,
+      91.94850119281426
+    ],
+    "heading": -3.1192404009775316,
+    "version": 1,
+    "source_hash": "c9135810705ac06c0d0e2f54a557624021b1e6b99ed40a4f903bdfd64d114cf0"
+  },
+  "mumbai": {
+    "id": "grand-arena:mumbai",
+    "name": "Mindaam Grand Arena",
+    "x": -49.774244235857125,
+    "z": 54.73525110367771,
+    "half": 13,
+    "entrance": [
+      -39.57481105896428,
+      39.90381277591943
+    ],
+    "heading": 2.5391762383832126,
+    "version": 1,
+    "source_hash": "0c0e9f730013c6f9ace4486efb3e60816cf5747d0c7fdf9b46f0f9847886db71"
+  },
+  "bengaluru": {
+    "id": "grand-arena:bengaluru",
+    "name": "Mindaam Grand Arena",
+    "x": -81.71380927257027,
+    "z": -153.11994537300743,
+    "half": 13,
+    "entrance": [
+      -67.61470231814258,
+      -141.92998634325184
+    ],
+    "heading": 0.8999305222749402,
+    "version": 1,
+    "source_hash": "0e0bea783136f68b28dc3748b1d2f3cdefea62ea0b0a899601d08412394a1690"
+  },
+  "kochi": {
+    "id": "grand-arena:kochi",
+    "name": "Mindaam Grand Arena",
+    "x": -111.7721422447098,
+    "z": -194.3304746036911,
+    "half": 13,
+    "entrance": [
+      -106.83741056117745,
+      -177.02011865092277
+    ],
+    "heading": 0.2777075577065515,
+    "version": 1,
+    "source_hash": "da2fed40dd6cc3fb79293f75ed0afd8914c7a2328e070677f4538a6ae2694a97"
+  },
+  "singapore": {
+    "id": "grand-arena:singapore",
+    "name": "Mindaam Grand Arena",
+    "x": 69.19975873189713,
+    "z": 111.5221554788803,
+    "half": 13,
+    "entrance": [
+      83.94868968297429,
+      121.84053886972008
+    ],
+    "heading": 0.9603374445270918,
+    "version": 1,
+    "source_hash": "39b8c54bbdb47b85177635455e4893b61f632e849142c921ef8b5bea66965773"
+  },
+  "tokyo": {
+    "id": "grand-arena:tokyo",
+    "name": "Mindaam Grand Arena",
+    "x": -189.55384974766932,
+    "z": -223.28647861985846,
+    "half": 13,
+    "entrance": [
+      -180.40846243691735,
+      -207.78286965496463
+    ],
+    "heading": 0.5329507594796207,
+    "version": 1,
+    "source_hash": "a2b01136fda9f69fd4b64b7670c06c779f667ad7cae1185b65ce17a8c98a8576"
+  },
+  "seoul": {
+    "id": "grand-arena:seoul",
+    "name": "Mindaam Grand Arena",
+    "x": -129.13705348505522,
+    "z": -30.718936128564348,
+    "half": 13,
+    "entrance": [
+      -111.13926337126381,
+      -31.000984032141087
+    ],
+    "heading": 1.5864662960516116,
+    "version": 1,
+    "source_hash": "2d9636773866b5a9d3af7c34c373802bf9d7929c399265a27dff5a12675be19d"
+  },
+  "bangkok": {
+    "id": "grand-arena:bangkok",
+    "name": "Mindaam Grand Arena",
+    "x": 94.88740045004283,
+    "z": -288.6234171945507,
+    "half": 13,
+    "entrance": [
+      95.65060011251072,
+      -270.63960429863766
+    ],
+    "heading": 0.04241269569058745,
+    "version": 1,
+    "source_hash": "edf74f58f3bfebc3c18c40a52abb3b3b8653d68dd8145c0d48a225f792a01d04"
+  },
+  "shanghai": {
+    "id": "grand-arena:shanghai",
+    "name": "Mindaam Grand Arena",
+    "x": -224.2359147259715,
+    "z": 225.13036568100443,
+    "half": 13,
+    "entrance": [
+      -208.68022868149288,
+      216.0738414202511
+    ],
+    "heading": 2.0980249468954764,
+    "version": 1,
+    "source_hash": "ac964024390365b96c000d49b84ccdff8fb467d63ac5dbd20e65b45c4d498a79"
+  },
+  "sydney": {
+    "id": "grand-arena:sydney",
+    "name": "Mindaam Grand Arena",
+    "x": -581.0283631297882,
+    "z": 392.9584863131029,
+    "half": 13,
+    "entrance": [
+      -349.06,
+      331.39
+    ],
+    "heading": 1.830232215627348,
+    "version": 1,
+    "extended_plaza": true,
+    "source_hash": "dc8280222e2d2ac80fba0aa1893bdab24b2277b0a38e69992c4812dc7662ed4a"
+  },
+  "melbourne": {
+    "id": "grand-arena:melbourne",
+    "name": "Mindaam Grand Arena",
+    "x": -430.08936423779255,
+    "z": -486.07048976780004,
+    "half": 13,
+    "entrance": [
+      -348.46,
+      -348.46
+    ],
+    "heading": 0.5353981633974484,
+    "version": 1,
+    "extended_plaza": true,
+    "source_hash": "d9640e8718bbd986a2d3a37eebf5a2c49813a8ec7b7097f05ddd980e5fbae8f6"
+  }
+}

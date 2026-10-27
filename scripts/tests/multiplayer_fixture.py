@@ -24,7 +24,10 @@ else:
     data=json.loads(sys.argv[2])
     with SessionLocal.begin() as db:
         city=data['city'];users=[db.get(User,id) for id in data['users']]
-        if action=='place':
+        if action=='venue_funds':
+            for u in users:credit(db,u.id,int(data['cost']),'purchase','local-qa-venue:'+data['event_id'],'local-qa-venue:'+data['event_id']+':'+u.id)
+            print('{}')
+        elif action=='place':
             kind=data.get('kind')
             if kind:
                 assets=list(db.scalars(select(RentalAsset).where(RentalAsset.city==city,RentalAsset.kind==kind,RentalAsset.enabled==True)))

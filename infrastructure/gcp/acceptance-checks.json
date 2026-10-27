@@ -19,5 +19,8 @@
   "self_hosted_media",
   "responsive",
   "startup_policy",
-  "turn_tls"
+  "turn_tls",
+  "profiles",
+  "avatar_rendering",
+  "venue_booking"
 ]

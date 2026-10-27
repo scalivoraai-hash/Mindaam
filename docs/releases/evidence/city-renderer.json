@@ -1,0 +1,66 @@
+{
+  "results": [
+    {
+      "city": "london",
+      "fixtureRadius": 110,
+      "features": 293,
+      "unchanged": true,
+      "buildings": 152,
+      "geometries": 50,
+      "textures": 4,
+      "drawCalls": 50,
+      "attribution": "OpenStreetMap contributors",
+      "license": "ODbL 1.0"
+    },
+    {
+      "city": "milton-keynes",
+      "fixtureRadius": 110,
+      "features": 129,
+      "unchanged": true,
+      "buildings": 82,
+      "geometries": 44,
+      "textures": 2,
+      "drawCalls": 44,
+      "attribution": "OpenStreetMap contributors",
+      "license": "ODbL 1.0"
+    },
+    {
+      "city": "dubai",
+      "fixtureRadius": 110,
+      "features": 49,
+      "unchanged": true,
+      "buildings": 20,
+      "geometries": 25,
+      "textures": 2,
+      "drawCalls": 25,
+      "attribution": "OpenStreetMap contributors",
+      "license": "ODbL 1.0"
+    },
+    {
+      "city": "mumbai",
+      "fixtureRadius": 110,
+      "features": 54,
+      "unchanged": true,
+      "buildings": 22,
+      "geometries": 39,
+      "textures": 3,
+      "drawCalls": 39,
+      "attribution": "OpenStreetMap contributors",
+      "license": "ODbL 1.0"
+    },
+    {
+      "city": "new-york",
+      "fixtureRadius": 110,
+      "features": 155,
+      "unchanged": true,
+      "buildings": 15,
+      "geometries": 34,
+      "textures": 2,
+      "drawCalls": 34,
+      "attribution": "OpenStreetMap contributors",
+      "license": "ODbL 1.0"
+    }
+  ],
+  "errors": [],
+  "stableRepeatedCityResources": true
+}

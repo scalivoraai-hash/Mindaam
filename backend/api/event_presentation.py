@@ -220,7 +220,7 @@ def stop(id:str,data:Start,u=Depends(current_user),db=Depends(get_db)):
 class Lighting(Strict):
     enabled:bool=True
     preset:Literal['STANDARD','CONCERT','DJ PARTY','CINEMA','WARM','COOL','PURPLE WAVE','BLUE WAVE','RAINBOW','SPOTLIGHT','PULSE']='STANDARD'
-    intensity:float=Field(default=.7,ge=0,le=1,allow_inf_nan=False)
+    intensity:float=Field(default=.7,ge=0,le=2,allow_inf_nan=False)
     target:Literal['stage','audience','screen']='stage'
 
 

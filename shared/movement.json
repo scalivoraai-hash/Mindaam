@@ -12,5 +12,6 @@
     "scooter": 34,
     "car": 120
   },
-  "normalWorldMultiplier": 3
+  "normalWorldMultiplier": 3,
+  "outdoorWalkFactor": 0.6
 }

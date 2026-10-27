@@ -34,7 +34,7 @@ from pathlib import Path
 MOVEMENT = json.loads((Path(__file__).resolve().parents[2]/'shared/movement.json').read_text())
 WALK_SPEED = MOVEMENT['previewStep'] / (MOVEMENT['inputIntervalMs'] / 1000)
 RUN_SPEED = WALK_SPEED * MOVEMENT['runMultiplier']
-OUTDOOR_WALK_SPEED = WALK_SPEED * MOVEMENT['normalWorldMultiplier']
+OUTDOOR_WALK_SPEED = WALK_SPEED * MOVEMENT['normalWorldMultiplier'] * MOVEMENT['outdoorWalkFactor']
 OUTDOOR_RUN_SPEED = RUN_SPEED * MOVEMENT['normalWorldMultiplier']
 WALK_ACCELERATION = WALK_SPEED / MOVEMENT['accelerationSeconds']
 RUN_ACCELERATION = RUN_SPEED / MOVEMENT['accelerationSeconds']
@@ -263,7 +263,8 @@ def move(data: Movement, u=Depends(current_user), db=Depends(get_db)):
     if rental_current(db,u):raise HTTPException(409,'Use your vehicle controls or Exit Vehicle')
     if p.zone_id.startswith('bus:'):raise HTTPException(409,'Choose a seat or wait for the bus to stop')
     multiplier = MOVEMENT["normalWorldMultiplier"] if p.zone_id == "world" else 1
-    speeds = {"walk": WALK_SPEED*multiplier, "run": RUN_SPEED*multiplier, **MOVEMENT["vehicleSpeeds"]}
+    walk_factor = MOVEMENT['outdoorWalkFactor'] if p.zone_id == 'world' else 1
+    speeds = {"walk": WALK_SPEED*multiplier*walk_factor, "run": RUN_SPEED*multiplier, **MOVEMENT["vehicleSpeeds"]}
     if data.mode not in speeds:
         raise HTTPException(422, "Unsupported movement mode")
     if data.mode not in {"walk", "run"}:
@@ -275,7 +276,7 @@ def move(data: Movement, u=Depends(current_user), db=Depends(get_db)):
     # Preview-matched walking and a distinct faster run use the same shared contract.
     # Released input stops immediately. Render interpolation supplies the soft stop.
     previous = p.motion_speed if now-p.last_move < .5 else 0
-    acceleration=(RUN_ACCELERATION if data.mode=='run' else WALK_ACCELERATION)*multiplier
+    acceleration=(RUN_ACCELERATION if data.mode=='run' else WALK_ACCELERATION*walk_factor)*multiplier
     speed = min(speeds[data.mode], previous+acceleration*dt)
     if not (data.dx or data.dz):speed=0
     old_x,old_z=p.x,p.z

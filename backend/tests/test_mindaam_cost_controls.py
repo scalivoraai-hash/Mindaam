@@ -25,6 +25,12 @@ def test_stage_host_plus_three_and_demotion_stops_publication(system,monkeypatch
     c,dbs=system;users=[register(c,'stage_'+str(i)) for i in range(5)]
     for h,_ in users:onboard(c,h)
     host=users[0];e=c.post('/api/events',headers=host[0],json={'title':'Local stage test','city':'manchester','starts_at':time.time()+60,'event_type':'Public Talk','venue_experience_type':'auditorium','communication_mode':'liveface'}).json()
+    assert c.post('/api/growth/worlds/manchester/starter',headers=host[0],json={'confirmed':True}).status_code==200
+    from backend.api.economy import credit
+    import uuid
+    with dbs.begin() as db:credit(db,host[1]['id'],100,'purchase','fixture','stage-cost-booking')
+    reserved=c.post('/api/events/'+e['id']+'/venue/booking',headers=host[0],json={'request_id':str(uuid.uuid4()),'hours':1,'expected_cost':100,'starts_at':time.time()-1})
+    assert reserved.status_code==200,reserved.text
     for h,_ in users[1:]:assert c.post('/api/events/'+e['id']+'/join',headers=h).status_code==200
     assert c.post('/api/events/'+e['id']+'/state/start',headers=host[0]).status_code==200
     async def permission(*args):pass

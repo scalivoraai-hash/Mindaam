@@ -15,7 +15,7 @@ def notify(db,uid,kind,body,source=''):
  from .talk import preferences
  if preferences(db,uid).get('event_notifications',True):base_notify(db,uid,kind,body,source)
 
-TYPES=['Social Hangout','Public Talk','Discussion','Networking','Audio Room','Video Meetup','Community Meetup','Gaming / Activity','Other']
+TYPES=['Social Hangout','Public Talk','Discussion','Networking','Audio Room','Video Meetup','Community Meetup','Gaming / Activity','Concert','Movie Premiere','Film Festival','Screening','Creator Release','Other']
 
 def attendance(db,e):return list(db.scalars(select(Attendee).where(Attendee.event_id==e.id,Attendee.state=='active')))
 def host(db,e,u):
@@ -30,22 +30,34 @@ def get(db,id,u,moderator=False):
  if moderator and not host(db,e,u):raise HTTPException(403,'Only event hosts can do that')
  return e
 
-def view(db,e,u):
+def view(db,e,u,compact=False):
  a=db.get(Attendee,(e.id,u.id));people=attendance(db,e);moderator=host(db,e,u)
  from .event_presentation import state_view
  presentation=state_view(e,a,moderator)
  from .venue_rentals import booking
- reserved=booking(db,e.id) if moderator and e.venue_experience_type=='auditorium' else None
- return {**serialize(e),'presentation':presentation,'venue_booking':serialize(reserved) if reserved and moderator else ({'starts_at':reserved.starts_at,'ends_at':reserved.ends_at} if reserved else None),'joined':bool(a and a.state=='active'),'my_state':a.state if a else None,'my_role':a.role if a else None,'my_hand':bool(a and a.hand),'can_manage':moderator,'attendees':len(people),'speakers':sum(p.role in ['host','cohost','speaker'] for p in people),'participants':[{'id':p.user_id,'username':person.username,'avatar':person.avatar,'friend':friends(db,u.id,person.id),'role':p.role,'hand':p.hand,'share_state':p.share_state,**display_profile(person)} for p in people if (person:=db.get(User,p.user_id))] if moderator or a and a.state=='active' else [],'requests':[{'id':p.user_id,'username':db.get(User,p.user_id).username} for p in db.scalars(select(Attendee).where(Attendee.event_id==e.id,Attendee.state=='pending'))] if moderator else []}
+ reserved=booking(db,e.id) if not compact and e.venue_experience_type=='auditorium' else None
+ from .event_tickets import summary
+ from .event_engagement import summary as engagement
+ programme={k:v for k,v in (e.programme or {}).items() if k not in ['polls','questions'] and (moderator or k!='rights_note') and (not compact or k in ['cover_image','arena_booking_required'])}
+ return {**serialize(e),'server_time':time.time(),'organiser':{'id':e.host_id,'name':db.get(User,e.host_id).username},'programme':programme,'engagement':engagement(e,u.id,moderator) if not compact and (moderator or a and a.state=='active') else None,'ticketing':None if compact else summary(db,e,u),'presentation':presentation,'venue_booking':serialize(reserved) if reserved and moderator else ({'starts_at':reserved.starts_at,'ends_at':reserved.ends_at} if reserved else None),'joined':bool(a and a.state=='active'),'my_state':a.state if a else None,'my_role':a.role if a else None,'my_hand':bool(a and a.hand),'can_manage':moderator,'attendees':len(people),'speakers':sum(p.role in ['host','cohost','speaker'] for p in people),'participants':[{'id':p.user_id,'username':person.username,'avatar':person.avatar,'friend':friends(db,u.id,person.id),'role':p.role,'hand':p.hand,'share_state':p.share_state,**display_profile(person)} for p in people if (person:=db.get(User,p.user_id))] if moderator or a and a.state=='active' else [],'requests':[{'id':p.user_id,'username':db.get(User,p.user_id).username} for p in db.scalars(select(Attendee).where(Attendee.event_id==e.id,Attendee.state=='pending'))] if moderator else []}
+
+class Programme(Strict):
+ agenda:str=Field(default='',max_length=1500)
+ cover_image:str=Field(default='',max_length=500,pattern=r'^(https://[^\s]+|/uploads/[^\s]+)?$')
+ arena_booking_required:bool=False
+ rights_confirmed:bool=False
+ rights_note:str=Field(default='',max_length=500)
 
 class EventInput(Strict):
+ programme:Programme=Field(default_factory=Programme)
+ ticket_price:int=Field(default=0,ge=0,le=1000000,strict=True)
  title:str=Field(min_length=3,max_length=120)
  description:str=Field(default='',max_length=1000)
  city:str
  starts_at:float=Field(allow_inf_nan=False)
  ends_at:float|None=Field(default=None,allow_inf_nan=False)
  capacity:int=Field(default=50,ge=2,le=250)
- event_type:Literal['Social Hangout','Public Talk','Discussion','Networking','Audio Room','Video Meetup','Community Meetup','Gaming / Activity','Other']='Social Hangout'
+ event_type:Literal['Social Hangout','Public Talk','Discussion','Networking','Audio Room','Video Meetup','Community Meetup','Gaming / Activity','Concert','Movie Premiere','Film Festival','Screening','Creator Release','Other']='Social Hangout'
  communication_mode:Literal['text','voice','liveface']='text'
  visibility:Literal['public','private']='public'
  venue_experience_type:Literal['standard','auditorium']='standard'
@@ -54,6 +66,7 @@ class EventInput(Strict):
 
 def validate(data,max_seconds=14400):
  check_city(data.city)
+ if data.event_type in ['Movie Premiere','Film Festival','Screening','Creator Release'] and not data.programme.rights_confirmed:raise HTTPException(422,'Confirm your rights to screen this content')
  if data.starts_at<time.time()-60:raise HTTPException(422,'Choose a current or future start time')
  if data.ends_at and (data.ends_at<=data.starts_at or data.ends_at-data.starts_at>max_seconds):raise HTTPException(422,'Events can last up to four hours')
  if data.communication_mode!='text' and data.event_type!='Public Talk' and data.venue_experience_type!='auditorium' and data.capacity>conversations.rules()['max_participants']:raise HTTPException(422,'Small media meetups use the configured conversation limit; choose Public Talk for an audience')
@@ -67,6 +80,7 @@ def listing(city:str|None=None,u=Depends(current_user),db=Depends(get_db)):
 def create(data:EventInput,u=Depends(current_user),db=Depends(get_db)):
  if not u.onboarded:raise HTTPException(409,'Complete your profile first')
  validate(data)
+ data.programme.arena_booking_required=data.venue_experience_type=='auditorium'
  from .media_policy import settings
  limits=settings(db)
  if 'capacity' not in data.model_fields_set:data.capacity=limits['free_event_max_audience']
@@ -84,11 +98,16 @@ def edit(id:str,data:EventInput,u=Depends(current_user),db=Depends(get_db)):
  from .venue_rentals import booking
  reserved=booking(db,id)
  if reserved and (data.city!=reserved.city or data.starts_at!=reserved.starts_at or data.ends_at!=reserved.ends_at or data.venue_experience_type!='auditorium'):raise HTTPException(409,'A reserved venue’s location and time cannot be changed')
+ from .event_tickets import sales
+ if sales(db,id) and (data.ticket_price!=e.ticket_price or data.starts_at!=e.starts_at or data.ends_at!=e.ends_at or data.status!=e.status or data.city!=e.city or data.visibility!=e.visibility or data.venue_experience_type!=e.venue_experience_type or data.capacity<sales(db,id)+1):raise HTTPException(409,'Sold tickets protect this event’s price, time, city and reserved audience capacity')
+ if data.ticket_price!=e.ticket_price and len(attendance(db,e))>1:raise HTTPException(409,'Ticket prices cannot change after participants join')
  validate(data,86400 if reserved else 14400)
  from .media_policy import settings
  if data.capacity>settings(db)["event_capacity_limit"]:raise HTTPException(422,"This event exceeds the current tested capacity")
  if data.capacity<len(attendance(db,e)):raise HTTPException(409,'Capacity cannot be smaller than the joined group')
- for k,v in data.model_dump().items():setattr(e,k,v)
+ data.programme.arena_booking_required=bool((e.programme or {}).get('arena_booking_required')) or (data.venue_experience_type=='auditorium' and e.venue_experience_type!='auditorium')
+ payload=data.model_dump();payload['programme'].update({k:v for k,v in (e.programme or {}).items() if k in ['highlights','polls','questions']})
+ for k,v in payload.items():setattr(e,k,v)
  return view(db,e,u)
 
 def add_media(db,e,a):
@@ -109,9 +128,13 @@ def eligible(db,e,u):
 def join(id:str,u=Depends(current_user),db=Depends(get_db)):
  e=get(db,id,u);a=eligible(db,e,u)
  if a and a.state in ['active','pending']:return view(db,e,u)
+ needs_approval=e.visibility=='private' and not host(db,e,u) and (not a or a.state!='approved')
+ if not needs_approval:
+  from .event_tickets import require_ticket
+  require_ticket(db,e,u)
  if not a:a=Attendee(event_id=e.id,user_id=u.id);db.add(a)
  # Even invited private guests require approval by a host.
- a.state='pending' if e.visibility=='private' and not host(db,e,u) else 'active';a.joined_at=time.time();a.last_seen=time.time();a.role='audience' if e.event_type=='Public Talk' or e.venue_experience_type=='auditorium' else 'speaker'
+ a.state='pending' if needs_approval else 'active';a.joined_at=time.time();a.last_seen=time.time();a.role='audience' if e.event_type=='Public Talk' or e.venue_experience_type=='auditorium' else 'speaker'
  if a.state=='active':add_media(db,e,a)
  else:notify(db,e.host_id,'event.join_request',u.username+' would like to join '+e.title,e.id)
  db.flush();return view(db,e,u)
@@ -128,6 +151,14 @@ def invite(id:str,data:InviteInput,u=Depends(current_user),db=Depends(get_db)):
  notify(db,p.id,'event.invited',u.username+' invited you to '+e.title,id);return {'ok':True}
 
 def finish(db,e,status):
+ if status=='cancelled':
+  from .event_tickets import EventTicket
+  affected=set(db.scalars(select(EventTicket.user_id).where(EventTicket.event_id==e.id)));affected.add(e.host_id)
+  list(db.scalars(select(User).where(User.id.in_(affected)).order_by(User.id).with_for_update()))
+  from .event_tickets import refund_cancelled
+  refund_cancelled(db,e)
+  from .venue_rentals import cancel_reservation
+  cancel_reservation(db,e)
  e.status=status
  if e.session_id:
   s=db.get(MediaSession,e.session_id);s.state='ended';s.ended_at=time.time();s.end_reason='event_'+status
@@ -137,6 +168,8 @@ def finish(db,e,status):
 @router.post('/{id}/state/{action}')
 def change_state(id:str,action:Literal['start','end','cancel'],u=Depends(current_user),db=Depends(get_db)):
  e=get(db,id,u,True)
+ if action=='cancel' and e.status not in ['draft','scheduled','live','cancelled']:raise HTTPException(409,'This event has already ended')
+ if action=='end' and e.status not in ['live','ended']:raise HTTPException(409,'Cancel an upcoming event so its tickets are refunded')
  if action=='start':
   if e.status=='live':return view(db,e,u)
   if e.status!='scheduled':raise HTTPException(409,'Schedule this event first')
@@ -179,7 +212,11 @@ async def moderate(id:str,user_id:str,action:Literal['approve','decline','declin
   if action in ['approve','decline']:
    if a.state=='active' and action=='approve':return e.session_id
    if a.state!='pending':raise HTTPException(409,'Request already answered')
-   if action=='approve':eligible(db,e,db.get(User,user_id));a.state='active';a.joined_at=time.time();add_media(db,e,a)
+   if action=='approve':
+    eligible(db,e,db.get(User,user_id))
+    from .event_tickets import entitled
+    a.state='active' if entitled(db,e,db.get(User,user_id)) else 'approved';a.joined_at=time.time()
+    if a.state=='active':add_media(db,e,a)
    else:a.state='declined'
    notify(db,user_id,'event.join_'+action,e.title+(' — you are welcome to join' if action=='approve' else ' — request declined'),id)
   elif action=='decline_hand':
@@ -229,10 +266,12 @@ def maintenance(db):
  for e in db.scalars(select(Event).where(Event.status.in_(['scheduled','live'])).with_for_update()):
   from .event_presentation import expire
   expire(db,e)
-  if not (creator:=db.get(User,e.host_id)) or creator.suspended:finish(db,e,'ended');continue
+  if not (creator:=db.get(User,e.host_id)) or creator.suspended:finish(db,e,'cancelled' if e.status=='scheduled' else 'ended');continue
   if e.status=='live' and e.ends_at and e.ends_at<time.time():finish(db,e,'ended')
   elif e.status=='scheduled' and not e.reminded and 0<e.starts_at-time.time()<300:
-   for a in attendance(db,e):notify(db,a.user_id,'event.starting',e.title+' starts soon',e.id)
+   from .event_tickets import EventTicket
+   recipients={a.user_id for a in attendance(db,e)}|set(db.scalars(select(EventTicket.user_id).where(EventTicket.event_id==e.id,EventTicket.refunded_at==None)))
+   for user_id in recipients:notify(db,user_id,'event.starting',e.title+' starts soon',e.id)
    e.reminded=True
 
 
@@ -284,6 +323,8 @@ def enter_venue(id:str,u=Depends(current_user),db=Depends(get_db)):
  from .growth import require_access
  e=get(db,id,u);a=db.get(Attendee,(id,u.id));p=db.get(Presence,u.id)
  if e.venue_experience_type!='auditorium' or e.status!='live' or not a or a.state!='active':raise HTTPException(403,'Join the live auditorium first')
+ from .event_tickets import require_ticket
+ require_ticket(db,e,u)
  require_access(db,u,e.city)
  from .mobility import current
  if current(db,u):raise HTTPException(409,'Exit your rental first')
@@ -306,7 +347,7 @@ def auditorium_scene(db,p,u):
  if not e or e.status!='live' or not a or a.state!='active':
   exit_venue(p.zone_id[6:],u,db);return None
  from .civic import scene
- return {'id':e.id,'name':e.title,'template':'auditorium','notice':'Mindaam Live Auditorium','event':view(db,e,u),'geography':{'city':p.city,'radius':40,'spawn':[0,8],'features':[]}}
+ return {'id':e.id,'name':e.title,'template':'auditorium','notice':'Mindaam Live Auditorium','event':view(db,e,u,compact=True),'geography':{'city':p.city,'radius':40,'spawn':[0,8],'features':[]}}
 
 class ChatSetting(Strict):
  enabled:bool

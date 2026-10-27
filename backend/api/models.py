@@ -205,6 +205,8 @@ class Event(Base):
     reminded: Mapped[bool] = mapped_column(Boolean, default=False)
     presentation: Mapped[dict] = mapped_column(JSON, default=dict, server_default='{}')
     lighting: Mapped[dict] = mapped_column(JSON, default=dict, server_default='{}')
+    ticket_price: Mapped[int] = mapped_column(Integer, default=0, server_default='0')
+    programme: Mapped[dict] = mapped_column(JSON, default=dict, server_default='{}')
 
 
 class Attendee(Base):

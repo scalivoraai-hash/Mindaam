@@ -25,12 +25,16 @@ def road_segments(city):
     return [(a,b) for f in district(city)['features'] if 'highway' in f['tags'] and f['tags']['highway'] not in {'motorway','trunk','motorway_link'} for a,b in zip(f['points'],f['points'][1:])]
 def walkable(city,x,z):
     d=district(city)
+    from .grand_arena import traversable_plaza
+    if traversable_plaza(city,x,z):return True
     if abs(x)>d['radius'] or abs(z)>d['radius']:return False
     return any(segment_distance(x,z,a,b)<=6 for a,b in street_grid(city).get((math.floor(x/32),math.floor(z/32)),[]))
 @router.get('/geography/{city}')
 def geometry(city:str):
     from .street_vehicles import placements
-    return {**district(city),'street_vehicles':placements(city)}
+    from .grand_arena import placement
+    geo=district(city);arena=placement(city);radius=max(geo['radius'],max(abs(arena['x']),abs(arena['z']))+25) if arena else geo['radius']
+    return {**geo,'radius':radius,'arena':arena,'street_vehicles':placements(city)}
 
 @lru_cache(maxsize=64)
 def footprints(city):

@@ -1,0 +1,159 @@
+{
+  "results": [
+    {
+      "preset": "0",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 57,
+      "textures": 1,
+      "geometries": 17,
+      "meanFrameMs": 54.480000000074504,
+      "season": "Summer",
+      "weather": "Sunny"
+    },
+    {
+      "preset": "1",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 57,
+      "textures": 1,
+      "geometries": 17,
+      "meanFrameMs": 2.75,
+      "season": "Winter",
+      "weather": "Clear"
+    },
+    {
+      "preset": "2",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 57,
+      "textures": 1,
+      "geometries": 17,
+      "meanFrameMs": 1.6600000001490116,
+      "season": "Spring",
+      "weather": "Partly cloudy"
+    },
+    {
+      "preset": "3",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 57,
+      "textures": 1,
+      "geometries": 17,
+      "meanFrameMs": 1.8,
+      "season": "Autumn",
+      "weather": "Overcast"
+    },
+    {
+      "preset": "4",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 58,
+      "textures": 1,
+      "geometries": 18,
+      "meanFrameMs": 2.860000000149012,
+      "season": "Autumn",
+      "weather": "Light rain"
+    },
+    {
+      "preset": "5",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 58,
+      "textures": 1,
+      "geometries": 18,
+      "meanFrameMs": 1.1699999999254942,
+      "season": "Autumn",
+      "weather": "Heavy rain"
+    },
+    {
+      "preset": "6",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 58,
+      "textures": 1,
+      "geometries": 18,
+      "meanFrameMs": 1.6,
+      "season": "Winter",
+      "weather": "Snowfall"
+    },
+    {
+      "preset": "7",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 64,
+      "textures": 1,
+      "geometries": 18,
+      "meanFrameMs": 1.35,
+      "season": "Winter",
+      "weather": "Light snow"
+    },
+    {
+      "preset": "8",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 57,
+      "textures": 1,
+      "geometries": 18,
+      "meanFrameMs": 1.2699999999254943,
+      "season": "Spring",
+      "weather": "Fog"
+    },
+    {
+      "preset": "9",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 111,
+      "textures": 1,
+      "geometries": 27,
+      "meanFrameMs": 1.4800000000745057,
+      "season": "Autumn",
+      "weather": "Windy"
+    },
+    {
+      "preset": "10",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 102,
+      "textures": 1,
+      "geometries": 27,
+      "meanFrameMs": 1.5100000001490117,
+      "season": "Summer",
+      "weather": "Sunset"
+    },
+    {
+      "preset": "11",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 60,
+      "textures": 1,
+      "geometries": 30,
+      "meanFrameMs": 1.0399999998509883,
+      "season": "Summer",
+      "weather": "Night"
+    },
+    {
+      "preset": "12",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 58,
+      "textures": 1,
+      "geometries": 30,
+      "meanFrameMs": 1.1199999999254941,
+      "season": "Autumn",
+      "weather": "Thunderclouds"
+    },
+    {
+      "preset": "13",
+      "screens": 1,
+      "lights": 2,
+      "drawCalls": 63,
+      "textures": 1,
+      "geometries": 30,
+      "meanFrameMs": 1.2600000001490117,
+      "season": "Summer",
+      "weather": "Sunrise"
+    }
+  ],
+  "errors": []
+}

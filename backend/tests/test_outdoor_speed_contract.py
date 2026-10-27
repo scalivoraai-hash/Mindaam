@@ -46,3 +46,23 @@ def test_outdoor_speed_contract(system, monkeypatch, mode, strength, gaps):
         # delayed ticks intentionally lose time to the cap and idle reset.
         base = world.RUN_SPEED if mode == 'run' else world.WALK_SPEED
         assert sum(upgraded) / sum(gaps) < base * strength * 2.8
+
+@pytest.mark.parametrize('mode,expected',[('walk',.6),('run',1.)])
+def test_requested_forty_percent_walk_reduction(system,monkeypatch,mode,expected):
+    client,sessions=system;headers,user=register(client);onboard(client,headers)
+    clock=[1000.]
+    monkeypatch.setattr(world,'time',SimpleNamespace(time=lambda:clock[0]))
+    def measured(factor):
+        monkeypatch.setitem(world.MOVEMENT,'outdoorWalkFactor',factor)
+        clock[0]=1000.;total=0
+        with sessions.begin() as db:
+            p=db.get(Presence,user['id']);account=db.get(User,user['id'])
+            p.zone_id='world';p.motion_speed=0;p.last_move=clock[0]
+            for _ in range(12):
+                p.x=p.z=0;clock[0]+=.12
+                result=world.move(world.Movement(dx=.6 if mode=='walk' else 1,dz=0,mode=mode),account,db)
+                total+=math.hypot(result['x'],result['z'])
+        return total
+    before=measured(1.);after=measured(.6)
+    assert before>0
+    assert after/before==pytest.approx(expected)
