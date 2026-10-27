@@ -102,3 +102,12 @@ Operator sequence (all from authenticated Cloud Shell, no operations dispatched 
 2. After verify passes, generate `python infrastructure/gcp/review.py --project mindaam --sha f53898771471b96debf3a91b65fa0de015152982 > release-review.json`. Complete the actual price/usage assumptions and owner approval, then save with the same command plus `--input release-review.json` (omit output redirection).
 3. Explicitly dispatch production for the same SHA with `-f review_object=releases/f53898771471b96debf3a91b65fa0de015152982/release-review.json`. Apply the DNS action above only after provider readiness.
 4. Dispatch the same workflow/ref/SHA with `-f operation=finalize`. This verifies DNS/HTTPS and never changes DNS or deploys.
+
+
+## 2026-10-27: Missing Artifact Registry image for a new feature release
+
+Recognize the exact complete `ERROR: (gcloud.artifacts.docker.images.describe) Image not found.` diagnostic only for `gcloud artifacts docker images describe` with explicit missing handling. Other commands, extra diagnostic text and permission/authentication/transport/quota/project/repository failures remain fatal. Repository absence on an image lookup is an error, not permission to build against an invalid repository.
+
+The requested feature SHA ccbefc3c684aaf46d2878ea0e8960744d7aeae5d becomes an ancestor after this fix. The prior workflow would then refuse its missing image even after discovery was corrected. Retain the existing ancestry and orchestration-only diff guard; for an allowed ancestor whose image is absent, export that exact commit with git archive into an isolated temporary context, safely extract it, and build/push its SHA tag. Never build current HEAD under an old release tag. Existing immutable image/state reuse remains unchanged. Application, Dockerfile, migration and other build-input differences still block ancestor staging through this path.
+
+Validation: full GCP suite (61 tests), Python compilation and browser syntax pass. The new mocked scenario starts with existing owned staging/migration resources and no image, exercises the exact CLI absence through the real adapter, verifies exact-source archive -> build -> push -> migration -> owned service update, then repeats without rebuilding or recreating services. Existing Foundation/resume, secrets, failure classification and image reuse tests remain passing. No real Docker build, deployment, resource mutation or workflow dispatch performed. Resume from main with operation=staging and release_sha=ccbefc3c684aaf46d2878ea0e8960744d7aeae5d.

@@ -1,5 +1,7 @@
 """Cloud Run first deployment and resume; no cloud or Docker operations."""
 import copy
+import io
+import tarfile
 import json
 import os
 from pathlib import Path
@@ -26,6 +28,35 @@ def absent(kind, name):
 
 
 class StagingResume(unittest.TestCase):
+    def test_exact_artifact_image_absence_is_command_scoped_and_opt_in(self):
+        args = ['gcloud', 'artifacts', 'docker', 'images', 'describe',
+                'europe-west2-docker.pkg.dev/mindaam/mindaam/app:' + SHA]
+        message = 'ERROR: (gcloud.artifacts.docker.images.describe) Image not found.'
+        with patch('common.subprocess.run', return_value=subprocess.CompletedProcess(args, 1, '', message)):
+            self.assertIsNone(command(args, allow_missing=True))
+            self.assertIsNone(Cloud('mindaam').gc(*args[1:], missing=True))
+            with self.assertRaises(Blocked): command(args)
+            for wrong in [['gcloud','artifacts','repositories','describe','mindaam'],
+                          args[:4]+['delete',args[5]], ['other',*args[1:]], args[:5]]:
+                with self.subTest(wrong=wrong), self.assertRaises(Blocked):command(wrong, allow_missing=True)
+        failures = ['PERMISSION_DENIED','UNAUTHENTICATED','401','403','invalid credentials',
+                    'quota exceeded','network unreachable','DNS lookup failed','TLS handshake failed',
+                    'connection timed out','INVALID_ARGUMENT','Invalid project','Invalid repository',
+                    'Wrong project','Repository unavailable','Unexpected error',
+                    'NOT_FOUND: Repository wrong-repo was not found',
+                    'Repository wrong-repo does not exist', 'NOT_FOUND: Invalid repository']
+        for failure in failures:
+            for payload in [failure, message+'\n'+failure, failure+'\n'+message]:
+                with self.subTest(payload=payload), patch('common.subprocess.run', return_value=
+                        subprocess.CompletedProcess(args,1,'',payload)), self.assertRaises(Blocked):
+                    command(args, allow_missing=True)
+        for payload in ['Image not found.', message+' extra text', 'ERROR: (other) Image not found.']:
+            with patch('common.subprocess.run', return_value=subprocess.CompletedProcess(args,1,'',payload)), self.assertRaises(Blocked):
+                command(args, allow_missing=True)
+
+    def test_missing_feature_image_builds_exact_ancestor_then_deploys_and_resumes(self):
+        self.scenario(job_exists=True, missing_image=True, service_exists=True)
+
     def test_exact_run_missing_requires_matching_command_and_opt_in(self):
         for kind, name in [('services', 'mindaam-staging'), ('services', 'mindaam-production'),
                            ('jobs', 'mindaam-migrate-staging'), ('jobs', 'mindaam-migrate-production')]:
@@ -64,11 +95,18 @@ class StagingResume(unittest.TestCase):
     def test_current_resume_keeps_existing_migration_job(self):
         self.scenario(job_exists=True)
 
-    def scenario(self, job_exists):
+    def scenario(self, job_exists, missing_image=False, service_exists=False):
         cloud = Cloud('mindaam')
         objects = {'foundation.json': {'project': 'mindaam', 'media_ip': '34.13.51.100'}}
         original_foundation = copy.deepcopy(objects['foundation.json'])
         current = None
+        if service_exists:
+            from render import service
+            current = service(cloud, 'staging', IMAGE, 'https://mindaam-staging-123.europe-west2.run.app')
+            current['status'] = {'url':'https://mindaam-staging-123.europe-west2.run.app',
+                'latestReadyRevisionName':'old-revision','latestCreatedRevisionName':'old-revision',
+                'conditions':[{'type':'Ready','status':'True'}]}
+        actions = []
         job = {'metadata': {'labels': {'application': 'mindaam'}}} if job_exists else None
         counts = {'service_creates': 0, 'job_creates': 0, 'executions': 0, 'image_lookups': 0}
         manifests = []
@@ -82,13 +120,32 @@ class StagingResume(unittest.TestCase):
                 return subprocess.CompletedProcess(args, 0, HEAD, '')
             if args[:3] == ['git', 'diff', '--name-only']:
                 return subprocess.CompletedProcess(args, 0, 'infrastructure/gcp/common.py\ninfrastructure/gcp/workflow.py', '')
-            self.assertEqual(args[0], 'gcloud', 'No Docker build/push or other subprocess on resume')
+            if args[:2] == ['git', 'archive']:
+                self.assertTrue(missing_image);self.assertEqual(args[-1], SHA)
+                target=next(a.split('=',1)[1] for a in args if a.startswith('--output='))
+                with tarfile.open(target,'w') as archive:
+                    data=b'FROM exact-requested-release';entry=tarfile.TarInfo('infrastructure/gcp/Dockerfile');entry.size=len(data)
+                    archive.addfile(entry,io.BytesIO(data))
+                actions.append('archive');return subprocess.CompletedProcess(args,0,'','')
+            if args[:2] == ['docker', 'build']:
+                self.assertTrue(missing_image)
+                self.assertEqual(Path(args[args.index('-f')+1]).read_bytes(),b'FROM exact-requested-release')
+                self.assertNotEqual(args[-1],'.');self.assertTrue(args[args.index('-t')+1].endswith(':'+SHA))
+                actions.append('build');return subprocess.CompletedProcess(args,0,'','')
+            if args[:2] == ['docker', 'push']:
+                self.assertEqual(actions[-1],'build');actions.append('push')
+                return subprocess.CompletedProcess(args,0,'','')
+            self.assertEqual(args[0], 'gcloud')
             self.assertIn('--project=mindaam', args)
             a = args[1:]
             if a[:4] == ['artifacts', 'docker', 'images', 'describe']:
                 self.assertEqual(a[4], 'europe-west2-docker.pkg.dev/mindaam/mindaam/app:' + SHA)
                 counts['image_lookups'] += 1
+                if missing_image and counts['image_lookups'] == 1:
+                    return subprocess.CompletedProcess(args,1,'','ERROR: (gcloud.artifacts.docker.images.describe) Image not found.')
                 data = {'image_summary': {'digest': DIGEST}}
+            elif a[:2] == ['auth','configure-docker']:
+                self.assertTrue(missing_image)
             elif a[:3] == ['run', 'services', 'describe']:
                 self.assertEqual(a[3], 'mindaam-staging')
                 self.assertIn('--region=europe-west2', a)
@@ -110,6 +167,7 @@ class StagingResume(unittest.TestCase):
                 self.assertIsNotNone(job)
                 self.assertIn('--wait', a)
                 counts['executions'] += 1
+                actions.append('migration')
             elif a[:3] == ['run', 'services', 'replace']:
                 manifest = json.loads(Path(a[3]).read_text())
                 self.assertEqual(manifest['metadata']['name'], 'mindaam-staging')
@@ -119,6 +177,7 @@ class StagingResume(unittest.TestCase):
                 self.assertEqual(template['metadata']['annotations']['autoscaling.knative.dev/minScale'], '0')
                 counts['service_creates'] += int(current is None)
                 manifests.append(manifest)
+                actions.append('deploy')
                 current = {**manifest, 'status': {'url': 'https://mindaam-staging-123.europe-west2.run.app',
                     'latestReadyRevisionName': 'mindaam-staging-00001', 'latestCreatedRevisionName': 'mindaam-staging-00001',
                     'conditions': [{'type': 'Ready', 'status': 'True'}]}}
@@ -151,11 +210,14 @@ class StagingResume(unittest.TestCase):
                 self.assertEqual(json.loads(Path('deployment-result.json').read_text())['image'], IMAGE)
             finally:
                 os.chdir(cwd)
-        self.assertEqual(counts, {'service_creates': 1, 'job_creates': 0 if job_exists else 1,
-                                 'executions': 2, 'image_lookups': 1})
+        self.assertEqual(counts, {'service_creates': 0 if service_exists else 1, 'job_creates': 0 if job_exists else 1,
+                                 'executions': 2, 'image_lookups': 2 if missing_image else 1})
         self.assertEqual(objects['foundation.json'], original_foundation)
         self.assertEqual(objects[f'releases/{SHA}/staging.json']['image'], IMAGE)
-        self.assertEqual(len(manifests), 3)  # Initial create + origin fix, then owned service update.
+        self.assertEqual(len(manifests), 2 if service_exists else 3)  # Initial create + origin fix, then owned service update.
+
+        if missing_image:
+            self.assertEqual(actions, ['archive','build','push','migration','deploy','migration','deploy'])
 
     def test_unowned_service_blocks_before_migration(self):
         cloud = Cloud('mindaam')

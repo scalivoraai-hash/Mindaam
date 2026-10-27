@@ -3,6 +3,8 @@ import json
 import os
 import re
 import subprocess
+import tarfile
+import tempfile
 from pathlib import Path
 from common import Cloud, Blocked, SETTINGS, command, summary
 from deploy import foundation, deploy, rollback, image_check
@@ -11,7 +13,7 @@ from readiness import ready_service
 from finalize import finalize
 
 
-def staging_image(c, sha, *, build_allowed):
+def staging_image(c, sha, *, build_allowed, build_ref=None):
     existing = c.get_json(f'releases/{sha}/staging.json')
     if existing is not None:
         if existing.get('sha') != sha or existing.get('environment') != 'staging':
@@ -25,7 +27,21 @@ def staging_image(c, sha, *, build_allowed):
             if not build_allowed:
                 raise Blocked('Ancestor staging image is absent; never build current code under an old SHA')
             c.gc('auth', 'configure-docker', registry, raw=True)
-            subprocess.run(['docker', 'build', '-f', 'infrastructure/gcp/Dockerfile', '-t', tag, '.'], check=True)
+            if build_ref is None:
+                subprocess.run(['docker', 'build', '-f', 'infrastructure/gcp/Dockerfile', '-t', tag, '.'], check=True)
+            else:
+                if build_ref != sha or not re.fullmatch(r'[a-f0-9]{40}', build_ref):
+                    raise Blocked('Build source must match the requested full release SHA')
+                # Build exact tracked release bytes, never current HEAD under an old tag.
+                with tempfile.TemporaryDirectory() as directory:
+                    archive = Path(directory) / 'source.tar'
+                    context = Path(directory) / 'source'
+                    context.mkdir()
+                    subprocess.run(['git', 'archive', '--format=tar', '--output=' + str(archive), build_ref], check=True)
+                    with tarfile.open(archive) as source:
+                        source.extractall(context, filter='data')
+                    subprocess.run(['docker', 'build', '-f', str(context / 'infrastructure/gcp/Dockerfile'),
+                                    '-t', tag, str(context)], check=True)
             subprocess.run(['docker', 'push', tag], check=True)
             info = c.gc('artifacts', 'docker', 'images', 'describe', tag)
         digest = (info or {}).get('image_summary', {}).get('digest', '')
@@ -61,7 +77,7 @@ def main():
                 raise Blocked('Staging resume requires unchanged application and image build inputs')
         if not c.get_json('foundation.json'):
             raise Blocked('Complete foundation and media/turn DNS first')
-        image = staging_image(c, sha, build_allowed=sha == head)
+        image = staging_image(c, sha, build_allowed=True, build_ref=sha if sha != head else None)
         deploy(c, 'staging', image, sha)
     elif operation == 'verify':
         release = c.get_json(f'releases/{sha}/staging.json')

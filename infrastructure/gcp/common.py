@@ -32,8 +32,16 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
                     r'^ERROR: \(gcloud\.run\.' + args[2] + r'\.describe\) Cannot find '
                     + kind + r' \[' + re.escape(args[4]) + r'\][ \t]*$',
                     message, re.MULTILINE) is not None
+        # Artifact Registry's name-only diagnostic is valid only for this lookup.
+        # Full-message matching prevents unrelated repository/project errors from
+        # being swallowed alongside an apparent missing-image line.
+        image_lookup = (len(args) >= 6
+                        and args[:5] == ['gcloud', 'artifacts', 'docker', 'images', 'describe'])
+        image_missing = (image_lookup
+                         and re.fullmatch(r'ERROR: \(gcloud\.artifacts\.docker\.images\.describe\) '
+                                          r'Image not found\.[ \t\r\n]*', message) is not None)
         # An authentication/network/permission error must NEVER become 'not found'.
-        missing = (run_missing or any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
+        missing = (image_missing or run_missing or any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
                    or re.search(r"\bnot found: 404\b", message) is not None
                    # Match the Storage diagnostic header, not text inside an object URL.
                    or re.search(r"^ERROR: \(gcloud\.storage\.cat\) "
@@ -67,6 +75,11 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
             r"connect\w*|resolv\w*|network|dns|ssl|tls|proxy|transport)",
             message, re.IGNORECASE,
         ) is not None
+        if image_lookup and re.search(
+                r'\b(?:invalid|unknown|wrong|malformed) repository\b'
+                r'|\brepository\b[^\n]{0,100}\b(?:not found|does not exist|invalid|denied|unavailable)\b',
+                message, re.IGNORECASE):
+            failure = True
         if allow_missing and missing and not failure:
             return None
         detail = "Sensitive command failed; consult the provider audit log." if sensitive else message[-1800:]
