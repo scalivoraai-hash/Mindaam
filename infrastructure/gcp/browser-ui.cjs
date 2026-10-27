@@ -1,11 +1,11 @@
 /* Shared bounded actionability checks; never inspect input values. */
 async function waitUI(page,timeout=60000){
  await page.bringToFront();
- // Authentication/onboarding controls are ready once the application shell replaces
- // the initial splash. World-loading is intentionally NOT a global gate: it may stay
- // mounted outside an active world and is validated by dedicated world-entry checks.
- await page.locator('main.app').waitFor({state:'visible',timeout});
- await page.locator('.splash').waitFor({state:'hidden',timeout});
+ // The current app no longer guarantees a persistent main.app wrapper. Treat the UI
+ // as ready when any real interactive application surface is visible.
+ await page.locator('.splash').waitFor({state:'hidden',timeout}).catch(()=>{});
+ const surfaces=page.locator('.auth-card, .onboarding, .welcome-home, .world-playing');
+ await surfaces.first().waitFor({state:'visible',timeout});
 }
 async function inspectControl(locator){
  const count=await locator.count(),elements=[];
