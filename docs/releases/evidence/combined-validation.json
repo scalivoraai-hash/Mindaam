@@ -31,5 +31,15 @@
   "renderer_presets": 14,
   "full_device_fps_verified": false,
   "live_staging_verified": false,
-  "note": "CI and live deployment status are recorded by GitHub Actions after publication; this file records local checks only."
+  "note": "CI and live deployment status are recorded by GitHub Actions after publication; this file records local checks only.",
+  "ci_backend_test_step": "passed on 543fd73405e23128a074570b18fb7fc9f713bdc1; later dependency audit failed",
+  "security_followup": {
+    "next": "15.5.28",
+    "postcss": "8.5.28",
+    "pillow": "13.0.0",
+    "npm_audit_vulnerabilities": 0,
+    "patched_build_exit": 0,
+    "profile_image_suite_exit": 0,
+    "auditorium_renderer_exit": 0
+  }
 }

@@ -11,7 +11,7 @@ function check(name,value){assert.ok(value,name);results.checks.push(name);conso
 async function main(){
  execFileSync(python,['-m','scripts.tests.multiplayer_fixture','init'],{cwd:root,env,stdio:'pipe'});
  const children=[];for(const [bin,args,log] of [[python,['-m','uvicorn','backend.api.main:app','--host','127.0.0.1','--port','8000'],'api'],[process.execPath,['node_modules/next/dist/bin/next','start','apps/consumer-web','--hostname','127.0.0.1','--port','3000'],'web']]){const fd=fs.openSync(path.join(out,log+'.log'),'w');children.push(spawn(bin,args,{cwd:log==='api'?(process.env.QA_API_ROOT||root):root,env:{...env,PUBLIC_ORIGIN:origin},stdio:['ignore',fd,fd]}))}
- await until(async()=>{try{return (await fetch(origin+'/api/health')).ok}catch{return false}},'application startup');
+ await until(async()=>{try{return (await fetch(origin+'/api/health')).ok}catch{return false}},'application startup',Number(process.env.QA_STARTUP_TIMEOUT||60000)).catch(error=>{for(const child of children)child.kill('SIGTERM');throw error});
  const browser=await chromium.launch({executablePath:process.env.QA_CHROMIUM||'/tmp/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-webgl','--disable-background-timer-throttling']});
  try{
  const city=process.env.QA_CITY||'milton-keynes',route=fixture({city}),context=await browser.newContext(),page=await context.newPage();
@@ -125,7 +125,11 @@ async function cameraAndPeer(_browser,hostApi,hostId,city,hostPage,input,hostFra
  await hostPage.getByRole('button',{name:'walk',exact:true}).click();await input(...direction.map(n=>n*.6));await wait(700);await until(()=>peerFrames.at(-1)?.players.some(q=>q.id===hostId&&q.mode==='walk'&&q.speed>0),'remote walk');
  await input(...direction);await wait(850);await until(()=>peerFrames.at(-1)?.players.some(q=>q.id===hostId&&q.mode==='run'&&q.speed>0),'remote run');await input(0,0);await wait(1000);
  const final=(await hostApi('/world/'+city)).position,remote=peerFrames.at(-1).players.find(q=>q.id===hostId);check('remote sees walk and run and final authoritative position',Math.hypot(remote.x-final.x,remote.z-final.z)<.05);results.remote={final,remote:{x:remote.x,z:remote.z,mode:remote.mode,speed:remote.speed}};
- const event=await hostApi('/events',{title:'Local movement camera QA',description:'Disposable local test',city,starts_at:Date.now()/1000,communication_mode:'text',venue_experience_type:'auditorium',event_type:'Public Talk'});await hostApi('/events/'+event.id+'/state/start',{});await hostApi('/events/'+event.id+'/venue/enter',{});await api('/events/'+event.id+'/join',{});await api('/events/'+event.id+'/venue/enter',{});
+ const event=await hostApi('/events',{title:'Local movement camera QA',description:'Disposable local test',city,starts_at:Date.now()/1000,communication_mode:'text',venue_experience_type:'auditorium',event_type:'Public Talk'});
+ const catalog=await hostApi('/venue-rentals/'+city),cost=catalog.prices['1'];assert.ok(catalog.enabled&&cost>0);
+ execFileSync(python,['-m','scripts.tests.multiplayer_fixture','venue_funds',JSON.stringify({city,users:[hostId],event_id:event.id,cost})],{cwd:root,env,stdio:'pipe'});
+ const receipt=await hostApi('/events/'+event.id+'/venue/booking',{request_id:require('crypto').randomUUID(),hours:1,expected_cost:cost,starts_at:Date.now()/1000});assert.equal(receipt.cost,cost);
+ await hostApi('/events/'+event.id+'/state/start',{});await hostApi('/events/'+event.id+'/venue/enter',{});await api('/events/'+event.id+'/join',{});await api('/events/'+event.id+'/venue/enter',{});
  await p.locator('.in-auditorium .world-canvas[data-ready=true]').waitFor({timeout:60000});await wait(2000);check('real WebGL auditorium',await p.locator('.world-canvas canvas').count()>0&&await p.locator('.world-fallback').count()===0);
  const avatar=(await api('/world/'+city)).position,focus={x:Math.max(-.5,Math.min(.5,avatar.x)),y:(avatar.y||0)+1.7,z:Math.max(-4.5,Math.min(4.3,avatar.z-6))};
  const camera=()=>p.evaluate(()=>window.__qaCamera);const distance=pos=>Math.hypot(pos.x-focus.x,pos.y-focus.y,pos.z-focus.z);await until(async()=>!!await camera(),'rendered camera');

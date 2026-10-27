@@ -40,6 +40,7 @@ apps/consumer-web/lib/cityArchitecture.ts
 apps/consumer-web/lib/movement.ts
 apps/consumer-web/lib/worldClimate.test.mjs
 apps/consumer-web/lib/worldClimate.ts
+apps/consumer-web/package.json
 backend/api/auth.py
 backend/api/core.py
 backend/api/event_creators.py
@@ -95,11 +96,13 @@ infrastructure/gcp/acceptance-checks.json
 infrastructure/gcp/browser.cjs
 infrastructure/gcp/staging_trigger.py
 infrastructure/gcp/tests/test_staging_trigger.py
+package-lock.json
 scripts/prepare_grand_arenas.py
 scripts/tests/auditorium-renderer.cjs
 scripts/tests/city-upgrade-renderer.cjs
 scripts/tests/living-world-browser.cjs
 scripts/tests/living-world-renderer.cjs
+scripts/tests/movement-camera.cjs
 scripts/tests/multiplayer-browser.cjs
 scripts/tests/multiplayer_fixture.py
 scripts/tests/outdoor-xp.cjs

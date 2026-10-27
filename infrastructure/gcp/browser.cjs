@@ -73,7 +73,7 @@ async function user(city,index){
  await page.locator('.world-playing').waitFor();
  await page.locator('.world-canvas[data-ready="true"]').waitFor({timeout:90000});
  await until(()=>states.at(-1)?.city===city,'Authenticated realtime world state '+city,60000);
- return u;
+ u.username=name;return u;
 }
 async function settled(users){
  await Promise.all(users.map(u=>move(u,0,0)));let stableSince=Date.now(),previous=JSON.stringify(users.map(position));
@@ -125,7 +125,7 @@ async function main(){
   await a.page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'PEOPLE',exact:true}).click();
   await a.page.getByRole('heading',{name:'Your people',exact:true}).waitFor();await a.page.getByRole('tab',{name:'Friends',exact:true}).click();
   stage='profiles';await b.api('/me/profile',{display_name:'Staging profile check',bio:'Automated staging acceptance',links:{instagram:{url:'@mindaamqa',visible:true},facebook:{url:'mindaamqa',visible:false}}},'PUT');
-  await a.page.getByRole('button',{name:'View profile',exact:true}).first().click();const profile=a.page.getByRole('dialog',{name:'Player profile',exact:true});await profile.getByRole('heading',{name:'Staging profile check',exact:true}).waitFor();assert.equal(await profile.locator('a[href*="facebook.com"]').count(),0);await profile.getByRole('button',{name:'Follow',exact:true}).click();await profile.getByRole('button',{name:'Unfollow',exact:true}).waitFor();await profile.getByRole('button',{name:'Avatar',exact:true}).click();await profile.locator('.avatar-preview canvas').waitFor();assert.equal(await profile.getByText('3D preview is unavailable in this browser.',{exact:false}).count(),0);await profile.getByRole('button',{name:'Close profile',exact:true}).click();checks.profiles=true;checks.avatar_rendering=true;
+  await a.page.locator('.friend-card').filter({hasText:b.username}).getByRole('button',{name:'View profile',exact:true}).click();const profile=a.page.getByRole('dialog',{name:'Player profile',exact:true});await profile.getByRole('heading',{name:'Staging profile check',exact:true}).waitFor();assert.equal(await profile.locator('a[href*="facebook.com"]').count(),0);await profile.getByRole('button',{name:'Follow',exact:true}).click();await profile.getByRole('button',{name:'Unfollow',exact:true}).waitFor();await profile.getByRole('button',{name:'Avatar',exact:true}).click();await profile.locator('.avatar-preview canvas').waitFor();assert.equal(await profile.getByText('3D preview is unavailable in this browser.',{exact:false}).count(),0);await profile.getByRole('button',{name:'Close profile',exact:true}).click();checks.profiles=true;checks.avatar_rendering=true;
   await a.page.getByRole('button',{name:'Close panel',exact:true}).click();
   for(const key of ['browser','signup','login','onboarding','session_persistence','world_entry','friends','no_world_media'])checks[key]=true;
   stage='events-auditorium';
