@@ -39,8 +39,8 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
                         and args[:5] == ['gcloud', 'artifacts', 'docker', 'images', 'describe'])
         image_missing = (image_lookup
                          and re.search(
-                             r'^ERROR: \\(gcloud\\.artifacts\\.docker\\.images\\.describe\\) '
-                             r'Image not found\\.[ \\t]*$',
+                             r'^ERROR: \(gcloud\.artifacts\.docker\.images\.describe\) '
+                             r'Image not found\.[ \t]*,
                              message,
                              re.MULTILINE,
                          ) is not None)
@@ -175,7 +175,10 @@ def summary(message):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
             f.write(message + "\n\n")
 
-, message, re.MULTILINE) is not None)
+,
+                             message,
+                             re.MULTILINE,
+                         ) is not None)
         # An authentication/network/permission error must NEVER become 'not found'.
         missing = (image_missing or run_missing or any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
                    or re.search(r"\bnot found: 404\b", message) is not None
