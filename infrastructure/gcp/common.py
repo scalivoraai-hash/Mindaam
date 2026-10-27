@@ -38,8 +38,12 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
         image_lookup = (len(args) >= 6
                         and args[:5] == ['gcloud', 'artifacts', 'docker', 'images', 'describe'])
         image_missing = (image_lookup
-                         and re.search(r'^ERROR: \(gcloud\.artifacts\.docker\.images\.describe\) '
-                                       r'Image not found\.[ \t]*
+                         and re.search(
+                             r'^ERROR: \\(gcloud\\.artifacts\\.docker\\.images\\.describe\\) '
+                             r'Image not found\\.[ \\t]*$',
+                             message,
+                             re.MULTILINE,
+                         ) is not None)
         # An authentication/network/permission error must NEVER become 'not found'.
         missing = (image_missing or run_missing or any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
                    or re.search(r"\bnot found: 404\b", message) is not None
