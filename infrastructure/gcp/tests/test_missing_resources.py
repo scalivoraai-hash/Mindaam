@@ -19,6 +19,9 @@ SQL_MISSING = ('ERROR: (gcloud.sql.databases.describe) HTTPError 404: Not Found.
                IDENTITY.replace('credentials ...', 'credentials in '
                    '/home/runner/work/Mindaam/Mindaam/gha-creds-cb272febf1799868.json, '
                    'specified by the [auth/credential_file_override] property'))
+STORAGE_CAT_HEADER = ('ERROR: (gcloud.storage.cat) '
+                      'The following URLs matched no objects or files:')
+STORAGE_CAT_MISSING = STORAGE_CAT_HEADER + '\n' + 'gs://mindaam-releases/vm/current.json'
 # Include SQL databases and VM bundle metadata as well as the requested resources.
 DISCOVERY = [
     ('artifacts.repositories.describe', 'mindaam'),
@@ -42,6 +45,52 @@ DISCOVERY = [
 class MissingResources(unittest.TestCase):
     def result(self, error):
         return subprocess.CompletedProcess([], 1, '', error)
+
+    def test_exact_storage_cat_missing_requires_explicit_opt_in(self):
+        with patch('common.subprocess.run', return_value=self.result(STORAGE_CAT_MISSING)):
+            self.assertIsNone(command(['gcloud', 'storage', 'cat',
+                'gs://mindaam-releases/vm/current.json'], allow_missing=True))
+            with self.assertRaises(Blocked):
+                command(['gcloud', 'storage', 'cat', 'gs://mindaam-releases/vm/current.json'])
+
+    def test_all_optional_state_reads_share_missing_handling(self):
+        keys = ['foundation.json', 'vm/current.json'] + [
+            'releases/' + 'a' * 40 + '/' + name + '.json' for name in
+            ['staging', 'production', 'staging-previous', 'production-previous',
+             'staging-verified', 'production-verified', 'release-review', 'metrics']]
+        for key in keys:
+            url = 'gs://mindaam-releases/' + key
+            with self.subTest(key=key), patch('common.subprocess.run',
+                    return_value=self.result(STORAGE_CAT_HEADER + '\n' + url)) as run:
+                self.assertIsNone(Cloud('mindaam').get_json(key))
+                self.assertEqual(run.call_args.args[0],
+                    ['gcloud', 'storage', 'cat', url, '--project=mindaam'])
+                run.assert_called_once()
+        with patch('common.subprocess.run', return_value=subprocess.CompletedProcess(
+                [], 0, '{"production_origin":"https://existing.run.app"}', '')):
+            self.assertEqual(Cloud('mindaam').get_json('vm/current.json'),
+                             {'production_origin': 'https://existing.run.app'})
+        with patch('common.subprocess.run', return_value=subprocess.CompletedProcess([], 0, 'bad json', '')):
+            with self.assertRaises(json.JSONDecodeError):
+                Cloud('mindaam').get_json('vm/current.json')
+
+    def test_storage_cat_real_failures_remain_fatal(self):
+        for error in ['PERMISSION_DENIED', 'UNAUTHENTICATED', '401', '403',
+                      'invalid credentials', 'quota exceeded', 'network unreachable',
+                      'DNS lookup failed', 'TLS handshake failed', 'connection timed out',
+                      'INVALID_ARGUMENT', 'invalid request', 'malformed request',
+                      'Invalid URL', 'Malformed path', 'HTTPError 500: Internal Server Error']:
+            for message in [error, error + '\n' + STORAGE_CAT_MISSING,
+                            STORAGE_CAT_MISSING + '\n' + error]:
+                with self.subTest(message=message), patch('common.subprocess.run',
+                        return_value=self.result(message)):
+                    with self.assertRaises(Blocked):
+                        Cloud('mindaam').get_json('vm/current.json')
+        for error in ['Storage access failed', 'Unexpected storage error',
+                      'ERROR: gs://bucket/The following URLs matched no objects or files:']:
+            with self.subTest(error=error), patch('common.subprocess.run', return_value=self.result(error)):
+                with self.assertRaises(Blocked):
+                    Cloud('mindaam').get_json('vm/current.json')
 
     def test_exact_cloud_sql_error_requires_explicit_missing(self):
         with patch('common.subprocess.run', return_value=self.result(SQL_MISSING)):
@@ -106,6 +155,9 @@ class MissingResources(unittest.TestCase):
     def test_current_sql_partial_resume_reaches_completion(self):
         self.foundation_scenario(sql_partial=True)
 
+    def test_current_gcs_partial_resume_reaches_completion(self):
+        self.foundation_scenario(sql_partial=True, databases_exist=True)
+
     def test_database_discovery_failure_does_not_create(self):
         for error in ['HTTPError 403: Forbidden', 'HTTPError 401: Unauthorized',
                       'RESOURCE_EXHAUSTED: quota exceeded', 'INVALID_ARGUMENT',
@@ -113,7 +165,7 @@ class MissingResources(unittest.TestCase):
             with self.subTest(error=error):
                 self.foundation_scenario(sql_partial=True, database_error=error)
 
-    def foundation_scenario(self, partial=False, sql_partial=False, database_error=None):
+    def foundation_scenario(self, partial=False, sql_partial=False, database_error=None, databases_exist=False):
         created, missing = set(), set()
         policies, versions = [], set()
         resuming = False
@@ -138,6 +190,9 @@ class MissingResources(unittest.TestCase):
                 initial.update(('secrets', f'mindaam-{env}-' + key.lower().replace('_', '-'))
                                for key in OPTIONAL)
             initial.update(('secrets', name) for name in versions)
+        if databases_exist:
+            initial.update({('sql', 'databases', 'mindaam_staging'),
+                            ('sql', 'databases', 'mindaam_production')})
         initial_versions = set(versions)
         objects, user_updates, vm_creates = {}, [], []
         created.update(initial)
@@ -247,7 +302,7 @@ class MissingResources(unittest.TestCase):
                 if args[2] in objects:
                     return subprocess.CompletedProcess([], 0, json.dumps(objects[args[2]]), '')
                 missing.add(('storage', 'cat', args[2]))
-                return self.result('No URLs matched: ' + args[2] + IDENTITY)
+                return self.result(STORAGE_CAT_HEADER + '\n' + args[2])
             return subprocess.CompletedProcess([], 0, json.dumps(data), '')
 
         def sql_create(*args, **kwargs):

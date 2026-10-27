@@ -23,6 +23,10 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
         # An authentication/network/permission error must NEVER become 'not found'.
         missing = (any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
                    or re.search(r"\bnot found: 404\b", message) is not None
+                   # Match the Storage diagnostic header, not text inside an object URL.
+                   or re.search(r"^ERROR: \(gcloud\.storage\.cat\) "
+                                r"The following URLs matched no objects or files:[ \t]*$",
+                                message, re.MULTILINE) is not None
                    # Cloud SQL uses HTTPError; require both the status and reason.
                    # A bare 404 or an arbitrary HTTP error is not missing evidence.
                    or re.search(r"\bHTTP(?:Error)?[ \t]+404:[ \t]+Not Found(?=[.\s]|$)",
@@ -35,7 +39,8 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
             r"deadline_exceeded|unavailable|timeout|timed out|resource_exhausted|"
             r"quota_exceeded|invalid_argument|failed_precondition|bad_request)\b"
             r"|\bHTTP(?:Error)?[ \t]+(?:(?!404\b)[45]\d{2})\b"
-            r"|\b(?:quota|rate limit|malformed request|bad request|invalid argument)\b"
+            r"|\b(?:quota|rate limit|malformed request|bad request|invalid argument|invalid request|"
+            r"(?:invalid|malformed) (?:path|url|uri))\b"
             r"|permission(?:s)?[ _]+(?:denied|missing|required)"
             r"|(?:access denied|reauth|could not refresh|invalid_grant)"
             r"|(?:credential\w*|authentication|authorization|network|connection|dns|"
