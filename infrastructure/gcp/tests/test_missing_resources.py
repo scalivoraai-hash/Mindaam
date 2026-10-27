@@ -9,12 +9,16 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import Blocked, Cloud, command
-from deploy import bucket, ensure, foundation, DESCRIPTION
+from deploy import bucket, ensure, foundation, ensure_postgres, DESCRIPTION, OPTIONAL
 from common import SETTINGS
 
 STORAGE_MISSING = 'ERROR: (gcloud.storage.buckets.describe) gs://mindaam-releases not found: 404.'
 IDENTITY = (' This command is authenticated as mindaam-deploy@mindaam.iam.gserviceaccount.com'
             ' using the credentials ...')
+SQL_MISSING = ('ERROR: (gcloud.sql.databases.describe) HTTPError 404: Not Found.' +
+               IDENTITY.replace('credentials ...', 'credentials in '
+                   '/home/runner/work/Mindaam/Mindaam/gha-creds-cb272febf1799868.json, '
+                   'specified by the [auth/credential_file_override] property'))
 # Include SQL databases and VM bundle metadata as well as the requested resources.
 DISCOVERY = [
     ('artifacts.repositories.describe', 'mindaam'),
@@ -39,6 +43,14 @@ class MissingResources(unittest.TestCase):
     def result(self, error):
         return subprocess.CompletedProcess([], 1, '', error)
 
+    def test_exact_cloud_sql_error_requires_explicit_missing(self):
+        with patch('common.subprocess.run', return_value=self.result(SQL_MISSING)):
+            self.assertIsNone(Cloud('mindaam').gc('sql', 'databases', 'describe',
+                'mindaam_staging', '--instance=mindaam-postgres', missing=True))
+            self.assertIsNone(command(['unused'], allow_missing=True))
+            with self.assertRaises(Blocked):
+                command(['unused'])
+
     def test_exact_artifact_registry_error_with_identity_context(self):
         error = ('ERROR: (gcloud.artifacts.repositories.describe) NOT_FOUND: '
                  'Requested entity was not found.' + IDENTITY)
@@ -50,7 +62,10 @@ class MissingResources(unittest.TestCase):
     def test_all_foundation_discovery_errors_with_identity_context(self):
         for cli, resource in DISCOVERY:
             for detail in [f'NOT_FOUND: Requested entity {resource} was not found.',
-                           f"The resource '{resource}' was not found"]:
+                           f"The resource '{resource}' was not found",
+                           'HTTPError 404: Not Found.', 'HTTP 404: Not Found',
+                           f'{resource} not found: 404.', 'No URLs matched: ' + resource,
+                           f'{resource} does not exist']:
                 with self.subTest(cli=cli, detail=detail), patch(
                     'common.subprocess.run', return_value=self.result(
                         f'ERROR: (gcloud.{cli}) {detail}' + IDENTITY)):
@@ -67,10 +82,13 @@ class MissingResources(unittest.TestCase):
                   'There was a problem refreshing your current auth tokens: invalid_grant',
                   'network unreachable', 'connection reset', 'DNS lookup failed',
                   'TLS handshake failed', 'SSL certificate error', 'connection timed out',
-                  'name resolution failed', 'proxy error', 'transport error']
+                  'name resolution failed', 'proxy error', 'transport error',
+                  'RESOURCE_EXHAUSTED', 'quota exceeded', 'HTTPError 429: Too Many Requests',
+                  'HTTPError 500: Internal Server Error', 'HTTPError 504: Gateway failure', 'INVALID_ARGUMENT',
+                  'invalid argument', 'malformed request', 'HTTPError 400: Bad Request']
         for cli, resource in DISCOVERY:
             for error in errors:
-                for message in [error + '\nNOT_FOUND' + IDENTITY,
+                for message in [SQL_MISSING + '\n' + error, error + '\nNOT_FOUND' + IDENTITY,
                                 'NOT_FOUND' + IDENTITY + '\n' + error,
                                 'NOT_FOUND' + IDENTITY + ' ' + error]:
                     with self.subTest(cli=cli, error=error, message=message), patch(
@@ -85,12 +103,43 @@ class MissingResources(unittest.TestCase):
     def test_partial_foundation_keeps_media_and_creates_private_redis(self):
         self.foundation_scenario(partial=True)
 
-    def foundation_scenario(self, partial=False):
+    def test_current_sql_partial_resume_reaches_completion(self):
+        self.foundation_scenario(sql_partial=True)
+
+    def test_database_discovery_failure_does_not_create(self):
+        for error in ['HTTPError 403: Forbidden', 'HTTPError 401: Unauthorized',
+                      'RESOURCE_EXHAUSTED: quota exceeded', 'INVALID_ARGUMENT',
+                      'connection timed out', 'HTTPError 500: Internal Server Error']:
+            with self.subTest(error=error):
+                self.foundation_scenario(sql_partial=True, database_error=error)
+
+    def foundation_scenario(self, partial=False, sql_partial=False, database_error=None):
         created, missing = set(), set()
         policies, versions = [], set()
         resuming = False
         initial = {('compute', 'firewall-rules', 'mindaam-media-public'),
                    ('secrets', 'mindaam-postgres-password')} if partial else set()
+        if sql_partial:
+            initial = {('storage', 'buckets', 'gs://mindaam-' + name)
+                       for name in ('releases', 'assets')}
+            initial.update({('artifacts', 'repositories', 'mindaam'),
+                ('compute', 'networks', 'mindaam'),
+                ('compute', 'networks', 'subnets', 'mindaam-run'),
+                ('compute', 'firewall-rules', 'mindaam-media-public'),
+                ('compute', 'firewall-rules', 'mindaam-redis-private'),
+                ('compute', 'addresses', 'mindaam-media'),
+                ('sql', 'instances', 'mindaam-postgres')})
+            versions.update({'mindaam-postgres-password', 'mindaam-redis-password'})
+            suffixes = ['database-password', 'database-url', 'migration-url', 'redis-url',
+                        'livekit-key', 'livekit-secret', 'pulsepoint-secret',
+                        'mail-encryption-key', 'owner-email', 'owner-username', 'owner-password']
+            for env in ('staging', 'production'):
+                versions.update(f'mindaam-{env}-{suffix}' for suffix in suffixes)
+                initial.update(('secrets', f'mindaam-{env}-' + key.lower().replace('_', '-'))
+                               for key in OPTIONAL)
+            initial.update(('secrets', name) for name in versions)
+        initial_versions = set(versions)
+        objects, user_updates, vm_creates = {}, [], []
         created.update(initial)
         if partial:
             versions.add('mindaam-postgres-password')
@@ -125,7 +174,20 @@ class MissingResources(unittest.TestCase):
                 ])
                 self.assertIn('--no-dry-run', args)
                 policies.append(policy)
+            elif args[:3] == ['sql', 'users', 'set-password']:
+                self.assertEqual(args[3:5], ['postgres', '--instance=mindaam-postgres'])
+                payload = json.loads(Path(next(a.split('=', 1)[1] for a in args
+                    if a.startswith('--flags-file='))).read_text())
+                self.assertEqual(payload, {'--password': 'test-only-value'})
+                user_updates.append(args[3])
+            elif args[:2] == ['storage', 'cp']:
+                if args[3].endswith('.json'):
+                    objects[args[3]] = json.loads(Path(args[2]).read_text())
+                else:
+                    self.assertIn('/vm/bundles/', args[3])
+                    self.assertTrue(Path(args[2]).read_bytes())
             elif args[:3] == ['secrets', 'versions', 'add']:
+                self.assertFalse(sql_partial, 'All current-state secrets already have values')
                 self.assertFalse(resuming, 'Resume must not regenerate existing secrets')
                 self.assertNotIn(args[3], versions, 'Never regenerate an existing secret')
                 versions.add(args[3])
@@ -147,11 +209,27 @@ class MissingResources(unittest.TestCase):
                 self.assertFalse(resuming, 'Resume must not recreate existing resources')
                 i = args.index('create'); key = tuple(args[:i] + [args[i + 1]])
                 self.assertNotIn(key, created, 'Never recreate an existing resource')
+                if sql_partial:
+                    self.assertIn(key, {('sql', 'databases', 'mindaam_staging'),
+                        ('sql', 'databases', 'mindaam_production'),
+                        ('compute', 'instances', 'mindaam-media')})
+                if args[:2] == ['compute', 'instances']:
+                    self.assertIn('--subnet=mindaam-run', args)
+                    self.assertIn('--private-network-ip=' + SETTINGS['media_private_ip'], args)
+                    self.assertIn('--address=192.0.2.1', args)
+                    self.assertIn('--service-account=' + Cloud('mindaam').sa('media'), args)
+                    script = Path(next(a.split('startup-script=', 1)[1] for a in args
+                        if a.startswith('--metadata-from-file='))).read_text()
+                    self.assertIn('set -euo pipefail', script)
+                    self.assertIn('systemctl enable --now mindaam-reconcile.timer', script)
+                    vm_creates.append(key)
                 created.add(key)
             elif 'describe' in args:
                 i = args.index('describe'); key = tuple(args[:i] + [args[i + 1]])
                 if key not in created:
                     missing.add(key)
+                    if args[:2] == ['sql', 'databases']:
+                        return self.result(SQL_MISSING if database_error is None else database_error + IDENTITY)
                     return self.result(f'ERROR: (gcloud.{".".join(args[:i + 1])}) '
                                        f'NOT_FOUND: {key} was not found.' + IDENTITY)
                 data = dict(resource)
@@ -166,11 +244,14 @@ class MissingResources(unittest.TestCase):
             elif 'list' in args:
                 data = []
             elif args[:2] == ['storage', 'cat']:
+                if args[2] in objects:
+                    return subprocess.CompletedProcess([], 0, json.dumps(objects[args[2]]), '')
                 missing.add(('storage', 'cat', args[2]))
                 return self.result('No URLs matched: ' + args[2] + IDENTITY)
             return subprocess.CompletedProcess([], 0, json.dumps(data), '')
 
         def sql_create(*args, **kwargs):
+            self.assertFalse(sql_partial or resuming, 'Never recreate existing Cloud SQL')
             created.add(('sql', 'instances', 'mindaam-postgres'))
             return io.StringIO('{"name": "test-operation"}')
 
@@ -178,9 +259,24 @@ class MissingResources(unittest.TestCase):
              patch('deploy.urlopen', side_effect=sql_create), \
              patch.dict('os.environ', {'MINDAAM_BUDGET_CONFIRMED': 'true'}), \
              patch('deploy.summary'):
+            if database_error is not None:
+                with self.assertRaises(Blocked):
+                    foundation(Cloud('mindaam'))
+                self.assertEqual(created, initial)
+                self.assertEqual(versions, initial_versions)
+                self.assertFalse(objects)
+                return
             foundation(Cloud('mindaam'))
             resuming = True
             foundation(Cloud('mindaam'))
+        self.assertEqual(user_updates, ['postgres', 'postgres'])
+        self.assertEqual(len(vm_creates), 1)
+        self.assertIn('gs://mindaam-releases/vm/current.json', objects)
+        inventory = objects['gs://mindaam-releases/foundation.json']
+        self.assertEqual(inventory['project'], 'mindaam')
+        self.assertEqual(inventory['media_ip'], '192.0.2.1')
+        if sql_partial:
+            self.assertEqual(versions, initial_versions)
         self.assertEqual(len(policies), 2)
         self.assertEqual(policies[0], policies[1])
         self.assertEqual(missing - {('storage', 'cat', 'gs://mindaam-releases/vm/current.json')}, created - initial)
@@ -224,7 +320,8 @@ class MissingResources(unittest.TestCase):
                         command(['unused'], allow_missing=True)
 
     def test_unknown_errors_and_bare_404_fail(self):
-        for error in ['404', 'HTTP 404 error', 'not found: 4040', 'unexpected error']:
+        for error in ['404', 'HTTP 404 error', 'HTTPError 404: Forbidden', 'HTTPError 4040: Not Found',
+                      'HTTPError 404: Not Foundational', 'not found: 4040', 'unexpected error']:
             with self.subTest(error=error), patch('common.subprocess.run', return_value=self.result(error)):
                 with self.assertRaises(Blocked):
                     command(['unused'], allow_missing=True)
@@ -241,6 +338,15 @@ class MissingResources(unittest.TestCase):
             with self.assertRaises(Blocked):
                 bucket(Cloud('mindaam'), 'mindaam-releases')
         run.assert_called_once()
+
+    def test_unowned_sql_and_secrets_fail_before_reconciliation(self):
+        for labels in [{}, {'application': 'other'}]:
+            for operation in [lambda c: ensure_postgres(c),
+                              lambda c: c.secret('mindaam-postgres-password', generate=lambda: self.fail('regenerated'))]:
+                with self.subTest(labels=labels), patch.object(Cloud, 'gc', return_value={'labels': labels}) as gc:
+                    with self.assertRaises(Blocked):
+                        operation(Cloud('mindaam'))
+                    gc.assert_called_once()
 
     def test_existing_unowned_resources_never_adopted(self):
         for resource in [{}, {'labels': {'application': 'other'}}]:

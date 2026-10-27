@@ -22,13 +22,20 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
         message = result.stderr
         # An authentication/network/permission error must NEVER become 'not found'.
         missing = (any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
-                   or re.search(r"\bnot found: 404\b", message) is not None)
+                   or re.search(r"\bnot found: 404\b", message) is not None
+                   # Cloud SQL uses HTTPError; require both the status and reason.
+                   # A bare 404 or an arbitrary HTTP error is not missing evidence.
+                   or re.search(r"\bHTTP(?:Error)?[ \t]+404:[ \t]+Not Found(?=[.\s]|$)",
+                                message, re.IGNORECASE) is not None)
         # Match failure statuses/phrases, not nouns in CLI context such as
         # "using the credentials" or resource paths such as "compute.networks".
         # Inspect the entire message so identity context cannot hide a later error.
         failure = re.search(
             r"\b(?:permission_denied|unauthenticated|unauthorized|forbidden|401|403|"
-            r"deadline_exceeded|unavailable|timeout|timed out)\b"
+            r"deadline_exceeded|unavailable|timeout|timed out|resource_exhausted|"
+            r"quota_exceeded|invalid_argument|failed_precondition|bad_request)\b"
+            r"|\bHTTP(?:Error)?[ \t]+(?:(?!404\b)[45]\d{2})\b"
+            r"|\b(?:quota|rate limit|malformed request|bad request|invalid argument)\b"
             r"|permission(?:s)?[ _]+(?:denied|missing|required)"
             r"|(?:access denied|reauth|could not refresh|invalid_grant)"
             r"|(?:credential\w*|authentication|authorization|network|connection|dns|"
