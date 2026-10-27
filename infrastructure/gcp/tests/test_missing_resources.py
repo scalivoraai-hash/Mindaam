@@ -108,6 +108,20 @@ class MissingResources(unittest.TestCase):
             with self.assertRaises(Blocked):
                 command(['unused'])
 
+    def test_artifact_registry_image_missing_with_cli_guidance(self):
+        error = (
+            'ERROR: (gcloud.artifacts.docker.images.describe) Image not found.\n'
+            'A valid container image can be referenced by tag or digest, has the format of\n'
+            '  LOCATION-docker.pkg.dev/PROJECT-ID/REPOSITORY-ID/IMAGE:tag\n'
+            '  LOCATION-docker.pkg.dev/PROJECT-ID/REPOSITORY-ID/IMAGE@sha256:digest\n'
+        )
+        args = ['gcloud', 'artifacts', 'docker', 'images', 'describe',
+                'europe-west2-docker.pkg.dev/mindaam/mindaam/app:' + 'a' * 40]
+        with patch('common.subprocess.run', return_value=self.result(error)):
+            self.assertIsNone(command(args, allow_missing=True))
+            with self.assertRaises(Blocked):
+                command(args)
+
     def test_all_foundation_discovery_errors_with_identity_context(self):
         for cli, resource in DISCOVERY:
             for detail in [f'NOT_FOUND: Requested entity {resource} was not found.',
