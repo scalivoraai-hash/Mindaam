@@ -9,6 +9,29 @@ from deploy import foundation, deploy, rollback, image_check
 from smoke import check
 
 
+def staging_image(c, sha, *, build_allowed):
+    existing = c.get_json(f'releases/{sha}/staging.json')
+    if existing is not None:
+        if existing.get('sha') != sha or existing.get('environment') != 'staging':
+            raise Blocked('Existing staging state does not match the requested release')
+        image = existing.get('image', '')
+    else:
+        registry = c.region + '-docker.pkg.dev'
+        tag = f'{registry}/{c.project}/mindaam/app:{sha}'
+        info = c.gc('artifacts', 'docker', 'images', 'describe', tag, missing=True)
+        if info is None:
+            if not build_allowed:
+                raise Blocked('Ancestor staging image is absent; never build current code under an old SHA')
+            c.gc('auth', 'configure-docker', registry, raw=True)
+            subprocess.run(['docker', 'build', '-f', 'infrastructure/gcp/Dockerfile', '-t', tag, '.'], check=True)
+            subprocess.run(['docker', 'push', tag], check=True)
+            info = c.gc('artifacts', 'docker', 'images', 'describe', tag)
+        digest = (info or {}).get('image_summary', {}).get('digest', '')
+        image = tag.rsplit(':', 1)[0] + '@' + digest
+    image_check(c, image)
+    return image
+
+
 def main():
     operation = os.environ['OPERATION']
     c = Cloud(os.environ['MINDAAM_PROJECT_ID']); c.require_project()
@@ -23,23 +46,18 @@ def main():
     if operation == 'rollback':
         rollback(c, sha); return
     if operation == 'staging':
-        if sha != command(['git', 'rev-parse', 'HEAD']):
-            raise Blocked('Build staging from current main; verify/production can resume an existing SHA')
+        head = command(['git', 'rev-parse', 'HEAD'])
+        if sha != head:
+            # Resume an ancestor image only across reviewed orchestration changes.
+            # Runtime code, Dockerfile, migration script and build inputs must match.
+            changed = command(['git', 'diff', '--name-only', sha, head]).splitlines()
+            allowed = {'infrastructure/gcp/common.py', 'infrastructure/gcp/deploy.py',
+                       'infrastructure/gcp/workflow.py', 'docs/ADR-0022-gcp-automation.md'}
+            if any(p not in allowed and not p.startswith('infrastructure/gcp/tests/') for p in changed):
+                raise Blocked('Staging resume requires unchanged application and image build inputs')
         if not c.get_json('foundation.json'):
             raise Blocked('Complete foundation and media/turn DNS first')
-        existing = c.get_json(f'releases/{sha}/staging.json')
-        image = existing.get('image') if existing else None
-        if not image:
-            registry = c.region + '-docker.pkg.dev'
-            tag = f'{registry}/{c.project}/mindaam/app:{sha}'
-            c.gc('auth', 'configure-docker', registry, raw=True)
-            # No shell, no build arguments containing secrets, no unreviewed application checkout.
-            subprocess.run(['docker', 'build', '-f', 'infrastructure/gcp/Dockerfile', '-t', tag, '.'], check=True)
-            subprocess.run(['docker', 'push', tag], check=True)
-            info = c.gc('artifacts', 'docker', 'images', 'describe', tag)
-            digest = info['image_summary']['digest']
-            image = tag.rsplit(':', 1)[0] + '@' + digest
-        image_check(c, image)
+        image = staging_image(c, sha, build_allowed=sha == head)
         deploy(c, 'staging', image, sha)
     elif operation == 'verify':
         release = c.get_json(f'releases/{sha}/staging.json')

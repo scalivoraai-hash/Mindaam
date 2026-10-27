@@ -20,8 +20,20 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
     result = subprocess.run(args, input=stdin, text=True, capture_output=True)
     if result.returncode:
         message = result.stderr
+        # Cloud Run emits a name-only diagnostic. Bind it to the exact requested
+        # managed resource; malformed names and other commands are not absence.
+        run_missing = False
+        if (len(args) >= 5 and args[:2] == ['gcloud', 'run']
+                and args[2] in ('services', 'jobs') and args[3] == 'describe'):
+            kind = 'service' if args[2] == 'services' else 'job'
+            pattern = r'mindaam-(?:staging|production)' if kind == 'service' else r'mindaam-migrate-(?:staging|production)'
+            if re.fullmatch(pattern, args[4]):
+                run_missing = re.search(
+                    r'^ERROR: \(gcloud\.run\.' + args[2] + r'\.describe\) Cannot find '
+                    + kind + r' \[' + re.escape(args[4]) + r'\][ \t]*$',
+                    message, re.MULTILINE) is not None
         # An authentication/network/permission error must NEVER become 'not found'.
-        missing = (any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
+        missing = (run_missing or any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
                    or re.search(r"\bnot found: 404\b", message) is not None
                    # Match the Storage diagnostic header, not text inside an object URL.
                    or re.search(r"^ERROR: \(gcloud\.storage\.cat\) "
@@ -40,7 +52,10 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
             r"quota_exceeded|invalid_argument|failed_precondition|bad_request)\b"
             r"|\bHTTP(?:Error)?[ \t]+(?:(?!404\b)[45]\d{2})\b"
             r"|\b(?:quota|rate limit|malformed request|bad request|invalid argument|invalid request|"
-            r"(?:invalid|malformed) (?:path|url|uri))\b"
+            r"(?:invalid|malformed) (?:path|url|uri|resource|service|job|project|region)|"
+            r"(?:wrong|unknown) (?:project|region))\b"
+            r"|\b(?:project|region)[ \t]+[^\n]{0,100}?"
+            r"\b(?:not found|does not exist|is invalid)\b"
             r"|permission(?:s)?[ _]+(?:denied|missing|required)"
             r"|(?:access denied|reauth|could not refresh|invalid_grant)"
             r"|(?:credential\w*|authentication|authorization|network|connection|dns|"

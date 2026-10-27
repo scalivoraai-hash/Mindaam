@@ -276,6 +276,9 @@ def migrate(c, env, image):
     if env == "production":
         c.gc("sql", "backups", "create", "--instance=mindaam-postgres", "--description=Mindaam pre-release backup")
     name = "mindaam-migrate-" + env
+    existing = c.gc("run", "jobs", "describe", name, "--region=" + c.region, missing=True)
+    if existing is not None:
+        c.owned(existing.get("metadata", {}), name)
     args = ["run", "jobs", "deploy", name, "--region=" + c.region, "--image=" + image,
             "--service-account=" + c.sa("migrate"), "--command=python", "--args=/app/infrastructure/gcp/migrate.py",
             "--tasks=1", "--parallelism=1", "--max-retries=0", "--task-timeout=900s", "--cpu=1", "--memory=512Mi",
@@ -309,13 +312,13 @@ def deploy(c, env, image, sha):
         raise Blocked("Run foundation first.")
     if env == "production":
         release_gate(c, image, sha)
-    migrate(c, env, image)
     name = "mindaam-" + env
     previous = c.gc("run", "services", "describe", name, "--region=" + c.region, missing=True)
     if previous:
         c.owned(previous.get("metadata", {}), name)
         if c.get_json(f"releases/{sha}/{env}-previous.json") is None:
             c.put_json(f"releases/{sha}/{env}-previous.json", previous)
+    migrate(c, env, image)
     origin = "https://" + SETTINGS["domain"] if env == "production" else (previous or {}).get("status", {}).get("url", "https://not-yet-published.invalid")
     manifest = service(c, env, image, origin, optional_secrets(c, env))
     replace(c, manifest)
