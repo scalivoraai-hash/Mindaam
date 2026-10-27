@@ -37,11 +37,17 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
         # being swallowed alongside an apparent missing-image line.
         image_lookup = (len(args) >= 6
                         and args[:5] == ['gcloud', 'artifacts', 'docker', 'images', 'describe'])
-        first_error_line = message.splitlines()[0].strip() if message.splitlines() else ''
-        image_missing = (
-            image_lookup
-            and first_error_line == 'ERROR: (gcloud.artifacts.docker.images.describe) Image not found.'
-        )
+        image_lines = [line.rstrip() for line in message.splitlines() if line.strip()]
+        image_missing_forms = [
+            ['ERROR: (gcloud.artifacts.docker.images.describe) Image not found.'],
+            [
+                'ERROR: (gcloud.artifacts.docker.images.describe) Image not found.',
+                'A valid container image can be referenced by tag or digest, has the format of',
+                '  LOCATION-docker.pkg.dev/PROJECT-ID/REPOSITORY-ID/IMAGE:tag',
+                '  LOCATION-docker.pkg.dev/PROJECT-ID/REPOSITORY-ID/IMAGE@sha256:digest',
+            ],
+        ]
+        image_missing = image_lookup and image_lines in image_missing_forms
         # An authentication/network/permission error must NEVER become 'not found'.
         missing = (image_missing or run_missing or any(t in message for t in ("NOT_FOUND", "was not found", "does not exist", "No URLs matched"))
                    or re.search(r"\bnot found: 404\b", message) is not None
