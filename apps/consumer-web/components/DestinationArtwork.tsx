@@ -1,0 +1,6 @@
+/** Original decorative skyline, not a photograph or representation of map coverage. */
+export default function DestinationArtwork({name}:{name:string}){
+ const seed=Array.from(name).reduce((n,c)=>n+c.charCodeAt(0),0);
+ const palette=[['#09264b','#1373b4','#80e8ff'],['#201446','#5a36a5','#e2aeff'],['#291837','#97465d','#ffbcae']][seed%3];
+ return <span className="destination-art" aria-hidden="true"><svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice"><rect width="400" height="150" fill={palette[0]}/><circle cx={280+seed%70} cy="34" r="25" fill={palette[2]} opacity=".8"/><path d="M0 94 Q70 60 150 90 T400 76 V150 H0Z" fill={palette[1]} opacity=".3"/>{Array.from({length:14},(_,i)=>{const h=25+(seed*(i+3)+i*17)%64,x=i*31-10;return <g key={i}><path d={`M${x} 125V${125-h}l15 -8 14 8v${h}Z`} fill={i%2?palette[1]:'#102345'}/><path d={`M${x+15} ${117-h}v${h+8}h14V${125-h}Z`} fill="#06122b" opacity=".45"/>{[0,1,2].map(j=><path key={j} d={`M${x+4} ${132-h+j*13}h6`} stroke={palette[2]} strokeWidth="3" opacity=".8"/>)}</g>})}<path d="M0 130Q100 111 200 134T400 128V150H0Z" fill="#06122b"/><path d="M0 139Q130 116 225 140T400 134" fill="none" stroke={palette[2]} strokeWidth="2"/><path d="M0 146Q130 123 225 147T400 141" fill="none" stroke={palette[1]} strokeWidth="3"/></svg></span>;
+}
