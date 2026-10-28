@@ -7,7 +7,7 @@ from backend.api.economy import credit,balance
 from backend.api import collectible_rotation as rotation,venue_rentals
 
 def create(c,h,title,start=None):
- r=c.post('/api/events',headers=h,json={'title':title,'city':'london','starts_at':start or time.time()+300,'venue_experience_type':'auditorium','communication_mode':'liveface','event_type':'Public Talk'})
+ r=c.post('/api/events',headers=h,json={'title':title,'city':'london','starts_at':start or time.time()+300,'venue_experience_type':'auditorium','venue_mode':'grand_arena','communication_mode':'liveface','event_type':'Public Talk'})
  assert r.status_code==201,r.text
  return r.json()
 

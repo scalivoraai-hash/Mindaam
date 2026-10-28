@@ -9,7 +9,7 @@
 .floating-chat footer button{position:relative;display:inline-flex;justify-content:center;align-items:center;min-width:44px;min-height:44px;padding:8px;border-radius:12px}
 .floating-chat footer button[aria-label]:is(:hover,:focus-visible)::after{content:attr(aria-label);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);white-space:nowrap;background:#131e39;color:#fff;padding:6px 9px;border:1px solid #7489b8;border-radius:6px;pointer-events:none;font-size:12px;z-index:4}
 .floating-chat header>div{min-width:0}.floating-chat header b{overflow-wrap:anywhere}.floating-chat header small{font-size:10px}.floating-chat header button{min-width:36px;min-height:44px}.floating-chat .floating-messages{min-height:80px;overflow-wrap:anywhere}
-.brand-wordmark,.brand-mark{border-radius:0;padding:0;background:transparent;filter:none;mix-blend-mode:multiply}.brand-artwork{background:linear-gradient(110deg,#edf5ff,#f4e9ff);padding:8px 12px;border-radius:24px;isolation:isolate;overflow:hidden;box-shadow:0 0 0 1px #c4c9ff40,0 5px 22px #8423f41c}.world-playing .brand-wordmark{padding:0}.brand-artwork{display:inline-flex;max-width:100%;align-items:center}
+.brand-wordmark,.brand-mark{border-radius:0;padding:0;background:transparent;filter:none;mix-blend-mode:normal}.brand-artwork{display:inline-flex;max-width:100%;align-items:center;background:transparent;padding:0;box-shadow:none}.world-playing .brand-wordmark{padding:0}
 @media(max-width:600px){.world-atmosphere{top:70px;left:10px}.world-atmosphere>button>span{display:none}.floating-chat:not(.event-chat){max-height:60dvh}}
 @media(prefers-reduced-motion:reduce){.primary,.floating-chat,.world-atmosphere{animation:none!important;transition:none!important}}
 
@@ -22,3 +22,12 @@
 /* Keep discovery controls clear of the location card and right action rail. */
 @media(min-width:1025px){.world-atmosphere{top:90px;left:calc(50% - 12px);transform:translateX(-100%)}.city-pulse{top:90px;right:auto;left:calc(50% + 12px)}}
 @media(max-width:1024px){.world-atmosphere{top:128px;left:12px;max-width:calc(50% - 18px)}.city-pulse{top:128px;right:12px;max-width:calc(50% - 18px)}.world-atmosphere section,.city-pulse section{width:min(280px,calc(100vw - 24px))}.city-pulse section{position:absolute;right:0}.brand-artwork{padding:5px 7px;border-radius:16px}}
+
+/* Weather and City Pulse share one row; navigation notices occupy the next row. */
+.waypoint-hint{top:156px!important;max-width:min(460px,calc(100vw - 24px));white-space:normal}.social-notice{top:210px}.world-info .info-toggle{display:flex;gap:8px;align-items:center;margin:8px 0;min-height:44px}.world-info .mission[hidden],.nearby[hidden]{display:none!important}.world-info .mission{max-height:32vh;overflow:auto}.nearby{max-height:30vh;overflow:auto}.world-info.info-collapsed .presence{font-size:10px}.city-action-tools:empty{display:none}.arena-entry-prompt{position:fixed;left:50%;bottom:180px;transform:translateX(-50%);z-index:24;min-height:44px}.arena-lobby button{min-height:44px;margin:6px}.arena-lobby article{margin:14px 0;padding:12px;border:1px solid #aab6ce;border-radius:12px}
+@media(max-width:1024px){.waypoint-hint{top:184px!important;max-width:calc(100vw - 24px)}.world-info .info-toggle{font-size:11px}.world-info .mission{max-height:24vh}.arena-entry-prompt{bottom:160px}.brand-artwork{padding:0;border-radius:0}}
+.info-toggle,.world-info .mission{pointer-events:auto}
+@media(max-width:1024px){.world-playing .world-info{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:6px}.world-info .compact-location{grid-column:1;grid-row:1;width:100%}.world-info .info-toggle{grid-column:2;grid-row:1;margin:0;padding:8px;width:44px;font-size:0}.world-info .info-toggle::before{content:'+';font-size:24px}.world-info .info-toggle[aria-expanded=true]::before{content:'−'}.world-info .location-details{grid-column:1/-1;grid-row:2}.world-info .mission:not([hidden]){display:block;grid-column:1/-1;grid-row:3;margin-top:58px}.nearby:not([hidden]){display:block;max-width:calc(100vw - 24px)}}
+
+.world-social-hud:not(.in-venue)>.quick-social{top:214px}
+@media(max-width:1024px){.world-social-hud:not(.in-venue)>.quick-social{top:240px}}

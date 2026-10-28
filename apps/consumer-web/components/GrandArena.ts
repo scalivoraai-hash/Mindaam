@@ -20,6 +20,6 @@ export function grandArena(arena:Data){
  const event=arena.events?.find((e:Data)=>e.status==='live')||arena.events?.[0];c.fillStyle='#fff';c.font='bold 48px sans-serif';c.fillText(event?.title||'Your next event starts here',38,235,950);c.font='28px sans-serif';c.fillText(event?`Hosted by ${event.host}`:'Concerts · Community · Presentations',38,290,950);if(event){c.font='24px sans-serif';c.fillText(`${event.ticket_price?event.ticket_price+' PC':'Free'} · ${event.available} available · ${event.visibility}`,38,335,950);c.fillText(new Date(event.starts_at*1000).toLocaleString(),38,375,950);}c.fillStyle='#8bf4dd';c.font='bold 32px sans-serif';c.fillText(event?(event.status==='live'?'LIVE NOW · View event':'UPCOMING · View event'):'BOOK THIS ARENA',38,422,950);
  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;const mat=new T.MeshBasicMaterial({map:texture});mat.userData.cityOwned=true;const board=new T.Mesh(new T.PlaneGeometry(11,5.5),mat);board.position.set(0,11.4,1);g.add(board);
  g.userData.tick=(seconds:number,distance:number)=>{neighbours.forEach((npc,i)=>{npc.userData.setLOD?.(distance);npc.userData.animate?.(seconds+i,0);if(i===2)npc.userData.sit?.();});};
- g.userData.cityAction=()=>window.dispatchEvent(new CustomEvent('pulse-open-event',{detail:event?.id||''}));
+ g.userData.cityAction=()=>window.dispatchEvent(new CustomEvent('pulse-city-action',{detail:{kind:'arena'}}));
  return g;
 }

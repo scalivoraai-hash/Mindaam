@@ -115,7 +115,7 @@ async function main(){
   for(const key of ['browser','signup','login','onboarding','session_persistence','world_entry','friends','no_world_media'])checks[key]=true;
   stage='events-auditorium';
   // Public auditorium entry places real users together using application APIs.
-  event=await a.api('/events',{title:'GCP staging acceptance '+Date.now(),description:'Automated staging QA, synthetic devices. Not a public customer event.',city:'milton-keynes',starts_at:Date.now()/1000,communication_mode:'liveface',venue_experience_type:'auditorium',event_type:'Public Talk'});
+  event=await a.api('/events',{title:'GCP staging acceptance '+Date.now(),description:'Automated staging QA, synthetic devices. Not a public customer event.',city:'milton-keynes',starts_at:Date.now()/1000,communication_mode:'liveface',venue_experience_type:'auditorium',venue_mode:'grand_arena',event_type:'Public Talk'});
   const catalogue=await a.api('/venue-rentals/milton-keynes'),cost=catalogue.prices?.['1'];
   const maxCost=Number(process.env.QA_STAGING_MAX_RESERVATION_PC||0);
   assert.ok(a.reusable&&catalogue.enabled&&Number.isInteger(cost)&&cost>0&&cost<=maxCost&&catalogue.purchased_credits>=cost,'Paid venue acceptance requires a dedicated purchased-credit staging host and an explicit per-reservation PC limit. No test credits are fabricated.');

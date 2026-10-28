@@ -178,6 +178,12 @@ class Payment(Base):
     credits = Column(Integer, nullable=False)
     provider_id = Column(String, unique=True, nullable=True)
     checkout_url = Column(Text, nullable=True)
+    intent_id = Column(String, unique=True, index=True, nullable=True)
+    refunded_pence = Column(Integer, nullable=False, default=0, server_default='0')
+    reversed_credits = Column(Integer, nullable=False, default=0, server_default='0')
+    dispute_status = Column(String, nullable=True)
+    dispute_pence = Column(Integer, nullable=False, default=0, server_default='0')
+    dispute_updated = Column(Float, nullable=False, default=0, server_default='0')
     status = Column(String, default="pending", nullable=False)
     request_key = Column(String, unique=True, nullable=False)
     created_at = Column(Float, default=now)
@@ -767,6 +773,14 @@ class CheckoutInput(BaseModel):
     request_id: str = Field(default_factory=uid, min_length=8, max_length=100)
 
 
+@router.get('/payments/{payment_id}/status')
+def payment_status(payment_id: str, user=Depends(current_user), db: Session = Depends(get_db)):
+    p = db.scalar(select(Payment).where(Payment.id == payment_id, Payment.user_id == user.id))
+    if not p:
+        raise HTTPException(404, 'Payment not found')
+    return {'id': p.id, 'status': p.status, 'credits': p.credits, 'amount_pence': p.amount_pence, 'currency': 'GBP'}
+
+
 @router.post("/payments/checkout")
 def checkout(
     data: CheckoutInput, user=Depends(current_user), db: Session = Depends(get_db)
@@ -775,8 +789,9 @@ def checkout(
 
     secret = os.getenv("STRIPE_SECRET_KEY", "")
     origin = os.getenv("PUBLIC_APP_URL", "http://localhost:3000").rstrip("/")
-    if not secret:
-        raise HTTPException(503, "Payments unavailable: Stripe is not configured")
+    from .payment_settlement import configured
+    if not configured():
+        raise HTTPException(503, "Payments unavailable: secure Stripe configuration is incomplete")
     from .credit_catalog import catalogue
     catalog = catalogue(db)
     if not catalog:
@@ -835,6 +850,7 @@ def checkout(
                 }
             ],
             metadata={"payment_id": p.id},
+            payment_intent_data={"metadata": {"payment_id": p.id}},
             success_url=origin + "/wallet?checkout=returned",
             cancel_url=origin + "/wallet?checkout=cancelled",
         )
@@ -863,6 +879,9 @@ async def webhook(request: Request, db: Session = Depends(get_db)):
         )
     except (ValueError, stripe.SignatureVerificationError):
         raise HTTPException(400, "Invalid webhook signature")
+    envelope = json.loads(body)
+    if os.getenv('APP_ENV', 'local') != 'production' and envelope.get('livemode') is True:
+        raise HTTPException(400, 'Live payment events are not accepted in this environment')
     if db.get(PaymentEvent, e.id):
         return {"received": True, "duplicate": True}
     try:
@@ -878,15 +897,20 @@ async def webhook(request: Request, db: Session = Depends(get_db)):
         "checkout.session.expired",
         "checkout.session.async_payment_failed",
     ):
-        p = db.scalar(
-            select(Payment).where(Payment.provider_id == obj["id"]).with_for_update()
-        )
+        p = db.scalar(select(Payment).where(Payment.provider_id == obj['id']))
         if not p:
             raise HTTPException(
                 409, "Unknown checkout session; retry after checkout persistence"
             )
+        db.scalar(select(User.id).where(User.id == p.user_id).with_for_update())
+        p = db.scalar(select(Payment).where(Payment.id == p.id).with_for_update().execution_options(populate_existing=True))
         if obj.get("metadata", {}).get("payment_id") != p.id:
             raise HTTPException(400, "Payment metadata mismatch")
+        intent = obj.get('payment_intent')
+        if intent:
+            if not isinstance(intent, str) or (p.intent_id and p.intent_id != intent):
+                raise HTTPException(400, 'Payment intent mismatch')
+            p.intent_id = intent
         if e.type in (
             "checkout.session.expired",
             "checkout.session.async_payment_failed",
@@ -909,6 +933,41 @@ async def webhook(request: Request, db: Session = Depends(get_db)):
             else:
                 credit(db, p.user_id, p.credits, "purchase", p.id, "payment:" + p.id)
             p.status = "paid"
+        from .payment_settlement import settle
+        settle(db, p.user_id)
+    elif e.type == 'charge.refunded' or e.type in ('charge.dispute.created', 'charge.dispute.updated', 'charge.dispute.closed'):
+        intent = obj.get('payment_intent')
+        p = db.scalar(select(Payment).where(Payment.intent_id == intent)) if isinstance(intent, str) else None
+        # New checkouts carry our payment ID onto the PaymentIntent/Charge. A refund
+        # can arrive before Checkout completion; never credit from this metadata alone.
+        if not p and e.type == 'charge.refunded':
+            p = db.get(Payment, obj.get('metadata', {}).get('payment_id', ''))
+        if not p:
+            raise HTTPException(409, 'Payment mapping is not available yet; retry after checkout confirmation')
+        if p.business_id:
+            raise HTTPException(409, 'Merchant funding reversal requires reconciliation before acknowledgement')
+        db.scalar(select(User.id).where(User.id == p.user_id).with_for_update())
+        p = db.scalar(select(Payment).where(Payment.id == p.id).with_for_update().execution_options(populate_existing=True))
+        if not isinstance(intent, str) or (p.intent_id and p.intent_id != intent):
+            raise HTTPException(400, 'Payment intent mismatch')
+        if obj.get('currency') != 'gbp':
+            raise HTTPException(400, 'Payment currency mismatch')
+        p.intent_id = intent
+        if e.type == 'charge.refunded':
+            amount = obj.get('amount_refunded')
+            if type(amount) is not int or not 0 <= amount <= p.amount_pence or obj.get('amount') != p.amount_pence:
+                raise HTTPException(400, 'Refund amount mismatch')
+            p.refunded_pence = max(p.refunded_pence, amount)
+        else:
+            status, amount, created = obj.get('status'), obj.get('amount'), envelope.get('created', 0)
+            if status not in ('warning_needs_response', 'warning_under_review', 'warning_closed', 'needs_response', 'under_review', 'won', 'lost') or type(amount) is not int or not 0 < amount <= p.amount_pence:
+                raise HTTPException(400, 'Dispute details mismatch')
+            # Terminal state cannot be reopened by an older delivery, including events
+            # created within the same second. Signed event IDs remain deduplicated above.
+            if p.dispute_status not in ('won', 'lost', 'warning_closed') and created >= p.dispute_updated:
+                p.dispute_status, p.dispute_pence, p.dispute_updated = status, amount, created
+        from .payment_settlement import settle
+        settle(db, p.user_id)
     db.flush()
     return {"received": True}
 

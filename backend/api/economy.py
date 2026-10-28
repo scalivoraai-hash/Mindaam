@@ -38,6 +38,9 @@ def credit(db, user_id, amount, kind, source, key, currency="credits"):
         if row.amount != amount or row.kind != kind or row.source != source:
             raise HTTPException(409, "Idempotency key conflict")
         return row
+    if currency == 'credits' and amount < 0 and kind != 'payment_reversal':
+        from .payment_settlement import require_spending
+        require_spending(db, user_id)
     before = balance(db, user_id, currency)
     if before + amount < 0:
         raise HTTPException(409, "Insufficient Credits")
@@ -61,4 +64,7 @@ def credit(db, user_id, amount, kind, source, key, currency="credits"):
         )
     )
     db.flush()
+    if currency == 'credits' and amount > 0:
+        from .payment_settlement import settle
+        settle(db, user_id)
     return row

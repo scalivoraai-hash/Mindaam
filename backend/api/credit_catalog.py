@@ -26,7 +26,8 @@ def public(db):
 
 @router.get('/payments/credits')
 def packs(u=Depends(current_user),db=Depends(get_db)):
- return {'packs':public(db),'ready':bool(os.getenv('STRIPE_SECRET_KEY') and os.getenv('STRIPE_WEBHOOK_SECRET'))}
+ from .payment_settlement import configured,summary
+ return {'packs':public(db),'ready':configured(),'payment_review':summary(db,u.id)}
 
 class Pack(Strict):
  id:str=Field(pattern=r'^credits_[a-z0-9_]{1,50}$')

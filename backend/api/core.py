@@ -270,6 +270,7 @@ def onboarding(data: Onboarding, u=Depends(current_user), db=Depends(get_db)):
 
 @router.get("/wallet")
 def wallet(u=Depends(current_user), db=Depends(get_db)):
+    from .payment_settlement import summary
     rows = db.scalars(
         select(Ledger)
         .where(Ledger.user_id == u.id)
@@ -288,6 +289,7 @@ def wallet(u=Depends(current_user), db=Depends(get_db)):
     ]
     return {
         "credits": balance(db, u.id),
+        "payment_review": summary(db, u.id),
         "xp": balance(db, u.id, "xp"),
         "transactions": [serialize(x) for x in rows],
         "perks": perks,

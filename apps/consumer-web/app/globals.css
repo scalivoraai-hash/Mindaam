@@ -209,7 +209,7 @@ html[data-communication-layout=expanded] .camera-tools{bottom:182px;width:210px}
 .world-loading{position:fixed;inset:0;z-index:140;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(ellipse at 50% 45%,#1b354c,#091526 65%);color:#edf7ff;pointer-events:auto}
 .world-loading svg{width:52px;height:52px}.world-loading strong{font-size:25px;letter-spacing:-.6px}.world-loading p{font-size:14px;color:#bed0df}.world-loading-line{width:100px;height:3px;overflow:hidden;border-radius:4px;background:#6086a340}.world-loading-line:after{content:'';display:block;width:40%;height:100%;background:#bfff68;animation:world-progress 1.3s ease-in-out infinite alternate}
 @keyframes world-progress{to{transform:translateX(150%)}}
-.app:has(.world-canvas[data-ready=false])>:not(.world-canvas),main:has(>.world-canvas[data-ready=false])>.preview-card{visibility:hidden}
+.app.world-playing:has(.world-canvas[data-ready=false])>:not(.world-canvas),main:has(>.world-canvas[data-ready=false])>.preview-card{visibility:hidden}
 .world-canvas[data-ready=false]{z-index:140;background:#091526}.world-canvas[data-ready=false] .district-loading{z-index:150}
 .in-auditorium .world-info,.in-auditorium .right-tools,.in-auditorium .nearby,.in-auditorium .movement,.in-auditorium .world-caption,.in-auditorium .world-minimap,.in-auditorium .venue-caption,.in-auditorium .world-tag.event,.in-auditorium .conversation-policy{display:none!important}
 .in-auditorium .topbar .balance,.in-auditorium .topbar .alpha-label{display:none}.in-auditorium .topbar{background:linear-gradient(#0a152bec,transparent);border:0;height:64px;pointer-events:none}.in-auditorium .topbar a,.in-auditorium .topbar button{pointer-events:auto}

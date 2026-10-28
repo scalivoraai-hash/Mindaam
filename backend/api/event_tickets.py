@@ -26,7 +26,8 @@ class EventTicket(Base):
 
 def ticket(db,event_id,user_id):return db.scalar(select(EventTicket).where(EventTicket.event_id==event_id,EventTicket.user_id==user_id))
 def entitled(db,event,user):
- if not event.ticket_price or event.host_id==user.id:return True
+ from .events import host
+ if not event.ticket_price or host(db,event,user):return True
  row=ticket(db,event.id,user.id)
  return bool(row and row.refunded_at is None)
 def require_ticket(db,event,user):
@@ -49,9 +50,10 @@ def purchase(id:str,data:Purchase,u=Depends(current_user),db=Depends(get_db)):
  if existing:
   if existing.refunded_at is not None:raise HTTPException(409,'This ticket was refunded')
   return serialize(existing)
- if e.status not in ['scheduled','live'] or not e.ticket_price or e.host_id==u.id:raise HTTPException(409,'Tickets are not available for this event')
+ if e.status not in ['scheduled','live'] or not e.ticket_price or events.host(db,e,u):raise HTTPException(409,'Tickets are not available for this event')
  if e.ends_at and e.ends_at<=time.time():raise HTTPException(409,'This event has ended')
- if e.venue_experience_type=='auditorium':
+ from .venue_modes import mode
+ if mode(db,e)=='grand_arena':
   from .venue_rentals import booking
   if not booking(db,e.id):raise HTTPException(409,'The organiser must confirm the arena reservation before selling tickets')
  a=events.eligible(db,e,u)

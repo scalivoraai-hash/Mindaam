@@ -98,7 +98,7 @@ export function car(p:T.Object3D,x:number,z:number,angle:number,color:string){
   box(g,color,side*.72,1.24,-.08,.05,.52,.07);
   const mirror=oval(g,color,side*1.0,1.12,.65,.16,.08,.12);mirror.material=finish(color);
   box(g,'#b5cdd8',side*.955,.89,-.12,.018,.035,.23);
-  for(const axle of [-1.25,1.28]){const tire=mesh(tireGeometry,'#17202c',g,side*.91,.4,axle);tire.rotation.z=Math.PI/2;const rim=mesh(rimGeometry,'#a6b7c4',g,side*.925,.4,axle);rim.material=finish('#a6b7c4',.85,.24);rim.rotation.z=Math.PI/2;}
+  for(const axle of [-1.25,1.28]){const tire=mesh(tireGeometry,'#17202c',g,side*.91,.4,axle);tire.rotation.z=Math.PI/2;tire.userData.rollingRadius=.4;const rim=mesh(rimGeometry,'#a6b7c4',g,side*.925,.4,axle);rim.material=finish('#a6b7c4',.85,.24);rim.rotation.z=Math.PI/2;rim.userData.rollingRadius=.4;}
   box(g,'#defaff',side*.52,.72,1.96,.5,.075,.04);box(g,'#f87189',side*.5,.82,-1.98,.52,.065,.04);
  }
  box(g,'#14222e',0,.57,2.04,.91,.14,.04);box(g,'#14222e',0,.53,-2.07,1.22,.11,.03);
@@ -106,12 +106,12 @@ export function car(p:T.Object3D,x:number,z:number,angle:number,color:string){
 }
 export function motorbike(p:T.Object3D,x=0,z=0){
  const g=new T.Group();g.position.set(x,0,z);p.add(g);
- for(const z of [-.83,.88]){const w=mesh(new T.CylinderGeometry(.42,.42,.19,18),'#19212b',g,0,.44,z);w.rotation.z=Math.PI/2;const rim=mesh(new T.CylinderGeometry(.3,.3,.20,14),'#64cfe2',g,0,.44,z);rim.rotation.z=Math.PI/2;}
+ for(const z of [-.83,.88]){const w=mesh(new T.CylinderGeometry(.42,.42,.19,18),'#19212b',g,0,.44,z);w.rotation.z=Math.PI/2;w.userData.rollingRadius=.42;const rim=mesh(new T.CylinderGeometry(.3,.3,.20,14),'#64cfe2',g,0,.44,z);rim.rotation.z=Math.PI/2;rim.userData.rollingRadius=.4;}
  oval(g,'#243b55',0,.9,.16,.29,.27,.51);box(g,'#13202e',0,.73,-.36,.4,.17,.8);box(g,'#394c60',0,.65,0,.4,.36,.43);
  for(const side of [-1,1]){const fork=box(g,'#a9bccb',side*.13,.81,.66,.065,.88,.07);fork.rotation.x=-.22;box(g,'#55d5e6',side*.29,.91,.16,.03,.07,.65);}
  box(g,'#233748',0,1.31,.52,.75,.07,.1);oval(g,'#b8eeff',0,1.08,.72,.16,.13,.04);box(g,'#eb7998',0,.82,-.86,.25,.06,.03);return g;
 }
-export function bicycle(p:T.Object3D,x=0,z=0){const g=new T.Group();g.position.set(x,0,z);p.add(g);for(const z of [-.8,.8]){const w=mesh(new T.TorusGeometry(.48,.065,6,18),'#253c51',g,0,.5,z);w.rotation.y=Math.PI/2;}const bar=(a:number[],b:number[])=>{const aa=new T.Vector3(a[0],a[1],a[2]),bb=new T.Vector3(b[0],b[1],b[2]),m=mesh(new T.CylinderGeometry(.045,.045,aa.distanceTo(bb),6),'#51bed1',g);m.position.copy(aa).add(bb).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),bb.sub(aa).normalize())};for(const [a,b] of [[[0,.5,-.8],[0,1.05,-.25]],[[0,1.05,-.25],[0,.5,0]],[[0,.5,0],[0,.5,-.8]],[[0,1.05,-.25],[0,1.1,.5]],[[0,1.1,.5],[0,.5,0]],[[0,1.1,.5],[0,.5,.8]]])bar(a,b);box(g,'#263849',0,1.12,-.2,.3,.12,.42);box(g,'#344d60',0,.79,.09,.18,.34,.39);box(g,'#c9f7fc',0,1.19,.67,.13,.12,.08);box(g,'#273e4d',0,1.32,.55,.7,.07,.09);return g;}
+export function bicycle(p:T.Object3D,x=0,z=0){const g=new T.Group();g.position.set(x,0,z);p.add(g);for(const z of [-.8,.8]){const w=mesh(new T.TorusGeometry(.48,.065,6,18),'#253c51',g,0,.5,z);w.rotation.y=Math.PI/2;w.userData.rollingRadius=.48;}const bar=(a:number[],b:number[])=>{const aa=new T.Vector3(a[0],a[1],a[2]),bb=new T.Vector3(b[0],b[1],b[2]),m=mesh(new T.CylinderGeometry(.045,.045,aa.distanceTo(bb),6),'#51bed1',g);m.position.copy(aa).add(bb).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),bb.sub(aa).normalize())};for(const [a,b] of [[[0,.5,-.8],[0,1.05,-.25]],[[0,1.05,-.25],[0,.5,0]],[[0,.5,0],[0,.5,-.8]],[[0,1.05,-.25],[0,1.1,.5]],[[0,1.1,.5],[0,.5,0]],[[0,1.1,.5],[0,.5,.8]]])bar(a,b);box(g,'#263849',0,1.12,-.2,.3,.12,.42);box(g,'#344d60',0,.79,.09,.18,.34,.39);box(g,'#c9f7fc',0,1.19,.67,.13,.12,.08);box(g,'#273e4d',0,1.32,.55,.7,.07,.09);return g;}
 
 export function streetSign(parent:T.Object3D,name:string,x:number,z:number,angle:number){
  const g=new T.Group();g.position.set(x,0,z);g.rotation.y=angle;parent.add(g);

@@ -86,12 +86,14 @@ def view(db,city,user):
  from .venue_rentals import booking
  from .event_tickets import summary
  now=time.time();items=[]
- for e in db.scalars(select(Event).where(Event.city==city,Event.venue_experience_type=='auditorium',Event.status.in_(['scheduled','live']),((Event.starts_at>now-14400)|(Event.ends_at>now))).order_by(Event.starts_at).limit(12)):
-  if not visible(db,e,user):continue
-  if (e.programme or {}).get('arena_booking_required') and not booking(db,e.id):continue
+ for e in db.scalars(select(Event).where(Event.city==city,Event.venue_experience_type=='auditorium',Event.status.in_(['scheduled','live']),((Event.starts_at>now-14400)|(Event.ends_at>now))).order_by(Event.starts_at)):
+  from .venue_modes import mode
+  if mode(db,e)!='grand_arena' or not visible(db,e,user):continue
+  if not booking(db,e.id):continue
   host=db.get(User,e.host_id)
-  items.append({'id':e.id,'title':e.title,'host':host.username if host else 'Organiser','starts_at':e.starts_at,'status':e.status,'visibility':e.visibility,'ticket_price':e.ticket_price,'available':summary(db,e,user)['available'],'cover_image':(e.programme or {}).get('cover_image','')})
- return {**arena,'events':items[:5]}
+  items.append({'id':e.id,'title':e.title,'host':host.username if host else 'Organiser','starts_at':e.starts_at,'status':e.status,'visibility':e.visibility,'ticket_price':e.ticket_price,'entitled':summary(db,e,user)['entitled'],'available':summary(db,e,user)['available'],'cover_image':(e.programme or {}).get('cover_image','')})
+  if len(items)==5:break
+ return {**arena,'events':items}
 
 # Event billboards refresh separately from high-frequency movement snapshots.
 from fastapi import APIRouter,Depends

@@ -3,7 +3,7 @@
   "liveName": "Mindaam Live",
   "tagline": "A LIVING WORLD TOGETHER",
   "origin": "https://mindaam.com",
-  "logo": "/brand/logo.webp",
+  "logo": "/brand/approved-logo.png",
   "mark": "/brand/mark.webp",
   "colours": {
     "navy": "#080f2c",
@@ -12,6 +12,7 @@
     "violet": "#8423f4",
     "pink": "#ff0d9b",
     "coral": "#ff5a42",
-    "white": "#ffffff"
+    "white": "#ffffff",
+    "surface": "#f1f0ff"
   }
 }

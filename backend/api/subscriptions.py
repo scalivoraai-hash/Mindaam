@@ -154,6 +154,8 @@ def secret():
     key = os.getenv("STRIPE_SECRET_KEY")
     if not key:
         raise HTTPException(503, "Subscriptions unavailable: Stripe is not configured")
+    if os.getenv('APP_ENV', 'local') != 'production' and not key.startswith(('sk_test_', 'rk_test_')):
+        raise HTTPException(503, 'Only Stripe sandbox credentials are allowed in this environment')
     return key
 
 
@@ -534,6 +536,8 @@ async def webhook(request: Request, db: Session = Depends(get_db)):
         )
     except (ValueError, stripe.SignatureVerificationError):
         raise HTTPException(400, "Invalid webhook signature")
+    if os.getenv('APP_ENV', 'local') != 'production' and json.loads(payload).get('livemode') is True:
+        raise HTTPException(400, 'Live subscription events are not accepted in this environment')
     if db.get(SubscriptionEvent, event_data.id):
         return {"received": True, "duplicate": True}
     try:

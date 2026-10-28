@@ -126,7 +126,8 @@ jobs:
               node scripts/tests/auditorium-renderer.cjs
               QA_OUTPUT=/tmp/mylil-presentation-evidence/avatars node scripts/tests/remote-renderer.cjs
               QA_OUTPUT=/tmp/mylil-presentation-evidence/cities node scripts/tests/city-upgrade-renderer.cjs
-              QA_OUTPUT=/tmp/mylil-presentation-evidence/weather node scripts/tests/living-world-renderer.cjs ;;
+              QA_OUTPUT=/tmp/mylil-presentation-evidence/weather node scripts/tests/living-world-renderer.cjs
+              QA_OUTPUT=/tmp/mylil-presentation-evidence/traffic node scripts/tests/traffic-motion.cjs ;;
             movement) node scripts/tests/movement-camera.cjs ;;
             outdoor-xp)
               for width in 1440 390 820; do

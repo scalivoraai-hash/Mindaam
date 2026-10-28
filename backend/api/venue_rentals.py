@@ -15,6 +15,7 @@ from .economy import balance,credit,config
 from .operations import super_admin
 from .expansion import Destination
 from . import events
+from .venue_modes import mode as venue_mode
 router=APIRouter(prefix='/api')
 DURATIONS=[1,2,3,6,10,12,24]
 SELECTABLE_DURATIONS=[1,2,10,24]
@@ -82,7 +83,7 @@ def availability(city:str,day:date,hours:int=1,u=Depends(current_user),db=Depend
  if not candidates or candidates[-1]['starts_at']<now-86400 or candidates[0]['starts_at']>now+86400*91:raise HTTPException(422,'Choose a date within the next 90 days')
  window_start=candidates[0]['starts_at'];window_end=candidates[-1]['starts_at']+hours*3600
  rows=list(db.scalars(select(VenueBooking).join(Event,Event.id==VenueBooking.event_id).where(Event.status!='cancelled',VenueBooking.city==city,VenueBooking.ends_at>window_start,VenueBooking.starts_at<window_end)))
- live=list(db.scalars(select(Event).where(Event.city==city,Event.venue_experience_type=='auditorium',Event.status=='live')))
+ live=[e for e in db.scalars(select(Event).where(Event.city==city,Event.venue_experience_type=='auditorium',Event.status=='live')) if venue_mode(db,e)=='grand_arena']
  slots=[]
  for slot in candidates:
   start=slot['starts_at'];end=start+hours*3600
@@ -105,7 +106,7 @@ def reserve(id:str,data:BookingInput,u=Depends(current_user),db=Depends(get_db))
   if prior.event_id!=id or prior.hours!=data.hours or prior.cost!=data.expected_cost or (data.starts_at is not None and prior.starts_at!=data.starts_at):raise HTTPException(409,'This confirmation was already used for another reservation')
   return serialize(prior)
  if booking(db,id):raise HTTPException(409,'This event already has a venue reservation')
- if e.venue_experience_type!='auditorium' or e.status not in ['scheduled','draft']:raise HTTPException(409,'Reserve an upcoming auditorium event')
+ if venue_mode(db,e)!='grand_arena' or e.status not in ['scheduled','draft']:raise HTTPException(409,'Reserve an upcoming auditorium event')
  from .growth import require_access
  require_access(db,u,e.city)
  catalog=settings(db);cost=catalog.get('prices',{}).get(str(data.hours))
@@ -114,7 +115,7 @@ def reserve(id:str,data:BookingInput,u=Depends(current_user),db=Depends(get_db))
  start=data.starts_at if data.starts_at is not None else e.starts_at;end=start+data.hours*3600
  if start<time.time()-60 or start>time.time()+86400*90:raise HTTPException(422,'Choose a venue start within the next 90 days')
  if conflict(db,e.city,start,end,id):raise HTTPException(409,'This venue is reserved during those times. Choose another start.')
- live=db.scalar(select(Event.id).where(Event.id!=id,Event.city==e.city,Event.venue_experience_type=='auditorium',Event.status=='live',Event.starts_at<end,Event.ends_at>start).limit(1))
+ live=any(venue_mode(db,other)=='grand_arena' for other in db.scalars(select(Event).where(Event.id!=id,Event.city==e.city,Event.venue_experience_type=='auditorium',Event.status=='live',Event.starts_at<end,Event.ends_at>start)))
  if live:raise HTTPException(409,'An event is using this venue. Choose a later start.')
  if purchased_available(db,u.id)<cost:raise HTTPException(409,'More purchased Credits are needed for this reservation. Open Wallet to buy Credits.')
  row=VenueBooking(id=uid(),request_id=str(data.request_id),user_id=u.id,event_id=id,city=e.city,starts_at=start,ends_at=end,hours=data.hours,cost=cost)
@@ -124,10 +125,10 @@ def reserve(id:str,data:BookingInput,u=Depends(current_user),db=Depends(get_db))
 
 
 def start_gate(db,e):
- if e.venue_experience_type!='auditorium':return
+ if venue_mode(db,e)!='grand_arena':return
  destination(db,e.city)
  row=booking(db,e.id);now=time.time()
- if not row and (e.programme or {}).get('arena_booking_required'):raise HTTPException(409,'Confirm this Grand Arena reservation before starting')
+ if not row:raise HTTPException(409,'Confirm this Grand Arena reservation before starting')
  if row:
   if not row.starts_at<=now<row.ends_at:raise HTTPException(409,'Start this event during its reserved venue time')
   e.ends_at=row.ends_at

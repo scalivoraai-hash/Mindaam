@@ -191,6 +191,7 @@ class Event(Base):
     starts_at: Mapped[float] = mapped_column(Float)
     capacity: Mapped[int] = mapped_column(Integer, default=100)
     venue_experience_type: Mapped[str] = mapped_column(String(30), default="standard")
+    venue_mode: Mapped[str | None] = mapped_column(String(30), nullable=True)
     chat_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     event_type: Mapped[str] = mapped_column(String(30), default='Social Hangout')
     communication_mode: Mapped[str] = mapped_column(String(20), default='text')
