@@ -1,3 +1,4 @@
+from release_policy import profile, evidence_name, review_name, BETA, POLICY
 """Create a review packet or validate/persist reviewed cost data. Contains no secrets.
 
 The deployment operator completes the price/usage review from actual inventory,
@@ -18,7 +19,9 @@ def inventory(c):
     vm = c.gc('compute', 'instances', 'describe', 'mindaam-media', '--zone=' + c.zone); c.owned(vm, 'media VM')
     run = ready_service(c, 'mindaam-staging')
     template = run.get('spec', {}).get('template', {})
-    return {'project': c.project, 'region': c.region, 'foundation': c.get_json('foundation.json'),
+    databases = c.gc('sql','databases','list','--instance=mindaam-postgres')
+    backups = c.gc('sql','backups','list','--instance=mindaam-postgres','--limit=5')
+    return {'databases':[{'name':row.get('name')} for row in databases], 'recent_backups':[{k:row.get(k) for k in ('id','status','type','startTime','endTime')} for row in backups], 'project': c.project, 'region': c.region, 'foundation': c.get_json('foundation.json'),
             'sql': {k: sql.get(k) for k in ('name', 'region', 'databaseVersion', 'settings')},
             'vm': {k: vm.get(k) for k in ('name', 'machineType', 'disks', 'networkInterfaces')},
             'staging': {'name': run.get('metadata', {}).get('name'), 'annotations': run.get('metadata', {}).get('annotations'),
@@ -29,7 +32,7 @@ def inventory(c):
 
 
 def packet(c, sha):
-    staged = c.get_json(f'releases/{sha}/staging-verified.json')
+    staged = c.get_json(f'releases/{sha}/{evidence_name()}')
     if not staged:
         raise Blocked('Complete real staging acceptance first')
     configured = {env: optional_secrets(c, env) for env in ('staging', 'production')}
@@ -48,12 +51,13 @@ def packet(c, sha):
                                    'https://cloud.google.com/sql/pricing','https://cloud.google.com/storage/pricing',
                                    'https://cloud.google.com/secret-manager/pricing','https://cloud.google.com/stackdriver/pricing'],
              'limitations':'WebSockets keep Cloud Run billed. Fixed caps are not a guaranteed bill ceiling. Credit is excluded. No 500/1000-user capacity assertion.'}
+    value.update({'profile':profile(), 'deferred':POLICY['deferred'] if profile()==BETA else {}, 'payment_actions_enabled':False, 'security_review':c.get_json(f'releases/{sha}/security-review.json')})
     return value
 
 
 def save(c, sha, value):
     # Validate against real release evidence before writing the production gate object.
-    staged = c.get_json(f'releases/{sha}/staging-verified.json')
+    staged = c.get_json(f'releases/{sha}/{evidence_name()}')
     if not staged or value.get('resource_metrics_evidence') != staged['resource_metrics_evidence']:
         raise Blocked('Review must reference this release\'s actual measurements')
     if not c.get_json(f'releases/{sha}/metrics.json'):
@@ -61,14 +65,14 @@ def save(c, sha, value):
     value['inventory'] = inventory(c)
     value['reviewed_at'] = int(time.time())
     old_get = c.get_json
-    c.get_json = lambda key: value if key == f'releases/{sha}/release-review.json' else old_get(key)
+    c.get_json = lambda key: value if key == f'releases/{sha}/{review_name()}' else old_get(key)
     try:
         release_gate(c, staged['image'], sha)
     finally:
         c.get_json = old_get
     if sum(value['costs']['light']['usd'].values()) >= SETTINGS['budget_usd']:
         print('Warning: light-use estimate is at or above $125/month; preferred target is below $100.')
-    c.put_json(f'releases/{sha}/release-review.json', value)
+    c.put_json(f'releases/{sha}/{review_name()}', value)
     print('Reviewed cost evidence stored; production remains a separate explicit operation.')
 
 

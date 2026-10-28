@@ -1,0 +1,19 @@
+{
+  "profile": "limited-public-beta-v1",
+  "base_sha": "f5bc3875a9d5266ad70acc96448802f475c87ba6",
+  "expires_on": "2026-11-28",
+  "deferred": {
+    "venue_booking": "DEFERRED \u2014 NOT VERIFIED",
+    "stripe_purchase": "DEFERRED \u2014 NOT VERIFIED",
+    "paid_event_tickets": "DEFERRED \u2014 NOT VERIFIED"
+  },
+  "additional_checks": [
+    "free_events",
+    "free_auditorium",
+    "auditorium_reentry",
+    "wallet_read",
+    "admin_access_control",
+    "payment_gate",
+    "direct_webrtc"
+  ]
+}

@@ -8,8 +8,9 @@ from sqlalchemy import select
 def configured():
     key = os.getenv('STRIPE_SECRET_KEY', '')
     sandbox = os.getenv('APP_ENV', 'local') != 'production'
-    return bool(key and os.getenv('STRIPE_WEBHOOK_SECRET') and
-                (not sandbox or key.startswith(('sk_test_', 'rk_test_'))))
+    from .payment_policy import actions_enabled
+    prefixes = ('sk_test_', 'rk_test_') if sandbox else ('sk_live_', 'rk_live_')
+    return bool(actions_enabled() and key.startswith(prefixes) and os.getenv('STRIPE_WEBHOOK_SECRET'))
 
 
 def target(payment):

@@ -1,3 +1,5 @@
+from .payment_policy import actions_enabled
+from .payment_settlement import configured as payments_configured
 import re
 import time
 import secrets
@@ -95,7 +97,8 @@ def get_config(db=Depends(get_db)):
                 and os.getenv("LIVEKIT_API_KEY")
                 and os.getenv("LIVEKIT_API_SECRET")
             ),
-            "payments_enabled": bool(os.getenv("STRIPE_SECRET_KEY") and os.getenv("STRIPE_WEBHOOK_SECRET")),
+            "payments_enabled": payments_configured(),
+            "payment_actions_enabled": actions_enabled(),
             "physical_visit_enabled": bool(os.getenv("PULSEPOINT_SECRET")),
             "vehicles_enabled": True,
             "trains_enabled": False,

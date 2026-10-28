@@ -41,6 +41,8 @@ class Purchase(Strict):
 @router.post('/{id}/tickets')
 def purchase(id:str,data:Purchase,u=Depends(current_user),db=Depends(get_db)):
  from . import events
+ from .payment_policy import require_payment_actions
+ require_payment_actions()
  e=events.get(db,id,u);db.scalar(select(User.id).where(User.id==u.id).with_for_update())
  prior=db.scalar(select(EventTicket).where(EventTicket.user_id==u.id,EventTicket.request_id==str(data.request_id)))
  if prior:
@@ -78,4 +80,5 @@ def refund_cancelled(db,e):
 
 def summary(db,e,u):
  row=ticket(db,e.id,u.id) if e.ticket_price else None
- return {'price':e.ticket_price,'entitled':entitled(db,e,u),'receipt':serialize(row) if row else None,'available':max(0,e.capacity-1-sales(db,e.id)) if e.ticket_price else max(0,e.capacity-(db.scalar(select(func.count()).select_from(Attendee).where(Attendee.event_id==e.id,Attendee.state=='active')) or 0))}
+ from .payment_policy import actions_enabled
+ return {'purchases_enabled':actions_enabled(),'price':e.ticket_price,'entitled':entitled(db,e,u),'receipt':serialize(row) if row else None,'available':max(0,e.capacity-1-sales(db,e.id)) if e.ticket_price else max(0,e.capacity-(db.scalar(select(func.count()).select_from(Attendee).where(Attendee.event_id==e.id,Attendee.state=='active')) or 0))}

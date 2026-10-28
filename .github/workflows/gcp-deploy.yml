@@ -9,8 +9,13 @@ on:
       operation:
         description: Resume at this step (foundation creates paid startup resources)
         type: choice
-        options: [foundation, staging, verify, production, finalize, rollback]
+        options: [foundation, staging, verify, review, production, finalize, rollback]
         required: true
+      release_profile:
+        description: Expiring owner-requested beta policy; payments remain server-gated
+        type: choice
+        options: [limited-public-beta-v1, full]
+        default: limited-public-beta-v1
       release_sha:
         description: Existing source SHA for resume/verify/production/finalize/rollback; empty uses current main
         type: string
@@ -61,6 +66,7 @@ jobs:
     env:
       MINDAAM_PROJECT_ID: ${{ vars.MINDAAM_PROJECT_ID }}
       MINDAAM_BUDGET_CONFIRMED: ${{ vars.MINDAAM_BUDGET_CONFIRMED }}
+      RELEASE_PROFILE: ${{ inputs.release_profile || 'limited-public-beta-v1' }}
       OPERATION: ${{ inputs.operation || 'staging' }}
       RELEASE_SHA: ${{ inputs.release_sha || github.event.workflow_run.head_sha || github.sha }}
       REVIEW_OBJECT: ${{ inputs.review_object }}

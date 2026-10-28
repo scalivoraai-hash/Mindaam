@@ -18,6 +18,10 @@ def check(release):
     health = read_url(origin + "/api/health", json_body=True)
     if health.get("status") != "ready" or health.get("environment") != release["environment"]:
         raise Blocked("Actual deployed health/environment failed")
+    if release.get('profile') == 'limited-public-beta-v1':
+        config = read_url(origin + '/api/config', json_body=True)
+        if config.get('flags', {}).get('payment_actions_enabled') is not False or config['flags'].get('payments_enabled') is not False:
+            raise Blocked('Public-beta payment actions are not gated on the actual service')
     html = read_url(origin)
     if "Mindaam" not in html:
         raise Blocked("Mindaam page was not served")

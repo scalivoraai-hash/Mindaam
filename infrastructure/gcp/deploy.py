@@ -337,7 +337,8 @@ def deploy(c, env, image, sha):
         vm_bundle(c, production_origin=provider_origin)
         foundation = c.get_json("foundation.json")
         summary(f"Production custom-domain DNS: A `mindaam.com` → `{foundation['media_ip']}`. No existing domain is overwritten automatically.")
-    release = {"sha": sha, "image": image, "environment": env, "origin": origin, "provider_origin": provider_origin,
+    from release_policy import profile
+    release = {"profile": profile(), "sha": sha, "image": image, "environment": env, "origin": origin, "provider_origin": provider_origin,
                "revision": current["status"]["latestReadyRevisionName"], "deployed_at": int(time.time())}
     c.put_json(f"releases/{sha}/{env}.json", release)
     Path("deployment-result.json").write_text(json.dumps(release, indent=2))
@@ -345,11 +346,18 @@ def deploy(c, env, image, sha):
 
 
 def release_gate(c, image, sha):
-    verified = c.get_json(f"releases/{sha}/staging-verified.json")
-    review = c.get_json(f"releases/{sha}/release-review.json")
+    from release_policy import profile, evidence_name, review_name, required_checks, validate_beta, BETA
+    selected = profile()
+    verified = c.get_json(f"releases/{sha}/{evidence_name(selected)}")
+    review = c.get_json(f"releases/{sha}/{review_name(selected)}")
+    if selected == BETA:
+        validate_beta(verified or {}, review or {})
+        security = c.get_json(f"releases/{sha}/security-review.json")
+        if not security or security != review.get("security_review") or security.get("sha") != sha or security.get("image") != image or security.get("evidence_object") != f"gs://{c.bucket}/releases/{sha}/security-review.json":
+            raise Blocked("Security review must be a private exact-release evidence object")
     if not verified or verified.get("image") != image or verified.get("sha") != sha or time.time() - verified.get("verified_at", 0) > 7 * 86400:
         raise Blocked("Fresh staging acceptance for this exact image/source is required.")
-    required = json.loads((HERE / "acceptance-checks.json").read_text()) + ["performance"]
+    required = required_checks(selected) + ["performance"]
     if not all(verified.get("checks", {}).get(k) is True for k in required):
         raise Blocked("Staging acceptance is incomplete.")
     if not review or review.get("sha") != sha or review.get("image") != image or time.time() - review.get("reviewed_at", 0) > 7 * 86400:

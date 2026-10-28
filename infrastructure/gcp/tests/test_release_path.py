@@ -127,6 +127,8 @@ class ReleasePath(unittest.TestCase):
             if args[:3]==('run','jobs','describe'):return None
             if args[:3] in [('run','jobs','deploy'),('run','jobs','execute')]:return {}
             if args[:3]==('sql','backups','create'):backups.append(args);return {}
+            if args[:3]==('sql','databases','list'):return [{'name':'mindaam_staging'},{'name':'mindaam_production'}]
+            if args[:3]==('sql','backups','list'):return [{'id':'test-backup','status':'SUCCESSFUL'}]
             if args[:3]==('sql','instances','describe'):return {'name':'mindaam-postgres','labels':{'application':'mindaam'},'settings':{'tier':'db-f1-micro'}}
             if args[:3]==('compute','instances','describe'):return {'name':'mindaam-media','labels':{'application':'mindaam'},'machineType':'e2-small','id':'123'}
             if args[:3]==('secrets','versions','list'):return []

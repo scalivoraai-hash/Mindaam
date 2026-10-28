@@ -3,6 +3,8 @@ const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=requ
 const {chromium}=require(process.env.QA_NODE_MODULES+'/playwright');
 const release=JSON.parse(fs.readFileSync('deployment-result.json'));
 assert.equal(release.environment,'staging');
+const betaPolicy=require('./beta-policy.json'),beta=release.profile===betaPolicy.profile;
+const acceptanceRequired=beta?[...required.filter(k=>k!=='venue_booking'),...betaPolicy.additional_checks.filter(k=>k!=='direct_webrtc'||process.env.QA_FORCE_TURN!=='1')]:required;
 const origin=release.origin;assert.match(origin,/^https:\/\/[a-z0-9.-]+\.run\.app$/);
 const out='gcp-evidence';fs.mkdirSync(out,{recursive:true});
 const {act,inspectControl,expectedAnonymous}=require('./browser-ui.cjs');
@@ -38,7 +40,7 @@ async function user(city,index){
  page.on('console',m=>{if(['warning','error'].includes(m.type())){logs.push(safeText(m.text(),sensitive));if(logs.length>80)logs.shift()}});
  page.on('websocket',ws=>{if(ws.url().endsWith('/api/realtime')){ws.on('framesent',frame=>{try{const d=JSON.parse(frame.payload.toString());if(d.type==='input'){inputs.push({at:Date.now(),...d});if(inputs.length>120)inputs.shift()}}catch{}});ws.on('framereceived',frame=>{try{const d=JSON.parse(frame.payload.toString());if(d.type==='state'){states.push(d);if(states.length>80)states.shift()}}catch{}})}});
  const api=async(route,data,method=data===undefined?'GET':'POST')=>{const res=await context.request.fetch(origin+'/api'+route,{method,data,headers:{Origin:origin,'X-Pulse-Client':'web'}});if(!res.ok())throw Error('API '+safeUrl(origin+'/api'+route)+' HTTP '+res.status());return res.json()};
- let name='gcpqa'+Date.now().toString(36)+index;const reusable=index===0&&!!process.env.QA_STAGING_HOST_IDENTIFIER;const password=reusable?process.env.QA_STAGING_HOST_PASSWORD:crypto.randomBytes(24).toString('base64url')+'!aA1';assert.ok(password,'Reusable staging host password is required');u.reusable=reusable;
+ let name='gcpqa'+Date.now().toString(36)+index;const reusable=!beta&&index===0&&!!process.env.QA_STAGING_HOST_IDENTIFIER;const password=reusable?process.env.QA_STAGING_HOST_PASSWORD:crypto.randomBytes(24).toString('base64url')+'!aA1';assert.ok(password,'Reusable staging host password is required');u.reusable=reusable;
  sensitive.push(password);if(reusable)sensitive.push(process.env.QA_STAGING_HOST_IDENTIFIER);u.api=api;stage='signup-'+index;
  await authenticateAndEnter(u,{origin,city,index,password,identifier:process.env.QA_STAGING_HOST_IDENTIFIER,name,reusable,until,setStage:value=>stage=value});
  return u;
@@ -100,7 +102,7 @@ async function main(){
  },'Staging health JSON via Playwright',120000).catch(error=>{throw Error(error.message+' · last='+readinessLast)});
  await readinessContext.close();
  assert.equal(health.environment,'staging');assert.equal(health.status,'ready');
- const users=[],checks={},result={sha:release.sha,origin,checks,synthetic_capture:true,forced_turn:process.env.QA_FORCE_TURN==='1'};let event;
+ const users=[],checks={},result={sha:release.sha,origin,profile:release.profile||'full',deferred:beta?betaPolicy.deferred:{},checks,synthetic_capture:true,forced_turn:process.env.QA_FORCE_TURN==='1'};let event;
  try{
   const a=await user('milton-keynes',0);users.push(a);const b=await user('milton-keynes',1);users.push(b);
   stage='ordinary-world';
@@ -113,13 +115,23 @@ async function main(){
   await act(a,a.page.locator('.friend-card').filter({hasText:b.username}).getByRole('button',{name:'View profile',exact:true}),'Acceptance control');const profile=a.page.getByRole('dialog',{name:'Player profile',exact:true});await profile.getByRole('heading',{name:'Staging profile check',exact:true}).waitFor();assert.equal(await profile.locator('a[href*="facebook.com"]').count(),0);await act(a,profile.getByRole('button',{name:'Follow',exact:true}),'Player profile control');await profile.getByRole('button',{name:'Unfollow',exact:true}).waitFor();await act(a,profile.getByRole('button',{name:'Avatar',exact:true}),'Player profile control');await profile.locator('.avatar-preview canvas').waitFor();assert.equal(await profile.getByText('3D preview is unavailable in this browser.',{exact:false}).count(),0);await act(a,profile.getByRole('button',{name:'Close profile',exact:true}),'Player profile control');checks.profiles=true;checks.avatar_rendering=true;
   await act(a,a.page.getByRole('button',{name:'Close panel',exact:true}),'Acceptance control');
   for(const key of ['browser','signup','login','onboarding','session_persistence','world_entry','friends','no_world_media'])checks[key]=true;
+  stage='free-events';
+  const standard=await a.api('/events',{title:'GCP free standard acceptance '+Date.now(),city:'milton-keynes',starts_at:Date.now()/1000,communication_mode:'text',venue_mode:'standard',ticket_price:0});
+  await a.api('/events/'+standard.id+'/state/start',{});await b.api('/events/'+standard.id+'/join',{});
+  assert.equal((await b.api('/events/'+standard.id)).joined,true);await a.api('/events/'+standard.id+'/state/cancel',{});checks.free_events=true;
+  const wallet=await a.api('/wallet');assert.ok(Number.isInteger(wallet.credits)&&wallet.credits>=0&&Number.isInteger(wallet.xp)&&wallet.xp>=0&&Array.isArray(wallet.transactions));checks.wallet_read=true;
+  for(const u of [a,b]){const denied=await u.context.request.get(origin+'/api/super-admin/overview');assert.equal(denied.status(),403)}
+  const anonymous=await browser.newContext();assert.equal((await anonymous.request.get(origin+'/api/super-admin/overview')).status(),401);await anonymous.close();checks.admin_access_control=true;
   stage='events-auditorium';
-  // Public auditorium entry places real users together using application APIs.
-  event=await a.api('/events',{title:'GCP staging acceptance '+Date.now(),description:'Automated staging QA, synthetic devices. Not a public customer event.',city:'milton-keynes',starts_at:Date.now()/1000,communication_mode:'liveface',venue_experience_type:'auditorium',venue_mode:'grand_arena',event_type:'Public Talk'});
-  const catalogue=await a.api('/venue-rentals/milton-keynes'),cost=catalogue.prices?.['1'];
-  const maxCost=Number(process.env.QA_STAGING_MAX_RESERVATION_PC||0);
-  assert.ok(a.reusable&&catalogue.enabled&&Number.isInteger(cost)&&cost>0&&cost<=maxCost&&catalogue.purchased_credits>=cost,'Paid venue acceptance requires a dedicated purchased-credit staging host and an explicit per-reservation PC limit. No test credits are fabricated.');
-  const reservation=await a.api('/events/'+event.id+'/venue/booking',{request_id:crypto.randomUUID(),hours:1,starts_at:Date.now()/1000,expected_cost:cost});assert.equal(reservation.cost,cost);checks.venue_booking=true;
+  event=await a.api('/events',{title:'GCP free auditorium acceptance '+Date.now(),description:'Automated staging QA, synthetic devices.',city:'milton-keynes',starts_at:Date.now()/1000,communication_mode:'liveface',venue_mode:'virtual_auditorium',ticket_price:0,event_type:'Public Talk'});
+  assert.equal(event.arena_booking_required,false);assert.equal(event.ticket_price,0);checks.free_auditorium=true;
+  if(beta){
+   const config=await a.api('/config');assert.equal(config.flags.payment_actions_enabled,false);assert.equal(config.flags.payments_enabled,false);
+   const packs=await a.api('/payments/credits');assert.equal(packs.ready,false);assert.ok(packs.packs.length>0);
+   const blocked=await a.context.request.post(origin+'/api/payments/checkout',{headers:{Origin:origin,'X-Pulse-Client':'web'},data:{sku:packs.packs[0].id,expected_amount:packs.packs[0].amount_pence,request_id:crypto.randomUUID()}});assert.equal(blocked.status(),503);
+   const booking=await a.context.request.post(origin+'/api/events/'+event.id+'/venue/booking',{headers:{Origin:origin,'X-Pulse-Client':'web'},data:{request_id:crypto.randomUUID(),hours:1,starts_at:Date.now()/1000,expected_cost:100}});assert.equal(booking.status(),503);
+   assert.deepEqual(await a.api('/wallet'),wallet);checks.payment_gate=true;
+  }
   await a.api('/events/'+event.id+'/state/start',{});await b.api('/events/'+event.id+'/join',{});await b.api('/events/'+event.id+'/venue/enter',{});
   await until(()=>peer(a,b.id)&&peer(b,a.id),'Mutual realtime presence',60000);
   await until(()=>[a,b].every(u=>u.states.at(-1)?.scene?.id===event.id),'Both users entered auditorium',60000);checks.events=true;stage='movement';
@@ -137,6 +149,13 @@ async function main(){
   await act(a,a.page.locator('.event-share-controls').getByRole('button',{name:'Share screen',exact:true}),'Acceptance control');
   await until(()=>c.page.locator('.presentation-sources video[data-track-source="screen_share"]').evaluateAll(es=>es.some(e=>e.videoWidth>0&&e.readyState>=2)),'Actual decoded screen');checks.screen_share=true;
   await audio(c,a.id);await act(a,a.page.getByRole('button',{name:'Stop sharing',exact:true}),'Acceptance control');
+  stage='auditorium-reentry';
+  await b.api('/events/'+event.id+'/venue/exit',{});
+  await until(()=>b.states.at(-1)?.position?.zone_id==='world','Audience returned to city',60000);
+  await b.api('/events/'+event.id+'/venue/enter',{});
+  await until(()=>b.states.at(-1)?.scene?.id===event.id,'Audience re-entered auditorium',60000);
+  if(await b.page.locator('.live-dock').getByRole('button',{name:'Expand',exact:true}).count())await controls(b,/Expand/);
+  await video(b,a.id);await audio(b,a.id);checks.auditorium_reentry=true;
   stage='responsive-policy';
   for(const size of [{width:390,height:844},{width:820,height:1180},{width:1440,height:900}]){await c.page.setViewportSize(size);await video(c,a.id);assert.ok(await c.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));await screenshot(c,'viewport-'+size.width+(result.forced_turn?'-turn':''));}
   checks.responsive=true;
@@ -147,10 +166,24 @@ async function main(){
   const forbidden=await c.page.locator('.remote-tile[data-peer-id="'+b.id+'"] video:not([hidden])').count();assert.equal(forbidden,0,'Demoted audience video must not remain subscribed');
   assert.ok(await c.page.locator('.remote-tile video:not([hidden])').count()<=4);checks.selective_subscription=true;
   if(result.forced_turn){await relay(a);await relay(c);checks.turn_tls=true;}
-  for(const key of required)assert.equal(checks[key],true,'Missing acceptance '+key);
+  else if(beta){
+   await until(()=>a.page.evaluate(async()=>{for(const pc of window.__gcpPeers){const stats=await pc.getStats();for(const pair of stats.values()){if(pair.type==='candidate-pair'&&pair.state==='succeeded'&&pair.nominated){const local=stats.get(pair.localCandidateId),remote=stats.get(pair.remoteCandidateId);if(local&&remote&&['host','srflx','prflx'].includes(local.candidateType)&&['host','srflx','prflx'].includes(remote.candidateType))return true}}}return false}),'Direct non-relay WebRTC candidate',45000);checks.direct_webrtc=true;
+  }
+  if(!beta){
+   stage='paid-venue';
+   await a.api('/events/'+event.id+'/state/cancel',{});
+   event=await a.api('/events',{title:'GCP paid arena acceptance '+Date.now(),city:'milton-keynes',starts_at:Date.now()/1000,communication_mode:'liveface',venue_mode:'grand_arena',event_type:'Public Talk'});
+  const catalogue=await a.api('/venue-rentals/milton-keynes'),cost=catalogue.prices?.['1'];
+  const maxCost=Number(process.env.QA_STAGING_MAX_RESERVATION_PC||0);
+  assert.ok(a.reusable&&catalogue.enabled&&Number.isInteger(cost)&&cost>0&&cost<=maxCost&&catalogue.purchased_credits>=cost,'Paid venue acceptance requires a dedicated purchased-credit staging host and an explicit per-reservation PC limit. No test credits are fabricated.');
+  const reservation=await a.api('/events/'+event.id+'/venue/booking',{request_id:crypto.randomUUID(),hours:1,starts_at:Date.now()/1000,expected_cost:cost});assert.equal(reservation.cost,cost);checks.venue_booking=true;
+   await a.api('/events/'+event.id+'/state/start',{});await b.api('/events/'+event.id+'/join',{});await b.api('/events/'+event.id+'/venue/enter',{});
+   await until(()=>[a,b].every(u=>u.states.at(-1)?.scene?.id===event.id),'Paid auditorium entry',60000);
+  }
+  for(const key of acceptanceRequired)assert.equal(checks[key],true,'Missing acceptance '+key);
   assert.equal(errors.length,0,'No uncaught browser errors');
   fs.writeFileSync(path.join(out,result.forced_turn?'relay.json':'direct.json'),JSON.stringify(result,null,2));
-  if(result.forced_turn){const direct=JSON.parse(fs.readFileSync(path.join(out,'direct.json')));assert.equal(direct.sha,result.sha);assert.equal(direct.origin,origin);fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify(result,null,2));}
+  if(result.forced_turn){const direct=JSON.parse(fs.readFileSync(path.join(out,'direct.json')));assert.equal(direct.sha,result.sha);assert.equal(direct.origin,origin);fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify({...result,checks:{...direct.checks,...result.checks}},null,2));}
  }catch(e){await diagnostics(e);throw e}finally{
   if(event&&users[0])await users[0].api('/events/'+event.id+'/state/cancel',{}).catch(()=>{});
   for(const u of activeUsers){if(u.api&&!u.reusable)await u.api('/me',undefined,'DELETE').catch(()=>{});if(u.api&&u.reusable)await u.api('/auth/logout',{}).catch(()=>{});await u.context.close();}

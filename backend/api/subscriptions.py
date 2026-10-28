@@ -1,3 +1,4 @@
+from .payment_policy import actions_enabled
 """Stripe recurring billing. Only signed paid invoices grant time or Credits."""
 
 import hashlib
@@ -119,7 +120,7 @@ def catalog(db):
 def plans(db: Session = Depends(get_db)):
     rows = catalog(db).plans
     return {
-        "configured": bool(rows) and bool(os.getenv("STRIPE_SECRET_KEY")),
+        "configured": bool(rows) and actions_enabled() and bool(os.getenv("STRIPE_SECRET_KEY")),
         "plans": [p.model_dump(exclude={"stripe_price_id"}) for p in rows],
     }
 
@@ -156,6 +157,8 @@ def secret():
         raise HTTPException(503, "Subscriptions unavailable: Stripe is not configured")
     if os.getenv('APP_ENV', 'local') != 'production' and not key.startswith(('sk_test_', 'rk_test_')):
         raise HTTPException(503, 'Only Stripe sandbox credentials are allowed in this environment')
+    if os.getenv('APP_ENV', 'local') == 'production' and not key.startswith(('sk_live_', 'rk_live_')):
+        raise HTTPException(503, 'Sandbox checkout is not available in production')
     return key
 
 
@@ -176,6 +179,8 @@ class Subscribe(Strict):
 
 @router.post("/subscriptions/checkout")
 def checkout(data: Subscribe, u=Depends(current_user), db: Session = Depends(get_db)):
+    from .payment_policy import require_payment_actions
+    require_payment_actions()
     import stripe
 
     key = secret()
@@ -295,6 +300,8 @@ def status(u=Depends(current_user), db: Session = Depends(get_db)):
 def portal(
     subscription_id: str, u=Depends(current_user), db: Session = Depends(get_db)
 ):
+    from .payment_policy import require_payment_actions
+    require_payment_actions()
     import stripe
 
     row = db.scalar(

@@ -51,6 +51,8 @@ def staging_image(c, sha, *, build_allowed, build_ref=None):
 
 
 def main():
+    from release_policy import profile, BETA, POLICY, evidence_name, review_name
+    selected = profile()
     operation = os.environ['OPERATION']
     c = Cloud(os.environ['MINDAAM_PROJECT_ID']); c.require_project()
     sha = os.environ['RELEASE_SHA']
@@ -59,6 +61,15 @@ def main():
     # Old release references are allowed only if still present in this repository's main history.
     if subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'HEAD'], capture_output=True).returncode:
         raise Blocked('Release is not in Mindaam main history')
+    if selected == BETA and subprocess.run(['git','merge-base','--is-ancestor',POLICY['base_sha'],sha],capture_output=True).returncode:
+        raise Blocked('Beta policy is limited to descendants of the reviewed Mindaam release')
+    if operation == 'review':
+        from review import packet
+        Path('gcp-evidence').mkdir(exist_ok=True)
+        value = packet(c, sha)
+        c.put_json(f'releases/{sha}/review-draft.json', value)
+        Path('gcp-evidence/review-draft.json').write_text(json.dumps(value, indent=2))
+        return
     if operation == 'foundation':
         foundation(c); return
     if operation == 'finalize':
@@ -83,17 +94,19 @@ def main():
         release = c.get_json(f'releases/{sha}/staging.json')
         if not release:
             raise Blocked('No existing staging release for this SHA')
+        if release.get('profile','full') != selected:
+            raise Blocked('Requested profile does not match the staged runtime; deploy the gated source first')
         current = ready_service(c, "mindaam-staging")
         if (current["status"]["latestReadyRevisionName"] != release["revision"]
                 or current["spec"]["template"]["spec"]["containers"][0]["image"] != release["image"]):
             raise Blocked("Requested staging revision is no longer current")
         Path('deployment-result.json').write_text(json.dumps(release, indent=2))
     elif operation == 'production':
-        staged = c.get_json(f'releases/{sha}/staging-verified.json')
+        staged = c.get_json(f'releases/{sha}/{evidence_name()}')
         if not staged:
             raise Blocked('Actual staging acceptance is required')
         object_name = os.getenv('REVIEW_OBJECT', '')
-        expected = f'releases/{sha}/release-review.json'
+        expected = f'releases/{sha}/{review_name()}'
         if object_name != expected:
             raise Blocked('Select the exact private release review prepared for this SHA: ' + expected)
         deploy(c, 'production', staged['image'], sha)

@@ -13,6 +13,9 @@ def environment(c, env, origin):
         "LIVEKIT_API_SECRET": "livekit-secret", "PULSEPOINT_SECRET": "pulsepoint-secret",
         "MAIL_ENCRYPTION_KEY": "mail-encryption-key", "SUPER_ADMIN_EMAIL": "owner-email",
         "SUPER_ADMIN_USERNAME": "owner-username", "SUPER_ADMIN_INITIAL_PASSWORD": "owner-password"}.items()}
+    from release_policy import profile, BETA
+    if profile() == BETA:
+        ordinary["MINDAAM_PAYMENT_ACTIONS_ENABLED"] = "false"
     return ordinary, secrets
 
 

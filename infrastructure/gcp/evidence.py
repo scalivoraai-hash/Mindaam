@@ -99,10 +99,23 @@ def verify(c, sha):
     browser = json.loads(Path("gcp-evidence/browser.json").read_text())
     if browser.get("origin") != release["origin"] or browser.get("sha") != sha:
         raise Blocked("Browser evidence does not match this release")
-    required = REQUIRED_CHECKS
+    from release_policy import profile, BETA, POLICY, required_checks, evidence_name, validate_beta
+    selected = profile()
+    if release.get('profile','full') != selected or browser.get('profile','full') != selected:
+        raise Blocked('Runtime/browser release profiles do not match')
+    required = required_checks(selected)
+    if selected == BETA:
+        validate_beta(browser)
+        runtime = {e['name']:e.get('value') for e in current['spec']['template']['spec']['containers'][0].get('env', [])}
+        if runtime.get('MINDAAM_PAYMENT_ACTIONS_ENABLED') != 'false':
+            raise Blocked('Staging payment flag is not server-enforced')
     for filename, forced in [('direct.json', False), ('relay.json', True)]:
         attempt = json.loads(Path('gcp-evidence', filename).read_text())
-        expected = [key for key in required if forced or key != 'turn_tls']
+        if selected == BETA:
+            if attempt.get('profile') != BETA or attempt.get('deferred') != POLICY['deferred']:
+                raise Blocked('Attempt beta policy mismatch')
+            if forced: validate_beta(attempt, relay_attempt=True)
+        expected = [key for key in required if (forced or key != 'turn_tls') and (not forced or key != 'direct_webrtc')]
         if (attempt.get('sha') != sha or attempt.get('origin') != release['origin']
                 or attempt.get('forced_turn') is not forced
                 or not all(attempt.get('checks', {}).get(k) is True for k in expected)):
@@ -133,12 +146,12 @@ def verify(c, sha):
         utilization[metric] = statistics.median(samples)
         if utilization[metric] > .90:
             raise Blocked("Measured resource saturation exceeds 90%; investigate before production: " + metric)
-    evidence = {**release, "verified_at": int(time.time()), "checks": {**browser["checks"], "performance": True},
+    evidence = {**release, 'profile':selected, 'deferred':browser.get('deferred', {}), "verified_at": int(time.time()), "checks": {**browser["checks"], "performance": True},
                 "smoke": smoke, "http": http, "browser": browser, "median_utilization": utilization,
                 "resource_metrics_evidence": f"gs://{c.bucket}/releases/{sha}/metrics.json",
                 "limitations": "Three synthetic-capture browsers and bounded HTTP requests. Not physical-device or 500/1000 CCU certification."}
-    c.put_json(f"releases/{sha}/staging-verified.json", evidence)
-    Path("gcp-evidence/staging-verified.json").write_text(json.dumps(evidence, indent=2))
+    c.put_json(f"releases/{sha}/{evidence_name()}", evidence)
+    Path("gcp-evidence", evidence_name()).write_text(json.dumps(evidence, indent=2))
     print("Real GCP staging acceptance recorded: " + release["origin"])
 
 

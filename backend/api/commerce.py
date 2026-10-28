@@ -785,6 +785,8 @@ def payment_status(payment_id: str, user=Depends(current_user), db: Session = De
 def checkout(
     data: CheckoutInput, user=Depends(current_user), db: Session = Depends(get_db)
 ):
+    from .payment_policy import require_payment_actions
+    require_payment_actions()
     import stripe
 
     secret = os.getenv("STRIPE_SECRET_KEY", "")
