@@ -3,7 +3,7 @@ import os,time,base64,hashlib,struct
 from uuid import UUID
 from typing import Literal
 from urllib.parse import urlparse
-from fastapi import APIRouter,Depends,HTTPException,Request,Response
+from fastapi import APIRouter,Depends,HTTPException,Request,Response,Query
 from pydantic import Field
 from sqlalchemy import String,Float,Integer,Boolean,LargeBinary,ForeignKey,select,func,delete
 from sqlalchemy.orm import Mapped,mapped_column
@@ -67,7 +67,7 @@ class AdInteraction(Base):
 class UserActivity(Base):
  __tablename__='user_activity_days'
  user_id:Mapped[str]=mapped_column(ForeignKey('users.id'),primary_key=True)
- day:Mapped[int]=mapped_column(Integer,primary_key=True)
+ day:Mapped[int]=mapped_column(Integer,primary_key=True,index=True)
  last_seen:Mapped[float]=mapped_column(Float)
 class OnlineSample(Base):
  __tablename__='online_samples'
@@ -244,7 +244,7 @@ def building_edit(id:str,data:BuildingInput,u=Depends(super_admin),db=Depends(ge
  b.enabled=data.enabled;audit(db,u,'building.updated',id,data.model_dump());return serialize(b)
 @router.get('/super-admin/users')
 def users(q:str='',u=Depends(super_admin),db=Depends(get_db)):
- from sqlalchemy import or_
+ from sqlalchemy import or_,case
  query=select(User).where(or_(User.username.ilike('%'+q[:80]+'%'),User.email.ilike('%'+q[:80]+'%'))).limit(200)
  return [{**public_user(p),'created_at':p.created_at,'suspended':p.suspended,'last_seen':(v.updated_at if (v:=db.get(Presence,p.id)) else None)} for p in db.scalars(query)]
 @router.get('/super-admin/events')
@@ -277,14 +277,16 @@ def sample(db):
 def overview(days:int=7,start:float|None=None,end:float|None=None,u=Depends(super_admin),db=Depends(get_db)):
  from .discovery import cities
  from .transit import Ticket,Vehicle,real_passengers
- from .growth import metrics
- now=time.time();end=min(end or now,now);start=start or end-max(1,min(90,days))*86400
+ now=time.time();end=min(end if end is not None else now,now);start=start if start is not None else end-max(1,min(90,days))*86400
+ import math
+ if not math.isfinite(start) or not math.isfinite(end):raise HTTPException(422,'Use finite UTC timestamps')
  if start>end or end-start>90*86400:raise HTTPException(422,'Choose a range within 90 days')
- day=int(now/86400);worlds=cities(db);daily=[{'day':d,'users':n} for d,n in db.execute(select(UserActivity.day,func.count()).where(UserActivity.day>=int(start/86400),UserActivity.day<=int(end/86400)).group_by(UserActivity.day))]
- registration=[{'day':int(t/86400),'count':n} for t,n in db.execute(select(func.floor(User.created_at/86400)*86400,func.count()).where(User.created_at>=start,User.created_at<=end).group_by(func.floor(User.created_at/86400)))]
+ day=int(now/86400);worlds=cities(db,include_disabled=True);daily=[{'day':d,'users':n} for d,n in db.execute(select(UserActivity.day,func.count()).where(UserActivity.day>=int(start/86400),UserActivity.day<=int(end/86400)).group_by(UserActivity.day))]
+ from .admin_analytics import day_series,enrich,online_series
+ registration=day_series(db,User.created_at,[func.count().label('count')],start,end)
  active=lambda n:db.scalar(select(func.count(func.distinct(UserActivity.user_id))).where(UserActivity.day>=day-n+1)) or 0
  sumkind=lambda kinds:db.scalar(select(func.coalesce(func.sum(Ledger.amount),0)).where(Ledger.currency=='credits',Ledger.kind.in_(kinds),Ledger.created_at>=start,Ledger.created_at<=end)) or 0
- trips=list(db.scalars(select(Ticket).where(Ticket.state=='aboard')));passengers=sum(len(real_passengers(db,v)) for v in {t.vehicle_id for t in trips})
+ passengers=db.scalar(select(func.count()).select_from(Ticket).join(Presence,Presence.user_id==Ticket.user_id).join(User,User.id==Ticket.user_id).where(Ticket.state=='aboard',Presence.zone_id=='bus:'+Ticket.vehicle_id,Presence.updated_at>now-45,User.suspended==False,User.id.in_(select(Session.user_id).where(Session.expires_at>now)))) or 0
  kpis={'registered_users':db.scalar(select(func.count()).select_from(User)),'online_now':sum(c['online'] for c in worlds),'daily_active':active(1),'weekly_active':active(7),'monthly_active':active(30),'new_users_today':db.scalar(select(func.count()).select_from(User).where(User.created_at>=day*86400)),'active_worlds':sum(c['enabled'] for c in worlds),'live_events':db.scalar(select(func.count()).select_from(Event).where(Event.status=='live')),'active_conversations':db.scalar(select(func.count()).select_from(MediaSession).where(MediaSession.state=='accepted',MediaSession.conversation_id==None)),'active_liveface':db.scalar(select(func.count()).select_from(MediaSession).where(MediaSession.state=='accepted',MediaSession.kind=='liveface')),'bus_passengers':passengers,'advertising_enquiries':db.scalar(select(func.count()).select_from(AdEnquiry)),'active_ad_campaigns':db.scalar(select(func.count()).select_from(AdCampaign).where(AdCampaign.status=='active',AdCampaign.starts_at<=now,AdCampaign.ends_at>now)),'credits_purchased':sumkind(['purchase']),'credits_spent':-(db.scalar(select(func.coalesce(func.sum(Ledger.amount),0)).where(Ledger.currency=='credits',Ledger.amount<0,Ledger.created_at>=start,Ledger.created_at<=end)) or 0),'transport_credits_spent':-sumkind(['transport_ticket']),'gift_credits_spent':-sumkind(['event_gift','social_gift'])}
  from .mobility import RentalLease
  from .gifts import GiftDelivery
@@ -293,7 +295,8 @@ def overview(days:int=7,start:float|None=None,end:float|None=None,u=Depends(supe
  kpis.update(vehicle_rentals=db.scalar(select(func.count()).select_from(RentalLease).where(RentalLease.ended_at==None,RentalLease.expires_at>now)),gifts_sent=db.scalar(select(func.count()).select_from(GiftDelivery).where(GiftDelivery.created_at>=start,GiftDelivery.created_at<=end)),city_requests=db.scalar(select(func.count()).select_from(CityInterest)))
  kpis.update(verified_users=db.scalar(select(func.count()).select_from(User).where(User.verified==True)),suspended_users=db.scalar(select(func.count()).select_from(User).where(User.suspended==True)),new_users_7_days=db.scalar(select(func.count()).select_from(User).where(User.created_at>=now-7*86400)),new_users_30_days=db.scalar(select(func.count()).select_from(User).where(User.created_at>=now-30*86400)),configured_worlds=len(worlds),inactive_worlds=sum(not c['enabled'] for c in worlds),inactive_users_30_days=max(0,kpis['registered_users']-active(30)))
  regions=[{'market':'United Kingdom','online':sum(c['online'] for c in worlds if c['country']=='GB')},{'market':'International','online':sum(c['online'] for c in worlds if c['country']!='GB')}]
- return {'markets':regions,'rentals':[{'asset':k,'count':n} for k,n in db.execute(select(RentalLease.asset_id,func.count()).where(RentalLease.started_at>=start,RentalLease.started_at<=end).group_by(RentalLease.asset_id))],'business_activity':[{'kind':k,'count':n} for k,n in db.execute(select(BusinessInteraction.kind,func.count()).where(BusinessInteraction.created_at>=start,BusinessInteraction.created_at<=end).group_by(BusinessInteraction.kind))],'kpis':kpis,'worlds':worlds,'daily_activity':daily,'registrations':registration,'online_history':[{'time':b*300,'count':n} for b,n in db.execute(select(OnlineSample.bucket,func.sum(OnlineSample.count)).where(OnlineSample.bucket>=int(start/300),OnlineSample.bucket<=int(end/300)).group_by(OnlineSample.bucket).order_by(OnlineSample.bucket))],'transport_activity':[{'route':v,'tickets':n} for v,n in db.execute(select(Vehicle.route_id,func.count(Ticket.id)).join(Ticket,Ticket.vehicle_id==Vehicle.id).where(Ticket.created_at>=start,Ticket.created_at<=end).group_by(Vehicle.route_id))],'event_activity':[{'type':k,'count':n} for k,n in db.execute(select(Event.venue_experience_type,func.count()).where(Event.created_at>=start,Event.created_at<=end).group_by(Event.venue_experience_type))],'credit_activity':[{'kind':k,'amount':n} for k,n in db.execute(select(Ledger.kind,func.sum(Ledger.amount)).where(Ledger.currency=='credits',Ledger.created_at>=start,Ledger.created_at<=end).group_by(Ledger.kind))],'ad_performance':[{'kind':k,'count':n} for k,n in db.execute(select(AdInteraction.kind,func.count()).where(AdInteraction.created_at>=start,AdInteraction.created_at<=end).group_by(AdInteraction.kind))],'growth':metrics(u,db),'history_notice':'Activity and online history begin when this release is deployed. No historic activity is invented.'}
+ result={'markets':regions,'rentals':[{'asset':k,'count':n} for k,n in db.execute(select(RentalLease.asset_id,func.count()).where(RentalLease.started_at>=start,RentalLease.started_at<=end).group_by(RentalLease.asset_id))],'business_activity':[{'kind':k,'count':n} for k,n in db.execute(select(BusinessInteraction.kind,func.count()).where(BusinessInteraction.created_at>=start,BusinessInteraction.created_at<=end).group_by(BusinessInteraction.kind))],'kpis':kpis,'worlds':worlds,'daily_activity':daily,'registrations':registration,'online_history':online_series(db,start,end),'transport_activity':[{'route':v,'tickets':n} for v,n in db.execute(select(Vehicle.route_id,func.count(Ticket.id)).join(Ticket,Ticket.vehicle_id==Vehicle.id).where(Ticket.created_at>=start,Ticket.created_at<=end).group_by(Vehicle.route_id))],'event_activity':[{'type':k,'count':n} for k,n in db.execute(select(Event.venue_experience_type,func.count()).where(Event.created_at>=start,Event.created_at<=end).group_by(Event.venue_experience_type))],'credit_activity':[{'kind':k,'amount':n} for k,n in db.execute(select(Ledger.kind,func.sum(Ledger.amount)).where(Ledger.currency=='credits',Ledger.created_at>=start,Ledger.created_at<=end).group_by(Ledger.kind))],'ad_performance':[{'kind':k,'count':n} for k,n in db.execute(select(AdInteraction.kind,func.count()).where(AdInteraction.created_at>=start,AdInteraction.created_at<=end).group_by(AdInteraction.kind))],'history_notice':'Activity and online history begin when this release is deployed. No historic activity is invented.'}
+ return enrich(db,result,start,end,now)
 
 def bootstrap_owner(db):
  email=os.getenv('SUPER_ADMIN_EMAIL','').strip().lower();password=os.getenv('SUPER_ADMIN_INITIAL_PASSWORD','');username=os.getenv('SUPER_ADMIN_USERNAME','').strip()
@@ -333,7 +336,7 @@ def stop_edit(id:str,data:StopInput,u=Depends(super_admin),db=Depends(get_db)):
 
 # Control-centre read models extend the existing operations router and role gate.
 from fastapi import Query
-from sqlalchemy import or_
+from sqlalchemy import or_,case
 
 def operator_user(db, person):
  from .economy import balance
@@ -349,10 +352,11 @@ def directory(q:str='',status:Literal['all','active','suspended']='all',sort:Lit
  order={'newest':User.created_at.desc(),'oldest':User.created_at.asc(),'username':User.username.asc()}[sort]
  total=db.scalar(select(func.count()).select_from(User).where(*filters))
  rows=db.scalars(select(User).where(*filters).order_by(order,User.id).offset((page-1)*limit).limit(limit))
- return {'items':[operator_user(db,p) for p in rows],'total':total,'page':page,'limit':limit,'presence_window_seconds':90}
+ from .admin_records import directory_rows
+ return {'items':directory_rows(db,list(rows)),'total':total,'page':page,'limit':limit,'presence_window_seconds':90}
 
 @router.get('/super-admin/users/{id}/detail')
-def user_detail(id:str,tab:Literal['overview','wallet','social','events','cities','payments','audit']='overview',page:int=Query(1,ge=1),u=Depends(super_admin),db=Depends(get_db)):
+def user_detail(id:str,tab:Literal['overview','profile','wallet','social','events','cities','payments','audit','activity','reports']='overview',page:int=Query(1,ge=1),u=Depends(super_admin),db=Depends(get_db)):
  from .models import Social,Report
  from .commerce import Payment
  from .venue_rentals import purchased_available,VenueBooking
@@ -361,7 +365,9 @@ def user_detail(id:str,tab:Literal['overview','wallet','social','events','cities
  person=db.get(User,id)
  if not person:raise HTTPException(404,'User not found')
  result={'user':operator_user(db,person),'tab':tab,'page':page,'limit':25}
- if tab=='overview':result['profile']={k:v for k,v in (person.profile or {}).items() if k in {'display_name','bio','languages','theme'}}
+ if tab in {'overview','profile'}:result['profile']={k:v for k,v in (person.profile or {}).items() if k in {'display_name','bio','languages','theme'}}
+ elif tab=='activity':query=select(UserActivity).where(UserActivity.user_id==id).order_by(UserActivity.day.desc())
+ elif tab=='reports':query=select(Report).where(Report.target_id==id).order_by(Report.created_at.desc(),Report.id)
  elif tab=='wallet':
   result.update(purchased_available=purchased_available(db,id),credits=balance(db,id),xp=balance(db,id,'xp'),attribution_notice='Purchased availability follows the existing purchased-first venue eligibility policy; promotional grants are never purchases.')
   query=select(Ledger).where(Ledger.user_id==id).order_by(Ledger.created_at.desc(),Ledger.id)
@@ -378,7 +384,7 @@ def user_detail(id:str,tab:Literal['overview','wallet','social','events','cities
   query=select(WorldAccess).where(WorldAccess.user_id==id)
  elif tab=='payments':query=select(Payment).where(Payment.user_id==id).order_by(Payment.created_at.desc())
  elif tab=='audit':query=select(Audit).where(Audit.target==id).order_by(Audit.created_at.desc())
- if tab!='overview':
+ if tab not in {'overview','profile'}:
   result['total']=db.scalar(select(func.count()).select_from(query.order_by(None).subquery()))
   result['items']=[serialize(row) for row in db.scalars(query.offset((page-1)*25).limit(25))]
   if tab=='payments':
@@ -430,32 +436,26 @@ def finance(days:int=Query(30,ge=1,le=90),u=Depends(super_admin),db=Depends(get_
  gross,refunds,paid_count=db.execute(select(func.coalesce(func.sum(Payment.amount_pence),0),func.coalesce(func.sum(Payment.refunded_pence),0),func.count()).where(Payment.created_at>=start,confirmed)).one()
  pending_count=db.scalar(select(func.count()).select_from(Payment).where(Payment.created_at>=start,Payment.status=='pending'))
  by_product=[{'product':sku,'count':n,'gross_pence':gross,'refund_pence':refund} for sku,n,gross,refund in db.execute(select(Payment.sku,func.count(),func.sum(Payment.amount_pence),func.sum(Payment.refunded_pence)).where(Payment.created_at>=start,confirmed).group_by(Payment.sku))]
- by_day=[{'day':int(day),'gross_pence':gross,'refund_pence':refund} for day,gross,refund in db.execute(select(func.floor(Payment.created_at/86400),func.sum(Payment.amount_pence),func.sum(Payment.refunded_pence)).where(Payment.created_at>=start,confirmed).group_by(func.floor(Payment.created_at/86400)).order_by(func.floor(Payment.created_at/86400)))]
+ from .admin_analytics import day_series
+ by_day=day_series(db,Payment.created_at,[func.sum(case((confirmed,Payment.amount_pence),else_=0)).label('gross_pence'),func.sum(case((confirmed,Payment.refunded_pence),else_=0)).label('refund_pence')],start,time.time())
  rows=[{k:getattr(p,k) for k in ['id','user_id','sku','amount_pence','refunded_pence','status','dispute_status','provider_id','created_at']} for p in payments]
  return {'currency':'GBP','amount_unit':'pence','days':days,'by_product':by_product,'by_day':by_day,'outstanding_pc':db.scalar(select(func.coalesce(func.sum(Ledger.amount),0)).where(Ledger.currency=='credits')),'failed_payments':db.scalar(select(func.count()).select_from(Payment).where(Payment.created_at>=start,Payment.status.in_(['failed','expired','cancelled']))),'gross_pence':gross,'refund_pence':refunds,'net_sales_pence':gross-refunds,'successful_payments':paid_count,'pending_payments':pending_count,'payments':rows,'limited_to_latest':1000,'active_subscriptions':db.scalar(select(func.count()).select_from(CustomerSubscription).where(CustomerSubscription.status=='active',CustomerSubscription.paid_through>time.time())),'subscription_revenue_pence':None,'settlement_pence':None,'fees_pence':None,'notice':'Reporting groups payments by checkout creation time, not settlement time. Paid rows reflect verified provider processing; pending rows are excluded from sales. Net sales are not bank settlement. Subscription invoice cash amounts and processing fees are not recorded, so those figures are unavailable. PC and XP are not GBP revenue.'}
 
 @router.get('/super-admin/records/{kind}')
-def operational_records(kind:Literal['reservations','tickets','subscriptions','reports','audit'],page:int=Query(1,ge=1),q:str='',days:int=Query(0,ge=0,le=365),u=Depends(super_admin),db=Depends(get_db)):
- from .venue_rentals import VenueBooking
- from .event_tickets import EventTicket
- from .subscriptions import CustomerSubscription
- from .models import Report
- model={'reservations':VenueBooking,'tickets':EventTicket,'subscriptions':CustomerSubscription,'reports':Report,'audit':Audit}[kind]
- query=select(model)
- if q:
-  filters=[model.id==q]
-  if hasattr(model,'user_id'):filters.append(model.user_id==q)
-  if hasattr(model,'city'):filters.append(model.city==q)
-  if hasattr(model,'target'):filters.append(model.target==q)
-  if hasattr(model,'actor_id'):filters.append(model.actor_id==q)
-  if hasattr(model,'action'):filters.append(model.action.ilike('%'+q[:80]+'%'))
-  query=query.where(or_(*filters))
- if days:query=query.where(model.created_at>=time.time()-days*86400)
+def operational_records(kind:str,page:int=Query(1,ge=1,le=10000),q:str=Query('',max_length=80),days:int=Query(0,ge=0,le=365),limit:int=Query(25,ge=1,le=100),status:str=Query('',max_length=40),sort:Literal['newest','oldest','name']='newest',event_id:str=Query('',max_length=100),user_id:str=Query('',max_length=100),u=Depends(super_admin),db=Depends(get_db)):
+ from .admin_records import rows
+ return rows(db,kind,page,limit,q,status,sort,days,event_id,user_id)
+
+@router.get('/super-admin/records/{kind}/{id}')
+def operational_detail(kind:str,id:str,u=Depends(super_admin),db=Depends(get_db)):
+ from .admin_records import detail
+ return detail(db,kind,id)
+
+@router.get('/super-admin/events/{id}/participants')
+def event_participants(id:str,page:int=Query(1,ge=1,le=10000),limit:int=Query(25,ge=1,le=100),u=Depends(super_admin),db=Depends(get_db)):
+ query=select(Attendee,User.username).join(User,User.id==Attendee.user_id).where(Attendee.event_id==id)
  total=db.scalar(select(func.count()).select_from(query.subquery()))
- items=[serialize(r) for r in db.scalars(query.order_by(model.created_at.desc(),model.id).offset((page-1)*25).limit(25))]
- for item in items:
-  for key in ('checkout_url','request_key','customer_id'):item.pop(key,None)
- return {'items':items,'total':total,'page':page,'limit':25}
+ return {'items':[{**serialize(a),'username':name,'id':a.user_id} for a,name in db.execute(query.order_by(Attendee.joined_at.desc(),Attendee.user_id).offset((page-1)*limit).limit(limit))],'total':total,'page':page,'limit':limit}
 
 class OperatorStatus(Strict):
  suspended:bool

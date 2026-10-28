@@ -186,7 +186,7 @@ class Payment(Base):
     dispute_updated = Column(Float, nullable=False, default=0, server_default='0')
     status = Column(String, default="pending", nullable=False)
     request_key = Column(String, unique=True, nullable=False)
-    created_at = Column(Float, default=now)
+    created_at = Column(Float, default=now, index=True)
 
 
 class PaymentEvent(Base):

@@ -37,7 +37,7 @@ class User(Base):
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
     location_consent: Mapped[bool] = mapped_column(Boolean, default=False)
     analytics_consent: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[float] = mapped_column(Float, default=time.time)
+    created_at: Mapped[float] = mapped_column(Float, default=time.time, index=True)
 
 
 Index('uq_users_username_normalized', func.lower(func.trim(User.username)), unique=True)
@@ -78,7 +78,7 @@ class Ledger(Base):
     idempotency_key: Mapped[str] = mapped_column(String(200))
     previous_balance: Mapped[int] = mapped_column(Integer)
     balance: Mapped[int] = mapped_column(Integer)
-    created_at: Mapped[float] = mapped_column(Float, default=time.time)
+    created_at: Mapped[float] = mapped_column(Float, default=time.time, index=True)
     __table_args__ = (
         UniqueConstraint("user_id", "currency", "idempotency_key"),
         CheckConstraint("currency IN ('credits','xp')"),
@@ -198,7 +198,7 @@ class Event(Base):
     visibility: Mapped[str] = mapped_column(String(20), default='public')
     status: Mapped[str] = mapped_column(String(20), default='scheduled')
     ends_at: Mapped[float | None] = mapped_column(Float, nullable=True)
-    created_at: Mapped[float] = mapped_column(Float, default=time.time)
+    created_at: Mapped[float] = mapped_column(Float, default=time.time, index=True)
     session_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     zone_id: Mapped[str] = mapped_column(String(80), default='')
     x: Mapped[float | None] = mapped_column(Float, nullable=True)
