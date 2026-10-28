@@ -135,7 +135,7 @@ async function cameraAndPeer(_browser,hostApi,hostId,city,hostPage,input,hostFra
  const camera=()=>p.evaluate(()=>window.__qaCamera);const distance=pos=>Math.hypot(pos.x-focus.x,pos.y-focus.y,pos.z-focus.z);await until(async()=>!!await camera(),'rendered camera');
  const before=await camera();await p.mouse.move(600,350);await p.mouse.down();await p.mouse.move(650,350,{steps:10});await p.mouse.up();await wait(900);const after=await camera();
  const yaw=v=>v.yaw;check('small drag gives controlled camera angle',Math.abs(yaw(after)-yaw(before))>.025&&Math.abs(yaw(after)-yaw(before))<.09);check('drag does not change rendered camera distance',Math.abs(distance(after)-distance(before))<.03);
- await p.screenshot({path:path.join(out,'camera-desktop.jpg')});await p.mouse.wheel(0,-100);await wait(700);const zoomed=await camera();check('wheel explicitly zooms',distance(zoomed)<distance(after)-.5);
+ await p.screenshot({path:path.join(out,'camera-desktop.jpg')});await p.mouse.wheel(0,-100);await until(async()=>distance(await camera())<distance(after)-.5,'Rendered wheel zoom');const zoomed=await camera();check('wheel explicitly zooms',distance(zoomed)<distance(after)-.5);
  for(const width of [390,820]){
   const spot=(await api('/world/'+city)).position;Object.assign(focus,{x:Math.max(-.5,Math.min(.5,spot.x)),y:(spot.y||0)+1.7,z:Math.max(-4.5,Math.min(4.3,spot.z-6))});
   await p.setViewportSize({width,height:844});await p.evaluate(()=>window.dispatchEvent(new Event('pulse-reset-camera')));await until(async()=>{const v=await camera();return Math.abs(distance(v)-10)<.002&&Math.abs(yaw(v))<.002},'settled camera reset');
