@@ -1,0 +1,385 @@
+MINDAAM SOURCE-AVAILABLE NON-COMMERCIAL LICENSE
+Version 1.0 – October 2026
+
+Copyright (c) 2026 Scalivora.
+All Rights Reserved.
+
+IMPORTANT: THIS SOFTWARE IS SOURCE-AVAILABLE, NOT OPEN SOURCE.
+
+This license governs access to and use of the Mindaam software, source
+code, object code, documentation, APIs, user interfaces, designs,
+databases, schemas, 3D environments, world designs, avatars, digital
+assets, graphics, animations, audio, video, game mechanics, virtual
+economy systems, Pulse Credits systems, marketplace systems, event
+systems, multiplayer systems, communications systems, algorithms,
+workflows, infrastructure configurations, and associated materials
+(collectively, the "Software").
+
+By accessing, downloading, cloning, forking, copying, modifying, or
+otherwise using the Software, you agree to the terms of this License.
+
+If you do not agree to these terms, you must not use, copy, modify,
+distribute, deploy, or otherwise exploit the Software.
+
+
+1. COPYRIGHT AND OWNERSHIP
+
+The Software and all associated intellectual property rights remain the
+exclusive property of the applicable copyright owner(s).
+
+Making the source code publicly accessible does not transfer ownership
+of the Software or grant any rights except those expressly stated in
+this License.
+
+All rights not expressly granted are reserved.
+
+
+2. LIMITED NON-COMMERCIAL LICENSE
+
+Subject to full compliance with this License, you are granted a limited,
+revocable, non-exclusive, non-transferable, non-sublicensable license
+to:
+
+(a) view and inspect the source code;
+
+(b) download or clone the Software for personal evaluation;
+
+(c) study the Software for educational or research purposes;
+
+(d) run the Software privately for personal, non-commercial evaluation;
+
+(e) make private modifications solely for personal, educational,
+    research, testing, or evaluation purposes.
+
+These permissions do not include any right to commercially exploit the
+Software.
+
+
+3. COMMERCIAL USE STRICTLY PROHIBITED WITHOUT WRITTEN PERMISSION
+
+You may NOT use the Software, in whole or in part, for any commercial
+purpose without prior written permission from the Copyright Owner.
+
+Prohibited commercial activities include, without limitation:
+
+(a) selling the Software;
+
+(b) licensing or sublicensing the Software;
+
+(c) renting, leasing, or charging for access to the Software;
+
+(d) offering the Software as Software-as-a-Service (SaaS),
+    Platform-as-a-Service (PaaS), hosted software, cloud software,
+    managed software, or any similar commercial service;
+
+(e) using the Software to create, operate, support, or enhance a
+    commercial product or service;
+
+(f) incorporating the Software or substantial portions of it into a
+    commercial product or service;
+
+(g) commercially distributing modified or unmodified versions;
+
+(h) commercially exploiting a fork or derivative work;
+
+(i) using the Software to provide paid consulting, implementation,
+    hosting, integration, development, or managed services;
+
+(j) monetising the Software through subscriptions, advertising,
+    transaction fees, commissions, virtual currencies, digital goods,
+    memberships, sponsorships, licensing, or other revenue-generating
+    activities;
+
+(k) rebranding, white-labelling, or reselling the Software;
+
+(l) using the Software as the foundation of a competing commercial
+    platform, application, virtual world, game, social platform,
+    marketplace, or service.
+
+Commercial use requires a separate written commercial license or other
+written authorisation from the Copyright Owner.
+
+
+4. NO COMMERCIAL FORKS OR COMPETING SERVICES
+
+You may not use the Software or any substantial portion of the Software
+to develop, operate, market, distribute, or provide a competing
+commercial product or service without prior written permission.
+
+This restriction includes commercial products or services substantially
+derived from Mindaam's implementation, architecture, source code, or
+protected assets.
+
+
+5. REDISTRIBUTION RESTRICTIONS
+
+You may not redistribute, republish, mirror, sell, sublicense, or make
+available copies of the Software or substantial portions of the
+Software except as expressly permitted in writing by the Copyright
+Owner.
+
+Normal GitHub functionality, including viewing and technically forking
+a public repository, does not grant permission to commercially exploit
+or independently redistribute the Software.
+
+
+6. MODIFICATIONS AND DERIVATIVE WORKS
+
+Private modifications for permitted non-commercial purposes are allowed.
+
+You may not commercially use, sell, license, host, distribute, or
+monetise any modification or derivative work based on the Software
+without prior written permission.
+
+Creating a derivative work does not remove or reduce the Copyright
+Owner's rights in the original Software.
+
+
+7. PROTECTION OF 3D AND CREATIVE ASSETS
+
+Unless separately licensed in writing, this License does not grant
+permission to independently reuse, redistribute, sell, commercialise,
+or incorporate into another product any Mindaam creative or digital
+asset.
+
+Protected materials include, without limitation:
+
+- 3D models;
+- city and world environments;
+- buildings;
+- venues;
+- maps;
+- avatars;
+- avatar designs;
+- character designs;
+- clothing and accessories;
+- animations;
+- textures;
+- materials;
+- illustrations;
+- graphics;
+- icons;
+- photographs;
+- video;
+- audio;
+- music;
+- sound effects;
+- visual effects;
+- UI/UX designs;
+- environment designs;
+- event designs;
+- virtual objects;
+- digital collectibles;
+- branded assets.
+
+Third-party assets remain subject to their respective licenses and
+ownership terms.
+
+
+8. VIRTUAL ECONOMY AND PULSE CREDITS
+
+No permission is granted to copy, reproduce, commercialise, rebrand, or
+create a substantially derived commercial implementation of proprietary
+Mindaam virtual-economy implementations, including Pulse Credits and
+associated proprietary transaction, reward, marketplace, rental, event,
+mission, or monetisation implementations, except with prior written
+permission.
+
+This clause does not claim ownership over general ideas, concepts,
+methods, or functionality that are not protectable under applicable law.
+
+
+9. APIs, BACKEND AND INFRASTRUCTURE
+
+No permission is granted to commercially reproduce, host, sell,
+white-label, or provide as a service Mindaam's proprietary backend,
+API implementations, infrastructure configurations, multiplayer
+implementations, realtime systems, world-state systems, marketplace
+implementations, payment implementations, or related proprietary
+components without written permission.
+
+
+10. AI AND MACHINE LEARNING RESTRICTIONS
+
+Unless prior written permission is obtained, the Software and
+Mindaam-owned assets may not be intentionally used as training data for
+a commercial artificial intelligence or machine-learning model where
+such use requires a copyright licence.
+
+You may not intentionally create a commercial dataset consisting
+substantially of Mindaam source code or Mindaam-owned assets for the
+purpose of training, fine-tuning, or commercialising an AI system
+without prior written permission.
+
+Nothing in this section restricts uses that cannot lawfully be
+restricted by contract or applicable law.
+
+
+11. TRADEMARKS AND BRANDING
+
+This License grants no trademark rights.
+
+The following names and associated branding may not be used to suggest
+endorsement, affiliation, sponsorship, or an official product without
+written permission:
+
+Mindaam
+Scalivora
+
+and any associated logos, product names, slogans, trade dress, or
+branding owned by their respective rights holders.
+
+Forks and modified versions must not represent themselves as official
+Mindaam products.
+
+
+12. NO IMPLIED PATENT LICENSE
+
+Except where expressly agreed in writing, no patent rights are granted
+under this License.
+
+Any patent rights owned or controlled by the Copyright Owner are
+reserved to the fullest extent permitted by applicable law.
+
+
+13. CONTRIBUTIONS
+
+Submitting a contribution does not automatically transfer ownership of
+the contributor's pre-existing intellectual property.
+
+Unless a separate Contributor License Agreement or written agreement
+applies, contributors represent that they have the right to submit
+their contribution and grant the project maintainers a perpetual,
+worldwide, non-exclusive, royalty-free license to use, reproduce,
+modify, distribute, display, perform, and incorporate the contribution
+into Mindaam, including in commercial versions of Mindaam.
+
+The Copyright Owner may require a separate Contributor License Agreement
+before accepting contributions.
+
+
+14. THIRD-PARTY COMPONENTS
+
+The Software may contain or depend upon third-party software, libraries,
+frameworks, fonts, models, media, APIs, or other materials.
+
+Those components remain governed by their respective licenses.
+
+Nothing in this License overrides rights granted under a third-party
+open-source or proprietary license.
+
+Where a third-party component is separately identifiable, the applicable
+third-party license controls that component.
+
+
+15. CONFIDENTIAL INFORMATION AND SECRETS
+
+Public availability of this repository does not constitute permission
+to use any credential, API key, token, password, certificate, private
+key, configuration secret, personal information, or other sensitive
+information that may be accidentally disclosed.
+
+Any accidentally committed credential or secret remains unauthorised
+for use and should be reported to the repository owner.
+
+
+16. NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE,
+NON-INFRINGEMENT, SECURITY, AVAILABILITY, RELIABILITY, OR ACCURACY.
+
+USE OF THE SOFTWARE IS ENTIRELY AT YOUR OWN RISK.
+
+
+17. LIMITATION OF LIABILITY
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE COPYRIGHT OWNER,
+PROJECT MAINTAINERS, CONTRIBUTORS, AND AFFILIATES SHALL NOT BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY,
+OR OTHER DAMAGES ARISING FROM OR RELATED TO THE SOFTWARE OR THIS
+LICENSE.
+
+
+18. TERMINATION
+
+Any rights granted under this License terminate automatically if you
+breach its terms.
+
+Upon termination, you must cease all unauthorised use, distribution,
+deployment, hosting, or commercial exploitation of the Software.
+
+Termination does not prevent the Copyright Owner from pursuing any
+rights or remedies available under applicable law.
+
+
+19. COMMERCIAL LICENSING
+
+Commercial licenses may be available separately.
+
+Organisations or individuals wishing to:
+
+- commercially deploy Mindaam;
+- incorporate Mindaam into another commercial product;
+- operate a hosted Mindaam service;
+- white-label the platform;
+- commercially distribute the Software;
+- build commercial integrations based substantially on the Software;
+- obtain enterprise usage rights; or
+- negotiate alternative licensing terms
+
+must obtain prior written authorisation from the Copyright Owner.
+
+Commercial permission is valid only when expressly granted in writing
+by an authorised representative of the Copyright Owner.
+
+
+20. NO WAIVER
+
+Failure to enforce any provision of this License does not constitute a
+waiver of that provision or any other right.
+
+
+21. SEVERABILITY
+
+If any provision of this License is found unenforceable, the remaining
+provisions shall remain effective to the maximum extent permitted by
+law.
+
+
+22. GOVERNING LAW
+
+To the extent permitted by applicable law, this License and disputes
+arising from it shall be governed by the laws of England and Wales.
+
+The courts of England and Wales shall have jurisdiction, subject to any
+mandatory rights or jurisdiction that applicable law provides
+otherwise.
+
+
+23. ENTIRE LICENSE
+
+This License represents the terms under which the Copyright Owner makes
+the Software source available unless a separate written agreement
+applies.
+
+No additional rights are granted by implication, estoppel, publication
+of the repository, or otherwise.
+
+
+24. RESERVATION OF RIGHTS
+
+All rights not expressly granted under this License are reserved.
+
+For the avoidance of doubt:
+
+PUBLICLY VISIBLE SOURCE CODE DOES NOT MEAN PUBLIC DOMAIN.
+
+PUBLICLY VISIBLE SOURCE CODE DOES NOT MEAN UNRESTRICTED USE.
+
+THIS SOFTWARE MAY NOT BE COMMERCIALLY USED WITHOUT PRIOR WRITTEN
+PERMISSION FROM THE COPYRIGHT OWNER.
+
+
+END OF LICENSE
