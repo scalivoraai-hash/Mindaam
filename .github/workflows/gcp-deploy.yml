@@ -86,6 +86,17 @@ jobs:
         run: python infrastructure/gcp/staging_trigger.py
       - name: Resume selected operation
         run: python infrastructure/gcp/workflow.py
+      - name: Inspect existing staging owner without changing accounts
+        if: env.OPERATION == 'staging'
+        run: |
+          gcloud run jobs execute mindaam-migrate-staging --project "$MINDAAM_PROJECT_ID" --region europe-west2 --args=-m,backend.api.owner_access --wait --format=json > owner-inspection-execution.json
+          python - <<'PYOWNER'
+          import json, subprocess
+          execution = json.load(open('owner-inspection-execution.json'))['metadata']['name']
+          query = 'resource.type="cloud_run_job" AND labels."run.googleapis.com/execution_name"="' + execution + '" AND textPayload:"MINDAAM_OWNER_INSPECTION"'
+          result = subprocess.run(['gcloud','logging','read',query,'--project','mindaam','--limit','5','--format=json'],check=True,capture_output=True,text=True)
+          with open('owner-inspection-result.json','w') as f: f.write(result.stdout)
+          PYOWNER
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: env.OPERATION == 'staging' || env.OPERATION == 'verify'
         with:
@@ -114,6 +125,7 @@ jobs:
           path: |
             deployment-result.json
             smoke-result.json
+            owner-inspection-result.json
             gcp-evidence/
           retention-days: 14
           if-no-files-found: ignore

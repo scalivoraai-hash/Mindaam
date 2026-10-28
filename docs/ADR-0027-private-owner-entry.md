@@ -1,0 +1,7 @@
+# Private owner entry
+
+The existing Control Centre moves to `/eluvathingal`; `/super-admin` returns 404. Backend `/api/super-admin/*` routes retain their existing authorization. `/eluvathingal/login` uses `/api/auth/admin-login`, the existing password hashes, HttpOnly sessions, exact-origin checks and shared auth rate limiter. That endpoint verifies `super_admin` before creating a session and uses the same generic error for unknown identities, incorrect passwords and ordinary accounts. Initial-password accounts remain denied management APIs until password change; password change revokes all sessions and is audited. Existing Super Admin functionality and consumer authentication remain in place. There is no MFA provider in this release.
+
+Owner inspection runs read-only in the existing staging migration job using an execution argument override; it does not change the job definition, infrastructure, users or privileges. It logs only booleans/counts about the requested identity, never credentials or other owners' identities. A GitHub identity match alone is not staging account ownership proof. The configured repository bootstrap email differs from the requested email; actual database evidence must determine the next action. Never silently elevate an existing ordinary account or create a second owner.
+
+Collectible behavior is unchanged. Existing server-authoritative hourly waves, finite density, per-user claims, daily caps, proximity and spacing checks remain authoritative. Additional tests cover active cities and fruit/gem/XP ledger reconciliation.

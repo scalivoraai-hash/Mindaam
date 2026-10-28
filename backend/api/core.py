@@ -148,17 +148,28 @@ def register(data: Register, request: Request, response: Response, db=Depends(ge
     return login_result(db, user, request, response)
 
 
-@router.post("/auth/login")
-def login(data: Login, request: Request, response: Response, db=Depends(get_db)):
+# Both portals use the same password hashes, cookie sessions and auth rate limiter.
+_ADMIN_DUMMY_HASH = hash_password(secrets.token_urlsafe(32))
+
+def authenticate(data, request, response, db, admin_only=False):
     identifier = (data.identifier or data.email or '').strip().lower()
     user = db.scalar(select(User).where(User.email == identifier if '@' in identifier else func.lower(func.trim(User.username)) == identifier))
-    if (
-        not user
-        or not check_password(data.password, user.password_hash)
-        or user.suspended
-    ):
+    valid = check_password(data.password, user.password_hash if user else _ADMIN_DUMMY_HASH)
+    if not user or not valid or user.suspended or (admin_only and user.role != 'super_admin'):
         raise HTTPException(401, "Invalid email, username or password")
+    if admin_only:
+        db.add(Audit(actor_id=user.id, action='identity.admin_login', target=user.id))
     return login_result(db, user, request, response)
+
+
+@router.post("/auth/login")
+def login(data: Login, request: Request, response: Response, db=Depends(get_db)):
+    return authenticate(data, request, response, db)
+
+
+@router.post("/auth/admin-login")
+def admin_login(data: Login, request: Request, response: Response, db=Depends(get_db)):
+    return authenticate(data, request, response, db, admin_only=True)
 
 
 @router.post("/auth/logout")
@@ -657,6 +668,8 @@ def change_password(data: ChangePassword, response: Response, u=Depends(current_
         raise HTTPException(401, 'Current password is incorrect')
     if data.password != data.confirm_password:
         raise HTTPException(422, 'Passwords do not match')
+    if u.role == 'super_admin' and check_password(data.password, u.password_hash):
+        raise HTTPException(422, 'Choose a different permanent password')
     u.must_change_password=False
     u.password_hash = hash_password(data.password)
     db.execute(delete(Session).where(Session.user_id == u.id))
