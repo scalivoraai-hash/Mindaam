@@ -248,8 +248,10 @@ def users(q:str='',u=Depends(super_admin),db=Depends(get_db)):
  query=select(User).where(or_(User.username.ilike('%'+q[:80]+'%'),User.email.ilike('%'+q[:80]+'%'))).limit(200)
  return [{**public_user(p),'created_at':p.created_at,'suspended':p.suspended,'last_seen':(v.updated_at if (v:=db.get(Presence,p.id)) else None)} for p in db.scalars(query)]
 @router.get('/super-admin/events')
-def events(u=Depends(super_admin),db=Depends(get_db)):
- return [{**serialize(e),'attendance':db.scalar(select(func.count()).select_from(Attendee).where(Attendee.event_id==e.id,Attendee.state=='active'))} for e in db.scalars(select(Event).order_by(Event.created_at.desc()).limit(200))]
+def events(q:str='',u=Depends(super_admin),db=Depends(get_db)):
+ query=select(Event)
+ if q:query=query.where(or_(Event.title.ilike('%'+q[:80]+'%'),Event.city==q,Event.host_id==q,Event.status==q,Event.id==q))
+ return [{**serialize(e),'attendance':db.scalar(select(func.count()).select_from(Attendee).where(Attendee.event_id==e.id,Attendee.state=='active'))} for e in db.scalars(query.order_by(Event.created_at.desc()).limit(200))]
 @router.post('/super-admin/events/{id}/end')
 def event_end(id:str,u=Depends(super_admin),db=Depends(get_db)):
  from .events import finish
@@ -289,8 +291,9 @@ def overview(days:int=7,start:float|None=None,end:float|None=None,u=Depends(supe
  from .discovery import CityInterest
  from .business_spatial import BusinessInteraction
  kpis.update(vehicle_rentals=db.scalar(select(func.count()).select_from(RentalLease).where(RentalLease.ended_at==None,RentalLease.expires_at>now)),gifts_sent=db.scalar(select(func.count()).select_from(GiftDelivery).where(GiftDelivery.created_at>=start,GiftDelivery.created_at<=end)),city_requests=db.scalar(select(func.count()).select_from(CityInterest)))
+ kpis.update(verified_users=db.scalar(select(func.count()).select_from(User).where(User.verified==True)),suspended_users=db.scalar(select(func.count()).select_from(User).where(User.suspended==True)),new_users_7_days=db.scalar(select(func.count()).select_from(User).where(User.created_at>=now-7*86400)),new_users_30_days=db.scalar(select(func.count()).select_from(User).where(User.created_at>=now-30*86400)),configured_worlds=len(worlds),inactive_worlds=sum(not c['enabled'] for c in worlds),inactive_users_30_days=max(0,kpis['registered_users']-active(30)))
  regions=[{'market':'United Kingdom','online':sum(c['online'] for c in worlds if c['country']=='GB')},{'market':'International','online':sum(c['online'] for c in worlds if c['country']!='GB')}]
- return {'markets':regions,'rentals':[{'asset':k,'count':n} for k,n in db.execute(select(RentalLease.asset_id,func.count()).where(RentalLease.started_at>=start,RentalLease.started_at<=end).group_by(RentalLease.asset_id))],'business_activity':[{'kind':k,'count':n} for k,n in db.execute(select(BusinessInteraction.kind,func.count()).where(BusinessInteraction.created_at>=start,BusinessInteraction.created_at<=end).group_by(BusinessInteraction.kind))],'kpis':kpis,'worlds':worlds,'daily_activity':daily,'registrations':registration,'online_history':[{'time':b*300,'count':n} for b,n in db.execute(select(OnlineSample.bucket,func.sum(OnlineSample.count)).where(OnlineSample.bucket>=int(start/300),OnlineSample.bucket<=int(end/300)).group_by(OnlineSample.bucket).order_by(OnlineSample.bucket))],'transport_activity':[{'route':v,'tickets':n} for v,n in db.execute(select(Vehicle.route_id,func.count(Ticket.id)).join(Ticket,Ticket.vehicle_id==Vehicle.id).where(Ticket.created_at>=start,Ticket.created_at<=end).group_by(Vehicle.route_id))],'event_activity':[{'type':k,'count':n} for k,n in db.execute(select(Event.venue_experience_type,func.count()).where(Event.created_at>=start,Event.created_at<=end).group_by(Event.venue_experience_type))],'credit_activity':[{'kind':k,'amount':n} for k,n in db.execute(select(Ledger.kind,func.sum(Ledger.amount)).where(Ledger.created_at>=start,Ledger.created_at<=end).group_by(Ledger.kind))],'ad_performance':[{'kind':k,'count':n} for k,n in db.execute(select(AdInteraction.kind,func.count()).where(AdInteraction.created_at>=start,AdInteraction.created_at<=end).group_by(AdInteraction.kind))],'growth':metrics(u,db),'history_notice':'Activity and online history begin when this release is deployed. No historic activity is invented.'}
+ return {'markets':regions,'rentals':[{'asset':k,'count':n} for k,n in db.execute(select(RentalLease.asset_id,func.count()).where(RentalLease.started_at>=start,RentalLease.started_at<=end).group_by(RentalLease.asset_id))],'business_activity':[{'kind':k,'count':n} for k,n in db.execute(select(BusinessInteraction.kind,func.count()).where(BusinessInteraction.created_at>=start,BusinessInteraction.created_at<=end).group_by(BusinessInteraction.kind))],'kpis':kpis,'worlds':worlds,'daily_activity':daily,'registrations':registration,'online_history':[{'time':b*300,'count':n} for b,n in db.execute(select(OnlineSample.bucket,func.sum(OnlineSample.count)).where(OnlineSample.bucket>=int(start/300),OnlineSample.bucket<=int(end/300)).group_by(OnlineSample.bucket).order_by(OnlineSample.bucket))],'transport_activity':[{'route':v,'tickets':n} for v,n in db.execute(select(Vehicle.route_id,func.count(Ticket.id)).join(Ticket,Ticket.vehicle_id==Vehicle.id).where(Ticket.created_at>=start,Ticket.created_at<=end).group_by(Vehicle.route_id))],'event_activity':[{'type':k,'count':n} for k,n in db.execute(select(Event.venue_experience_type,func.count()).where(Event.created_at>=start,Event.created_at<=end).group_by(Event.venue_experience_type))],'credit_activity':[{'kind':k,'amount':n} for k,n in db.execute(select(Ledger.kind,func.sum(Ledger.amount)).where(Ledger.currency=='credits',Ledger.created_at>=start,Ledger.created_at<=end).group_by(Ledger.kind))],'ad_performance':[{'kind':k,'count':n} for k,n in db.execute(select(AdInteraction.kind,func.count()).where(AdInteraction.created_at>=start,AdInteraction.created_at<=end).group_by(AdInteraction.kind))],'growth':metrics(u,db),'history_notice':'Activity and online history begin when this release is deployed. No historic activity is invented.'}
 
 def bootstrap_owner(db):
  email=os.getenv('SUPER_ADMIN_EMAIL','').strip().lower();password=os.getenv('SUPER_ADMIN_INITIAL_PASSWORD','');username=os.getenv('SUPER_ADMIN_USERNAME','').strip()
@@ -327,3 +330,245 @@ def stop_edit(id:str,data:StopInput,u=Depends(super_admin),db=Depends(get_db)):
  if not s:raise HTTPException(404,'Stop unavailable')
  if s.offset==0 and not data.enabled and db.scalar(select(Route.id).where((Route.origin==s.city)|(Route.destination==s.city),Route.enabled==True).limit(1)):raise HTTPException(409,'Disable routes serving this city before closing the central interchange')
  s.name=data.name;s.enabled=data.enabled;audit(db,u,'transport.stop_updated',id,data.model_dump());return serialize(s)
+
+# Control-centre read models extend the existing operations router and role gate.
+from fastapi import Query
+from sqlalchemy import or_
+
+def operator_user(db, person):
+ from .economy import balance
+ p=db.get(Presence,person.id)
+ last=db.scalar(select(func.max(UserActivity.last_seen)).where(UserActivity.user_id==person.id))
+ online=bool(p and p.updated_at>time.time()-90 and not person.suspended and db.scalar(select(Session.id).where(Session.user_id==person.id,Session.expires_at>time.time()).limit(1)))
+ return {'id':person.id,'username':person.username,'display_name':(person.profile or {}).get('display_name',''),'email':person.email,'role':person.role,'created_at':person.created_at,'last_seen':max(last or 0,p.updated_at if p else 0) or None,'online':online,'city':p.city if online else person.city,'suspended':person.suspended,'verified':person.verified,'credits':balance(db,person.id),'xp':balance(db,person.id,'xp')}
+
+@router.get('/super-admin/directory')
+def directory(q:str='',status:Literal['all','active','suspended']='all',sort:Literal['newest','oldest','username']='newest',page:int=Query(1,ge=1),limit:int=Query(25,ge=1,le=100),u=Depends(super_admin),db=Depends(get_db)):
+ filters=[or_(User.username.ilike('%'+q[:80]+'%'),User.email.ilike('%'+q[:80]+'%'),User.id==q)]
+ if status!='all':filters.append(User.suspended==(status=='suspended'))
+ order={'newest':User.created_at.desc(),'oldest':User.created_at.asc(),'username':User.username.asc()}[sort]
+ total=db.scalar(select(func.count()).select_from(User).where(*filters))
+ rows=db.scalars(select(User).where(*filters).order_by(order,User.id).offset((page-1)*limit).limit(limit))
+ return {'items':[operator_user(db,p) for p in rows],'total':total,'page':page,'limit':limit,'presence_window_seconds':90}
+
+@router.get('/super-admin/users/{id}/detail')
+def user_detail(id:str,tab:Literal['overview','wallet','social','events','cities','payments','audit']='overview',page:int=Query(1,ge=1),u=Depends(super_admin),db=Depends(get_db)):
+ from .models import Social,Report
+ from .commerce import Payment
+ from .venue_rentals import purchased_available,VenueBooking
+ from .event_tickets import EventTicket
+ from .economy import balance
+ person=db.get(User,id)
+ if not person:raise HTTPException(404,'User not found')
+ result={'user':operator_user(db,person),'tab':tab,'page':page,'limit':25}
+ if tab=='overview':result['profile']={k:v for k,v in (person.profile or {}).items() if k in {'display_name','bio','languages','theme'}}
+ elif tab=='wallet':
+  result.update(purchased_available=purchased_available(db,id),credits=balance(db,id),xp=balance(db,id,'xp'),attribution_notice='Purchased availability follows the existing purchased-first venue eligibility policy; promotional grants are never purchases.')
+  query=select(Ledger).where(Ledger.user_id==id).order_by(Ledger.created_at.desc(),Ledger.id)
+ elif tab=='social':
+  result['relationships']=[{'kind':k,'count':n} for k,n in db.execute(select(Social.kind,func.count()).where(Social.actor==id).group_by(Social.kind))]
+  result['privacy_notice']='Private messages, media and precise device location are not exposed.'
+  return result
+ elif tab=='events':
+  result['created']=[{'id':e.id,'title':e.title,'status':e.status,'city':e.city} for e in db.scalars(select(Event).where(Event.host_id==id).limit(100))]
+  result['reservations']=[serialize(b) for b in db.scalars(select(VenueBooking).where(VenueBooking.user_id==id).order_by(VenueBooking.created_at.desc()).limit(100))]
+  query=select(EventTicket).where(EventTicket.user_id==id).order_by(EventTicket.created_at.desc())
+ elif tab=='cities':
+  from .growth import WorldAccess
+  query=select(WorldAccess).where(WorldAccess.user_id==id)
+ elif tab=='payments':query=select(Payment).where(Payment.user_id==id).order_by(Payment.created_at.desc())
+ elif tab=='audit':query=select(Audit).where(Audit.target==id).order_by(Audit.created_at.desc())
+ if tab!='overview':
+  result['total']=db.scalar(select(func.count()).select_from(query.order_by(None).subquery()))
+  result['items']=[serialize(row) for row in db.scalars(query.offset((page-1)*25).limit(25))]
+  if tab=='payments':
+   for row in result['items']:
+    row.pop('checkout_url',None);row.pop('request_key',None)
+ return result
+
+class OperatorAdjustment(Strict):
+ request_id:UUID
+ currency:Literal['credits','xp']
+ amount:int=Field(ge=-100000,le=100000,strict=True)
+ reason:str=Field(min_length=12,max_length=500)
+ purpose:Literal['promotion','support','correction','xp_award']
+ confirmed:bool
+
+@router.post('/super-admin/users/{id}/adjustments')
+def adjust_wallet(id:str,data:OperatorAdjustment,u=Depends(super_admin),db=Depends(get_db)):
+ from .economy import credit,config
+ if len(data.reason.strip())<12:raise HTTPException(422,'Provide a meaningful reason of at least 12 characters')
+ if not data.confirmed or data.amount==0:raise HTTPException(422,'Confirm a non-zero adjustment')
+ if data.currency=='xp' and data.purpose not in {'xp_award','correction'}:raise HTTPException(422,'Choose an XP purpose')
+ if data.currency=='credits' and data.purpose=='xp_award':raise HTTPException(422,'XP awards cannot issue Credits')
+ if data.amount<0 and data.purpose!='correction':raise HTTPException(422,'Debits require a documented correction')
+ db.scalar(select(User.id).where(User.id==u.id).with_for_update())
+ target=db.get(User,id)
+ if not target:raise HTTPException(404,'User not found')
+ if target.role in {'admin','super_admin'}:raise HTTPException(409,'Privileged-account adjustments require separate operational review')
+ limits=config(db,'operator_adjustment_limits',{'credits':1000,'xp':5000,'daily_actions':20})
+ key='operator:'+u.id+':'+str(data.request_id)
+ old=db.scalar(select(Ledger).where(Ledger.user_id==id,Ledger.idempotency_key==key))
+ if old and old.currency!=data.currency:raise HTTPException(409,'Request ID already used for a different currency')
+ reason_hash=hashlib.sha256((data.reason.strip()+':'+data.purpose).encode()).hexdigest()
+ source='admin:'+u.id+':'+reason_hash[:32]
+ if not old:
+  if abs(data.amount)>int(limits.get(data.currency,0)):raise HTTPException(409,'Amount exceeds the configured operator limit; separate elevated approval is required')
+  count=db.scalar(select(func.count()).select_from(Audit).where(Audit.actor_id==u.id,Audit.action=='wallet.adjusted',Audit.created_at>time.time()-86400))
+  if count>=int(limits.get('daily_actions',20)):raise HTTPException(429,'Daily adjustment limit reached')
+ row=credit(db,id,data.amount,'admin_'+data.purpose,source,key,data.currency)
+ if not old:audit(db,u,'wallet.adjusted',id,{'transaction_id':row.id,'currency':data.currency,'amount':data.amount,'reason':data.reason.strip(),'purpose':data.purpose,'before':row.previous_balance,'after':row.balance,'request_id':str(data.request_id)})
+ return {'transaction':serialize(row),'replayed':bool(old)}
+
+@router.get('/super-admin/finance')
+def finance(days:int=Query(30,ge=1,le=90),u=Depends(super_admin),db=Depends(get_db)):
+ from .commerce import Payment
+ from .subscriptions import CustomerSubscription,SubscriptionInvoice
+ start=time.time()-days*86400
+ confirmed=Payment.status.in_(['paid','refunded','partially_refunded'])
+ payments=list(db.scalars(select(Payment).where(Payment.created_at>=start).order_by(Payment.created_at.desc()).limit(1000)))
+ gross,refunds,paid_count=db.execute(select(func.coalesce(func.sum(Payment.amount_pence),0),func.coalesce(func.sum(Payment.refunded_pence),0),func.count()).where(Payment.created_at>=start,confirmed)).one()
+ pending_count=db.scalar(select(func.count()).select_from(Payment).where(Payment.created_at>=start,Payment.status=='pending'))
+ by_product=[{'product':sku,'count':n,'gross_pence':gross,'refund_pence':refund} for sku,n,gross,refund in db.execute(select(Payment.sku,func.count(),func.sum(Payment.amount_pence),func.sum(Payment.refunded_pence)).where(Payment.created_at>=start,confirmed).group_by(Payment.sku))]
+ by_day=[{'day':int(day),'gross_pence':gross,'refund_pence':refund} for day,gross,refund in db.execute(select(func.floor(Payment.created_at/86400),func.sum(Payment.amount_pence),func.sum(Payment.refunded_pence)).where(Payment.created_at>=start,confirmed).group_by(func.floor(Payment.created_at/86400)).order_by(func.floor(Payment.created_at/86400)))]
+ rows=[{k:getattr(p,k) for k in ['id','user_id','sku','amount_pence','refunded_pence','status','dispute_status','provider_id','created_at']} for p in payments]
+ return {'currency':'GBP','amount_unit':'pence','days':days,'by_product':by_product,'by_day':by_day,'outstanding_pc':db.scalar(select(func.coalesce(func.sum(Ledger.amount),0)).where(Ledger.currency=='credits')),'failed_payments':db.scalar(select(func.count()).select_from(Payment).where(Payment.created_at>=start,Payment.status.in_(['failed','expired','cancelled']))),'gross_pence':gross,'refund_pence':refunds,'net_sales_pence':gross-refunds,'successful_payments':paid_count,'pending_payments':pending_count,'payments':rows,'limited_to_latest':1000,'active_subscriptions':db.scalar(select(func.count()).select_from(CustomerSubscription).where(CustomerSubscription.status=='active',CustomerSubscription.paid_through>time.time())),'subscription_revenue_pence':None,'settlement_pence':None,'fees_pence':None,'notice':'Reporting groups payments by checkout creation time, not settlement time. Paid rows reflect verified provider processing; pending rows are excluded from sales. Net sales are not bank settlement. Subscription invoice cash amounts and processing fees are not recorded, so those figures are unavailable. PC and XP are not GBP revenue.'}
+
+@router.get('/super-admin/records/{kind}')
+def operational_records(kind:Literal['reservations','tickets','subscriptions','reports','audit'],page:int=Query(1,ge=1),q:str='',days:int=Query(0,ge=0,le=365),u=Depends(super_admin),db=Depends(get_db)):
+ from .venue_rentals import VenueBooking
+ from .event_tickets import EventTicket
+ from .subscriptions import CustomerSubscription
+ from .models import Report
+ model={'reservations':VenueBooking,'tickets':EventTicket,'subscriptions':CustomerSubscription,'reports':Report,'audit':Audit}[kind]
+ query=select(model)
+ if q:
+  filters=[model.id==q]
+  if hasattr(model,'user_id'):filters.append(model.user_id==q)
+  if hasattr(model,'city'):filters.append(model.city==q)
+  if hasattr(model,'target'):filters.append(model.target==q)
+  if hasattr(model,'actor_id'):filters.append(model.actor_id==q)
+  if hasattr(model,'action'):filters.append(model.action.ilike('%'+q[:80]+'%'))
+  query=query.where(or_(*filters))
+ if days:query=query.where(model.created_at>=time.time()-days*86400)
+ total=db.scalar(select(func.count()).select_from(query.subquery()))
+ items=[serialize(r) for r in db.scalars(query.order_by(model.created_at.desc(),model.id).offset((page-1)*25).limit(25))]
+ for item in items:
+  for key in ('checkout_url','request_key','customer_id'):item.pop(key,None)
+ return {'items':items,'total':total,'page':page,'limit':25}
+
+class OperatorStatus(Strict):
+ suspended:bool
+ reason:str=Field(min_length=12,max_length=500)
+@router.patch('/super-admin/users/{id}/status')
+def operator_status(id:str,data:OperatorStatus,u=Depends(super_admin),db=Depends(get_db)):
+ from .core import suspend,Suspension
+ if len(data.reason.strip())<12:raise HTTPException(422,'Provide a meaningful reason of at least 12 characters')
+ result=suspend(id,Suspension(suspended=data.suspended),u,db)
+ audit(db,u,'user.status_review',id,{'reason':data.reason,'suspended':data.suspended})
+ return result
+
+class AdjustmentReview(Base):
+ __tablename__='operator_adjustment_reviews'
+ id:Mapped[str]=mapped_column(String(36),primary_key=True)
+ requester_id:Mapped[str]=mapped_column(ForeignKey('users.id'),index=True)
+ target_id:Mapped[str]=mapped_column(ForeignKey('users.id'),index=True)
+ currency:Mapped[str]=mapped_column(String(10))
+ amount:Mapped[int]=mapped_column(Integer)
+ purpose:Mapped[str]=mapped_column(String(30))
+ reason:Mapped[str]=mapped_column(String(500))
+ state:Mapped[str]=mapped_column(String(20),default='pending')
+ reviewer_id:Mapped[str|None]=mapped_column(ForeignKey('users.id'),nullable=True)
+ transaction_id:Mapped[str|None]=mapped_column(ForeignKey('wallet_transactions.id'),nullable=True)
+ created_at:Mapped[float]=mapped_column(Float,default=time.time)
+
+@router.post('/super-admin/users/{id}/adjustment-requests')
+def request_adjustment(id:str,data:OperatorAdjustment,u=Depends(super_admin),db=Depends(get_db)):
+ if len(data.reason.strip())<12:raise HTTPException(422,'Provide a meaningful reason of at least 12 characters')
+ if not data.confirmed or data.amount==0:raise HTTPException(422,'Confirm a non-zero adjustment')
+ if (data.currency=='xp' and data.purpose not in {'xp_award','correction'}) or (data.currency=='credits' and data.purpose=='xp_award') or (data.amount<0 and data.purpose!='correction'):raise HTTPException(422,'Invalid adjustment purpose')
+ db.scalar(select(User.id).where(User.id==u.id).with_for_update())
+ target=db.get(User,id)
+ if not target:raise HTTPException(404,'User not found')
+ if target.role in {'admin','super_admin'}:raise HTTPException(409,'Privileged-account adjustments are not permitted')
+ old=db.get(AdjustmentReview,str(data.request_id))
+ values={'requester_id':u.id,'target_id':id,'currency':data.currency,'amount':data.amount,'purpose':data.purpose,'reason':data.reason.strip()}
+ if old:
+  if any(getattr(old,k)!=v for k,v in values.items()):raise HTTPException(409,'Request ID already used with different details')
+  return serialize(old)
+ if db.scalar(select(func.count()).select_from(AdjustmentReview).where(AdjustmentReview.requester_id==u.id,AdjustmentReview.created_at>time.time()-86400))>=20:raise HTTPException(429,'Daily review request limit reached')
+ row=AdjustmentReview(id=str(data.request_id),**values);db.add(row);db.flush()
+ audit(db,u,'wallet.review_requested',id,{'review_id':row.id,**values});return serialize(row)
+
+class ReviewDecision(Strict):
+ approve:bool
+ reason:str=Field(min_length=12,max_length=500)
+ confirmed:bool
+
+@router.get('/super-admin/adjustment-requests')
+def adjustment_requests(page:int=Query(1,ge=1),u=Depends(super_admin),db=Depends(get_db)):
+ return {'items':[serialize(r) for r in db.scalars(select(AdjustmentReview).order_by(AdjustmentReview.created_at.desc()).offset((page-1)*25).limit(25))],'total':db.scalar(select(func.count()).select_from(AdjustmentReview)),'page':page,'limit':25}
+
+@router.post('/super-admin/adjustment-requests/{id}/decision')
+def decide_adjustment(id:str,data:ReviewDecision,u=Depends(super_admin),db=Depends(get_db)):
+ from .economy import credit
+ if len(data.reason.strip())<12:raise HTTPException(422,'Provide a meaningful review reason')
+ if not data.confirmed:raise HTTPException(422,'Confirm the review decision')
+ db.scalar(select(User.id).where(User.id==u.id).with_for_update())
+ row=db.scalar(select(AdjustmentReview).where(AdjustmentReview.id==id).with_for_update())
+ if not row:raise HTTPException(404,'Review not found')
+ if row.requester_id==u.id:raise HTTPException(403,'A different Super Admin must review this request')
+ if row.state!='pending':
+  if row.state==('approved' if data.approve else 'rejected'):return serialize(row)
+  raise HTTPException(409,'Review already decided')
+ if data.approve:
+  requester=db.get(User,row.requester_id);target=db.get(User,row.target_id)
+  if not requester or requester.suspended or requester.must_change_password or requester.role!='super_admin':raise HTTPException(409,'Requesting administrator is no longer eligible')
+  if not target or target.role in {'admin','super_admin'}:raise HTTPException(409,'Target is no longer eligible')
+  if row.created_at<time.time()-7*86400:raise HTTPException(409,'Review request expired; request a new review')
+  if db.scalar(select(func.count()).select_from(Audit).where(Audit.actor_id==u.id,Audit.action=='wallet.review_approved',Audit.created_at>time.time()-86400))>=20:raise HTTPException(429,'Daily approval limit reached')
+  transaction=credit(db,row.target_id,row.amount,'admin_'+row.purpose,'review:'+row.id,'operator-review:'+row.id,row.currency)
+  row.transaction_id=transaction.id
+  details={'before':transaction.previous_balance,'after':transaction.balance,'transaction_id':transaction.id}
+ else:details={}
+ row.state='approved' if data.approve else 'rejected';row.reviewer_id=u.id
+ audit(db,u,'wallet.review_'+row.state,row.target_id,{'review_id':row.id,'requester_id':row.requester_id,'currency':row.currency,'amount':row.amount,'reason':data.reason.strip(),**details})
+ return serialize(row)
+
+class AdjustmentLimits(Strict):
+ credits:int=Field(ge=0,le=10000,strict=True)
+ xp:int=Field(ge=0,le=50000,strict=True)
+ daily_actions:int=Field(ge=0,le=100,strict=True)
+ reason:str=Field(min_length=12,max_length=500)
+ confirmed:bool
+
+@router.get('/super-admin/adjustment-limits')
+def adjustment_limits(u=Depends(super_admin),db=Depends(get_db)):
+ from .economy import config
+ return config(db,'operator_adjustment_limits',{'credits':1000,'xp':5000,'daily_actions':20})
+
+@router.put('/super-admin/adjustment-limits')
+def save_adjustment_limits(data:AdjustmentLimits,u=Depends(super_admin),db=Depends(get_db)):
+ if len(data.reason.strip())<12:raise HTTPException(422,'Provide a meaningful policy reason')
+ if not data.confirmed:raise HTTPException(422,'Confirm limit changes')
+ before=adjustment_limits(u,db);value=data.model_dump(exclude={'reason','confirmed'})
+ row=db.get(Config,'operator_adjustment_limits')
+ if row:row.value=value;row.updated_at=time.time()
+ else:db.add(Config(key='operator_adjustment_limits',value=value))
+ audit(db,u,'wallet.limits_updated','operator_adjustment_limits',{'before':before,'after':value,'reason':data.reason.strip()});return value
+
+@router.get('/super-admin/system-health')
+def system_health(u=Depends(super_admin),db=Depends(get_db)):
+ from .db import APP_ENV
+ db.scalar(select(User.id).limit(1))
+ return {'environment':APP_ENV,'database':'query succeeded','release_sha':os.getenv('RELEASE_SHA') or os.getenv('GIT_SHA') or 'Not supplied by runtime','media_credentials_configured':all(os.getenv(k) for k in ['LIVEKIT_URL','LIVEKIT_API_KEY','LIVEKIT_API_SECRET']),'stripe_credentials_configured':bool(os.getenv('STRIPE_SECRET_KEY')),'stripe_webhook_configured':bool(os.getenv('STRIPE_WEBHOOK_SECRET')),'notice':'Configuration presence does not establish provider connectivity or account verification. Media and Stripe acceptance must run against the deployed environment. No cloud credentials are exposed.'}
+
+@router.get('/super-admin/live')
+def live_operations(city:str='',u=Depends(super_admin),db=Depends(get_db)):
+ now=time.time()
+ query=select(Presence).join(User,User.id==Presence.user_id).where(Presence.updated_at>now-90,User.suspended==False,select(Session.id).where(Session.user_id==User.id,Session.expires_at>now).exists())
+ if city:query=query.where(Presence.city==city)
+ rows=list(db.scalars(query));cities={};zones={}
+ for p in rows:
+  cities[p.city]=cities.get(p.city,0)+1;key=(p.city,p.zone_id or 'world');zones[key]=zones.get(key,0)+1
+ return {'as_of':now,'window_seconds':90,'online_users':len(rows),'cities':[{'city':k,'online':v} for k,v in sorted(cities.items())],'zones':[{'city':c,'zone':z,'online':v} for (c,z),v in sorted(zones.items())],'notice':'Authenticated presence updated within 90 seconds. Zone IDs describe virtual spaces, never device GPS. Multiple sessions do not duplicate a user.'}

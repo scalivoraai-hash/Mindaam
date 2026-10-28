@@ -1,5 +1,5 @@
 /* Shared visual layer. Layout/visibility rules for social and mobile flows stay in globals.css. */
-:root{--bg:#0b1222;--card:linear-gradient(145deg,#192a40f0,#0e1a2bed);--lime:#c2f85a;--cyan:#60def3;--muted:#a9bcd0;--line:#c4daff20;--text:#f3f7ff;--panel-shadow:0 16px 42px #02091636,inset 0 1px #ffffff0c}
+
 body{font-family:'DM Sans',Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
 button{border-radius:12px;transition:background .16s,border-color .16s,box-shadow .16s,transform .16s}
@@ -10,7 +10,7 @@ button:disabled{opacity:.55}
 input,textarea,select{border-radius:12px;background:#0a1626c9;border-color:#aacbea29}
 input:focus,textarea:focus,select:focus{border-color:var(--cyan);outline:1px solid var(--cyan)}
 select option{background:#132338;color:#f3f7ff}
-.glass{background:var(--card)!important;backdrop-filter:blur(16px);border:1px solid var(--line);box-shadow:var(--panel-shadow)}
+.glass{background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--line);box-shadow:var(--panel-shadow)}
 .primary{background:linear-gradient(135deg,#d0ff70,#98e443);color:#172609;border:1px solid #e1ffac55;box-shadow:0 4px 18px #a0ed5220}
 .primary:hover:not(:disabled){background:linear-gradient(135deg,#dcff94,#b6f263);border-color:#efffc9}
 .eyebrow{letter-spacing:1.6px;color:var(--cyan);font-size:10px}
