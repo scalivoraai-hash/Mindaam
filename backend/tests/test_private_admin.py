@@ -50,7 +50,7 @@ def test_private_admin_complete_password_session_and_rbac(system, monkeypatch):
         actions=set(db.scalars(select(Audit.action)))
         assert {'owner.bootstrap','identity.admin_login','identity.password_changed'} <= actions
 
-def test_admin_login_rate_limit_and_bootstrap_refuses_elevation(system, monkeypatch):
+def test_bootstrap_refuses_elevation(system, monkeypatch):
     c, dbs=system
     h,u=register(c,'ordinary_owner')
     monkeypatch.setenv('SUPER_ADMIN_EMAIL',u['email'])
@@ -59,6 +59,17 @@ def test_admin_login_rate_limit_and_bootstrap_refuses_elevation(system, monkeypa
     import pytest
     with pytest.raises(RuntimeError,match='refusing automatic privilege escalation'):
         with dbs.begin() as db:bootstrap_owner(db)
+
+
+def test_admin_login_rate_limit(system, monkeypatch):
+    # The fixture has its own client IP; no registration consumes its auth quota.
+    # Pin the middleware clock so a Redis minute boundary cannot reset this test.
+    import time
+    from types import SimpleNamespace
+    import backend.api.main as main_module
+    fixed = time.time()
+    monkeypatch.setattr(main_module, 'time', SimpleNamespace(time=lambda: fixed))
+    c, _ = system
     local_buckets.clear()
     for _ in range(20):
         assert c.post('/api/auth/admin-login',json={'identifier':'unknown','password':'wrong'}).status_code==401
