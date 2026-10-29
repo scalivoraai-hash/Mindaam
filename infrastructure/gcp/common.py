@@ -30,7 +30,7 @@ def command(args, *, stdin=None, sensitive=False, allow_missing=False):
             if re.fullmatch(pattern, args[4]):
                 run_missing = re.search(
                     r'^ERROR: \(gcloud\.run\.' + args[2] + r'\.describe\) Cannot find '
-                    + kind + r' \[' + re.escape(args[4]) + r'\][ \t]*$',
+                    + kind + r' \[' + re.escape(args[4]) + r'\]\.?[ \t]*$',
                     message, re.MULTILINE) is not None
         # Artifact Registry's name-only diagnostic is valid only for this lookup.
         # Full-message matching prevents unrelated repository/project errors from

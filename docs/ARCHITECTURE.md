@@ -116,3 +116,5 @@ The verify-resources operation is restricted to the exact da2a01 release, record
 Production preparation reuses the exact approved image and existing migration/bootstrap paths. The isolated security job verifies secret injection, both database-connect boundaries, restricted runtime role and real initial owner authentication, cookie security, forced-change denial and logout. The owner must complete the initial password change before dashboard access; this is explicitly scoped in the review. Final approval is saved only from actual matching successful runtime/recovery evidence and the unchanged owner-approved cost totals.
 
 Recovery/security Cloud Run jobs place Cloud SQL and VPC annotations on the execution template (`spec.template.metadata`), as required by the v1 Jobs API; task templates contain only task specifications.
+
+First-production deployment recognizes the provider’s optional terminal period in exact managed Cloud Run job/service absence messages. Command/name scoping and fatal permission/transport checks remain enforced.

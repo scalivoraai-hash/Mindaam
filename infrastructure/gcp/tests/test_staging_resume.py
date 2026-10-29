@@ -70,6 +70,18 @@ class StagingResume(unittest.TestCase):
                 with self.assertRaises(Blocked):
                     command(['gcloud', 'run', kind, 'describe', 'unrelated'], allow_missing=True)
 
+    def test_punctuated_provider_absence_remains_scoped_and_fail_closed(self):
+        for kind, name in [('services', 'mindaam-production'), ('jobs', 'mindaam-migrate-production')]:
+            args = ['gcloud', 'run', kind, 'describe', name]
+            message = absent(kind, name) + '.'
+            with patch('common.subprocess.run', return_value=subprocess.CompletedProcess(args, 1, '', message)):
+                self.assertIsNone(command(args, allow_missing=True))
+                with self.assertRaises(Blocked): command(args)
+                with self.assertRaises(Blocked): command(args[:4] + ['unrelated'], allow_missing=True)
+            for suffix in [' extra text', '\nPERMISSION_DENIED', '\nTLS handshake failed']:
+                with patch('common.subprocess.run', return_value=subprocess.CompletedProcess(args, 1, '', message + suffix)):
+                    with self.assertRaises(Blocked): command(args, allow_missing=True)
+
     def test_run_errors_are_fatal(self):
         args = ['gcloud', 'run', 'services', 'describe', 'mindaam-staging']
         errors = ['PERMISSION_DENIED', 'UNAUTHENTICATED', '401', '403', 'invalid credentials',
