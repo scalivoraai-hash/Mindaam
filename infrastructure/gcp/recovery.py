@@ -94,9 +94,13 @@ def run(c, sha):
             detail=json.loads(error.read()).get('error',{}).get('message','No provider detail')
             raise Blocked('Recovery create HTTP '+str(error.code)+': '+detail[:1000]) from None
         created=True
+        print('Temporary recovery instance creation accepted: '+name,flush=True)
         c.gc('sql','operations','wait',operation['name'],'--timeout=1800')
         guard(c.gc('sql','instances','describe',name),name,run_id)
-        c.gc('sql','backups','restore',str(backup['id']),'--backup-instance=mindaam-postgres','--restore-instance='+name)
+        operation=c.gc('sql','backups','restore',str(backup['id']),'--backup-instance=mindaam-postgres','--restore-instance='+name,'--async')
+        evidence['restore_operation']=operation['name']
+        print('Waiting for actual Cloud SQL restore operation '+operation['name'],flush=True)
+        c.gc('sql','operations','wait',operation['name'],'--timeout=3600')
         connection=f'{c.project}:{c.region}:{name}'
         manifest={'apiVersion':'run.googleapis.com/v1','kind':'Job','metadata':{'name':name,'labels':{'application':'mindaam','recovery_run':run_id}},
           'spec':{'template':{'spec':{'taskCount':1,'parallelism':1,'template':{'metadata':{'annotations':{'run.googleapis.com/cloudsql-instances':connection}},'spec':{
@@ -116,11 +120,17 @@ def run(c, sha):
         if len(rows)!=1: raise Blocked('Unique recovery result not available')
         evidence['checks']=json.loads(rows[0]['textPayload'].split('MINDAAM_RECOVERY_RESULT ',1)[1])
         evidence['status']='PASS'
+    except Exception as error:
+        evidence['status']='FAIL'
+        evidence['failure']=str(error)[-1500:]
+        raise
     finally:
         # Only resources created by this invocation can be removed.
         if job_created:
             c.gc('run','jobs','delete',name,'--region='+c.region)
         if created:
+            for op in c.gc('sql','operations','list','--instance='+name,'--filter=status!=DONE'):
+                c.gc('sql','operations','wait',op['name'],'--timeout=3600')
             guard(c.gc('sql','instances','describe',name),name,run_id)
             c.gc('sql','instances','delete',name)
             evidence['cleanup']=not any(x['name']==name for x in c.gc('sql','instances','list'))
