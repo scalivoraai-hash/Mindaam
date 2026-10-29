@@ -15,6 +15,19 @@ def rules():
     return dict(interaction_start_distance=start,interaction_warning_distance=warning,interaction_disconnect_distance=disconnect,disconnect_grace_period=max(2,float(os.getenv('TALK_DISCONNECT_GRACE_SECONDS','8'))),max_participants=max(2,min(10,int(os.getenv('TALK_MAX_PARTICIPANTS','8')))),approval_policy=os.getenv('TALK_JOIN_APPROVAL','originals'),rejoin_cooldown=max(30,int(os.getenv('TALK_REJOIN_COOLDOWN_SECONDS','120'))))
 
 
+def locked_session(db,id):
+    """Event rows precede their media rows in every locked conversation path.
+
+    Event maintenance/exit already uses this order. Locking media first during
+    social polling used to deadlock with event cleanup and exhaust the DB pool.
+    event_id is immutable after session creation; read it without locking media.
+    """
+    event_id=db.scalar(select(MediaSession.event_id).where(MediaSession.id==id))
+    if event_id:
+        db.scalar(select(Event.id).where(Event.id==event_id).with_for_update())
+    return db.scalar(select(MediaSession).where(MediaSession.id==id).with_for_update().execution_options(populate_existing=True))
+
+
 def members(db,s,include_inactive=False):
     rows=list(db.scalars(select(ConversationMember).where(ConversationMember.session_id==s.id)))
     if not rows and s.state=='accepted':

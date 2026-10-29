@@ -27,7 +27,7 @@ def provider_ready():
 
 
 def get_session(db, u, id):
-    s = db.scalar(select(MediaSession).where(MediaSession.id == id).with_for_update())
+    s = conversations.locked_session(db,id)
     if not s or (u.id not in {s.requester, s.target} and not conversations.member(db,s,u.id)):
         raise HTTPException(404, "Media session unavailable")
     own=conversations.member(db,s,u.id)

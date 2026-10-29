@@ -79,7 +79,7 @@ def request(data:Invitation,u=Depends(current_user),db=Depends(get_db)):
  parent=db.scalar(select(MediaSession).where(pair,MediaSession.kind=='text',MediaSession.state=='accepted').order_by(MediaSession.created_at.desc()).limit(1)) if data.kind!='text' else None
  s=MediaSession(requester=u.id,target=target.id,kind=data.kind,conversation_id=parent.id if parent else None,distance_policy='friends' if friends(db,u.id,target.id) else 'proximity',max_participants=parent.max_participants if parent else min(6,conversations.rules()['max_participants']));db.add(s);db.flush();emit(db,u,'talk_request_sent',s.id);notify(db,target.id,'interaction.requested',u.username+' wants to talk',s.id);return serialize(s)
 def member(db,u,id,accepted=False):
- s=db.scalar(select(MediaSession).where(MediaSession.id==id).with_for_update())
+ s=conversations.locked_session(db,id)
  if not s:raise HTTPException(403,'Conversation unavailable')
  if accepted:conversations.enforce(db,s)
  own=conversations.member(db,s,u.id)
@@ -146,7 +146,7 @@ def nearby_groups(u=Depends(current_user),db=Depends(get_db)):
 
 @router.post('/conversation/{id}/join')
 def ask_join(id:str,u=Depends(current_user),db=Depends(get_db)):
- s=db.scalar(select(MediaSession).where(MediaSession.id==id).with_for_update())
+ s=conversations.locked_session(db,id)
  if not s or s.conversation_id:raise HTTPException(403,'Conversation is not available to join')
  j=db.get(ConversationJoin,(id,u.id));now=time.time()
  own=conversations.member(db,s,u.id)
@@ -160,7 +160,7 @@ def ask_join(id:str,u=Depends(current_user),db=Depends(get_db)):
 
 @router.post('/conversation/{id}/join/{user_id}/{decision}')
 def decide_join(id:str,user_id:str,decision:Literal['accept','reject','cancel'],u=Depends(current_user),db=Depends(get_db)):
- s=db.scalar(select(MediaSession).where(MediaSession.id==id).with_for_update());j=db.get(ConversationJoin,(id,user_id))
+ s=conversations.locked_session(db,id);j=db.get(ConversationJoin,(id,user_id))
  if not s or not j:raise HTTPException(404,'Join request unavailable')
  own=conversations.member(db,s,u.id)
  if decision=='cancel':
