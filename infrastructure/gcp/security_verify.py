@@ -20,6 +20,8 @@ try:
   result['database_identity']=identity==('mindaam_production','mindaam_production')
   rights=c.execute('SELECT rolsuper,rolcreatedb,rolcreaterole,rolbypassrls FROM pg_roles WHERE rolname=current_user').fetchone()
   result['restricted_role']=not any(rights)
+  result['staging_role_denied_production']=not c.execute("SELECT has_database_privilege('mindaam_staging','mindaam_production','CONNECT')").fetchone()[0]
+  result['payments_gated']=os.environ.get('MINDAAM_PAYMENT_ACTIONS_ENABLED')=='false'
   result['staging_denied']=not c.execute("SELECT has_database_privilege(current_user,'mindaam_staging','CONNECT')").fetchone()[0]
   result['schema_revision']=c.execute('SELECT version_num FROM alembic_version').fetchone()[0]
   result['postgis']=bool(c.execute('SELECT PostGIS_Version()').fetchone()[0])
@@ -78,7 +80,7 @@ def run(c,sha):
    time.sleep(5)
   if len(rows)!=1:raise Blocked('Unique security runtime evidence unavailable')
   evidence['checks']=json.loads(rows[0]['textPayload'].split('MINDAAM_SECURITY_RESULT ',1)[1])
-  keys=('secret_injection','database_identity','restricted_role','staging_denied','postgis','owner_credential_verified','unauthenticated_admin_denied','wrong_password_denied','owner_login','secure_cookie','initial_change_enforced','logout')
+  keys=('secret_injection','database_identity','restricted_role','staging_denied','postgis','owner_credential_verified','unauthenticated_admin_denied','wrong_password_denied','owner_login','secure_cookie','initial_change_enforced','logout','payments_gated','staging_role_denied_production')
   evidence['status']='PASS' if all(evidence['checks'].get(k) is True for k in keys) else 'FAIL'
  finally:
   if created:c.gc('run','jobs','delete',name,'--region='+c.region);evidence['cleanup']=True
@@ -87,3 +89,6 @@ def run(c,sha):
   Path('gcp-evidence/security-runtime.json').write_text(json.dumps(evidence,indent=2))
   c.put_json(f'releases/{sha}/security-runtime.json',evidence)
  if evidence['status']!='PASS':raise Blocked('Production runtime security checks failed; inspect non-secret evidence')
+
+ from approved_review import finalise
+ finalise(c,sha)
