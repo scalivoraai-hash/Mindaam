@@ -67,6 +67,8 @@ def main():
         from review import packet
         Path('gcp-evidence').mkdir(exist_ok=True)
         value = packet(c, sha)
+        from diagnostics import collect
+        value["database_diagnostics"] = collect(c)
         c.put_json(f'releases/{sha}/review-draft.json', value)
         Path('gcp-evidence/review-draft.json').write_text(json.dumps(value, indent=2))
         return
