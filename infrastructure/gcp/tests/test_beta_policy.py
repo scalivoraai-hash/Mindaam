@@ -6,8 +6,23 @@ from common import Blocked
 from release_policy import BETA,POLICY,profile,required_checks,validate_beta,evidence_name,review_name
 from render import service
 from test_deployment import FakeCloud
+import review
 
 class BetaPolicy(unittest.TestCase):
+ def test_blocked_draft_is_not_release_approval(self):
+  c=FakeCloud();sha='a'*40
+  c.objects[f'releases/{sha}/staging.json']={'sha':sha,'image':'test-image','profile':BETA}
+  c.objects[f'releases/{sha}/metrics.json']={'series':{'test-only-memory':.95}}
+  before=copy.deepcopy(c.objects)
+  with patch.dict(os.environ,{'RELEASE_PROFILE':BETA}),patch('review.inventory',return_value={'test_only':True}),patch('review.optional_secrets',return_value={}):
+   draft=review.packet(c,sha)
+   self.assertFalse(draft['staging_acceptance_verified']);self.assertFalse(draft['owner_approved'])
+   self.assertTrue(draft['readiness'].startswith('BLOCKED'))
+   self.assertEqual(draft['resource_measurements'],c.objects[f'releases/{sha}/metrics.json'])
+   self.assertEqual(c.objects,before)
+   with self.assertRaises(Blocked):review.save(c,sha,draft)
+   del c.objects[f'releases/{sha}/metrics.json']
+   with self.assertRaises(Blocked):review.packet(c,sha)
  def evidence(self):return {'profile':BETA,'deferred':POLICY['deferred'],'checks':dict.fromkeys(required_checks(BETA),True)}
  def test_deferred_never_becomes_pass(self):
   value=self.evidence();validate_beta(value)

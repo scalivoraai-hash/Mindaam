@@ -32,13 +32,22 @@ def inventory(c):
 
 
 def packet(c, sha):
-    staged = c.get_json(f'releases/{sha}/{evidence_name()}')
+    verified = c.get_json(f'releases/{sha}/{evidence_name()}')
+    staged = verified or c.get_json(f'releases/{sha}/staging.json')
     if not staged:
-        raise Blocked('Complete real staging acceptance first')
+        raise Blocked('An actual staging release is required for a review draft')
+    if staged.get('sha') != sha or staged.get('profile','full') != profile():
+        raise Blocked('Review draft must match the staged release and profile')
+    measured = c.get_json(f'releases/{sha}/metrics.json')
+    if not measured:
+        raise Blocked('Actual release measurements are required for a review draft')
     configured = {env: optional_secrets(c, env) for env in ('staging', 'production')}
     items = ('cloud_run','compute_livekit','postgresql','redis','storage','network','logging','other')
     value = {'sha':sha,'image':staged['image'],'reviewed_at':None,'owner_approved':False,'pricing_date':None,
-             'resource_metrics_evidence':staged['resource_metrics_evidence'],
+             'staging_acceptance_verified':bool(verified),
+             'readiness':'REVIEW REQUIRED' if verified else 'BLOCKED — staging release gate has not passed',
+             'resource_metrics_evidence':f'gs://{c.bucket}/releases/{sha}/metrics.json',
+             'resource_measurements':measured,
              'costs':{scenario:{'assumptions':{'connected_user_hours':None,'media_publisher_hours':None,'media_receiver_hours':None,'internet_egress_gib':None,'api_requests':None},
                                 'pricing_sources':[], 'usd':dict.fromkeys(items,None)} for scenario in ('idle','light')},
              'targets':{'preferred_light_usd':100,'warning_usd':125,'requires_new_approval_above_usd':150},

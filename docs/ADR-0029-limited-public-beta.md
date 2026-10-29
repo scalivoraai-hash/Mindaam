@@ -7,3 +7,5 @@ The expiring limited-public-beta-v1 profile records payment checks as DEFERRED â
 Beta evidence uses staging-beta-verified.json; it never substitutes for full staging-verified.json. Promotion requires exact SHA/image, direct and forced-TURN evidence, server payment flag, metrics/cost review, private exact-release security review, owner approval and an unexpired policy. The existing backup-before-migration and traffic rollback remain. The review workflow only produces a draft; owner_approved remains false. It does not grant deployment approval.
 
 Existing bootstrap, Railway, databases and production DNS are unchanged. New runtime gating requires a newly built and staged image. Owner login and backup restoration must be actually verified before the security review can pass.
+
+A failed resource gate may still produce a read-only cost-review draft from its actual staged image, recorded measurements and current inventory. Such drafts explicitly report BLOCKED and unverified staging acceptance, retain owner_approved=false, and cannot be saved as release approval without the original verified evidence. Resource thresholds and promotion requirements are unchanged.
