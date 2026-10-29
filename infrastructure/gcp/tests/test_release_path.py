@@ -84,7 +84,7 @@ class ReleasePath(unittest.TestCase):
             return io.StringIO(json.dumps({} if calls[f]==1 else {'timeSeries':[{'points':[{'value':{'doubleValue':.2}}]}]}))
         with patch('evidence.command',return_value='not-a-real-token'), patch.object(c,'gc',return_value={'id':'123','labels':{'application':'mindaam'}}), \
              patch('evidence.urlopen',side_effect=response), patch('evidence.time.sleep') as sleep:
-            result=evidence.metrics(c,RELEASE);self.assertEqual(len(result['series']),9);sleep.assert_called_once()
+            result=evidence.metrics(c,RELEASE);self.assertEqual(len(result['series']),10);sleep.assert_called_once()
         self.assertTrue(any('revision_name = "staging-00001"' in f for f in filters))
         self.assertTrue(any('database_id = "mindaam:mindaam-postgres"' in f for f in filters))
         self.assertTrue(any('instance_id = "123"' in f for f in filters))
@@ -135,6 +135,9 @@ class ReleasePath(unittest.TestCase):
             self.fail('Unexpected provider action '+repr(args))
         def put(key,value):objects[key]=copy.deepcopy(value)
         measured={'series':{'custom.googleapis.com/mindaam/host_memory_utilization':{'timeSeries':[{'points':[{'value':{'doubleValue':.3}}]}]}}}
+        measured['series']['cloudsql.googleapis.com/database/memory/components']={'timeSeries':[
+            {'metric':{'labels':{'component':k}},'points':[{'interval':{'endTime':f'2026-10-29T00:0{i}:00Z'},'value':{'doubleValue':v}} for i in range(3)]}
+            for k,v in [('Usage',30),('Cache',20),('Free',50)]]}
         with tempfile.TemporaryDirectory() as directory:
             old=os.getcwd();os.chdir(directory)
             try:

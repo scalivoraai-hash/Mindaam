@@ -23,7 +23,7 @@ def metrics(c, release, *, timeout=600):
     end = now.isoformat(); start = (now - datetime.timedelta(minutes=30)).isoformat()
     types = ["custom.googleapis.com/mindaam/host_memory_utilization", "run.googleapis.com/container/cpu/utilizations", "run.googleapis.com/container/memory/utilizations",
              "run.googleapis.com/container/instance_count", "cloudsql.googleapis.com/database/cpu/utilization",
-             "cloudsql.googleapis.com/database/memory/utilization", "cloudsql.googleapis.com/database/postgresql/num_backends",
+             "cloudsql.googleapis.com/database/memory/utilization", "cloudsql.googleapis.com/database/memory/components", "cloudsql.googleapis.com/database/postgresql/num_backends",
              "compute.googleapis.com/instance/cpu/utilization", "compute.googleapis.com/instance/network/sent_bytes_count"]
     vm = c.gc('compute', 'instances', 'describe', 'mindaam-media', '--zone=' + c.zone)
     c.owned(vm, 'media VM')
@@ -88,6 +88,40 @@ def bounded_http(origin):
     return result
 
 
+def sql_memory_samples(measured):
+    """Google's PostgreSQL pressure metric: active usage, excluding reclaimable OS cache.
+
+    Monitoring returns components in percent (0..100), despite utilization using 0..1.
+    Require matched Usage/Cache/Free samples summing to 100; never infer missing data.
+    See https://docs.cloud.google.com/sql/docs/postgres/optimize-high-memory-usage
+    """
+    key = "cloudsql.googleapis.com/database/memory/components"
+    rows = {}
+    for series in measured.get("series", {}).get(key, {}).get("timeSeries", []):
+        component = series.get("metric", {}).get("labels", {}).get("component", "").lower()
+        if component not in {"usage", "cache", "free"}:
+            raise Blocked("Unknown Cloud SQL memory component")
+        for point in series.get("points", []):
+            stamp = point.get("interval", {}).get("endTime")
+            value = point.get("value", {}).get("doubleValue")
+            if not stamp or isinstance(value, bool) or not isinstance(value, (int,float)) or not math.isfinite(value) or not 0 <= value <= 100:
+                raise Blocked("Invalid Cloud SQL memory component sample")
+            row = rows.setdefault(stamp, {})
+            if component in row and row[component] != value:
+                raise Blocked("Conflicting Cloud SQL memory component samples")
+            row[component] = value
+    stamps = sorted(rows, reverse=True)[:5]
+    if len(stamps) < 3:
+        raise Blocked("Cloud SQL memory component samples are missing")
+    values = []
+    for stamp in stamps:
+        row = rows[stamp]
+        if set(row) != {"usage", "cache", "free"} or abs(sum(row.values()) - 100) > 1:
+            raise Blocked("Cloud SQL memory component samples do not reconcile")
+        values.append(row["usage"] / 100)
+    return values
+
+
 def verify(c, sha):
     release = c.get_json(f"releases/{sha}/staging.json")
     if not release:
@@ -127,12 +161,16 @@ def verify(c, sha):
     c.put_json(f"releases/{sha}/metrics.json", measured)
     if any(not result.get("timeSeries") for result in measured["series"].values()):
         raise Blocked("Cloud Monitoring data has not arrived for every required metric; resume verify after ingestion.")
+    sql_samples = sql_memory_samples(measured)
     utilization = {}
     for metric, response in measured["series"].items():
         if not any(word in metric for word in ("cpu/", "memory/", "memory_utilization")):
             continue
-        samples = []
-        for series in response["timeSeries"]:
+        # Retain raw shared-core utilization as diagnostic evidence, not active pressure.
+        if metric == "cloudsql.googleapis.com/database/memory/utilization":
+            continue
+        samples = sql_samples[:] if metric == "cloudsql.googleapis.com/database/memory/components" else []
+        for series in ([] if samples else response["timeSeries"]):
             for point in series.get("points", [])[:5]:
                 value = point.get("value", {})
                 sample = value.get("doubleValue", value.get("distributionValue", {}).get("mean"))

@@ -92,7 +92,7 @@ def main():
             raise Blocked('Complete foundation and media/turn DNS first')
         image = staging_image(c, sha, build_allowed=True, build_ref=sha if sha != head else None)
         deploy(c, 'staging', image, sha)
-    elif operation == 'verify':
+    elif operation in ('verify', 'verify-resources'):
         release = c.get_json(f'releases/{sha}/staging.json')
         if not release:
             raise Blocked('No existing staging release for this SHA')
