@@ -1,15 +1,25 @@
 """Bundled, attributed OSM districts; shared rendering and movement coordinates."""
-import json, math, gzip
+import json, math, gzip, hashlib
 from functools import lru_cache
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from .locations import CITIES
 router=APIRouter(prefix='/api')
 @lru_cache(maxsize=64)
+def terrain_position_corrections(city):
+    root=Path(__file__).resolve().parents[1]/'data'
+    path=root/'terrain-position-corrections.json'
+    item=json.loads(path.read_text()).get(city,{}) if path.exists() else {}
+    if item and item.get('map_sha256')==hashlib.sha256((root/(city+'.json.gz')).read_bytes()).hexdigest():return item
+    return {}
+
+@lru_cache(maxsize=64)
 def district(city):
     if city not in {c['id'] for c in CITIES}:raise HTTPException(422,'City not enabled')
     root=Path(__file__).resolve().parents[1]/'data'
     result=json.loads(gzip.decompress((root/(city+'.json.gz')).read_bytes()))
+    correction=terrain_position_corrections(city).get('spawn')
+    if correction and result['spawn']==correction['old']:result['spawn']=correction['new']
     enrichment=root/'business-enrichment.json'
     if enrichment.exists():
         additions=json.loads(enrichment.read_text()).get(city,{}).get('buildings',[])

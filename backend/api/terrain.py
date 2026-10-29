@@ -48,9 +48,10 @@ def grid(city):
         if not p:
             continue
         pad = 6 if f['kind'] == 'road' else .35
-        for ix in range(max(lo,math.floor((min(a[0] for a in p)-pad)/32)), min(hi,math.floor((max(a[0] for a in p)+pad)/32))+1):
-            for iz in range(max(lo,math.floor((min(a[1] for a in p)-pad)/32)), min(hi,math.floor((max(a[1] for a in p)+pad)/32))+1):
-                cells.setdefault((ix, iz), []).append(f)
+        bounds=(min(a[0] for a in p)-pad,max(a[0] for a in p)+pad,min(a[1] for a in p)-pad,max(a[1] for a in p)+pad)
+        for ix in range(max(lo,math.floor(bounds[0]/32)), min(hi,math.floor(bounds[1]/32))+1):
+            for iz in range(max(lo,math.floor(bounds[2]/32)), min(hi,math.floor(bounds[3]/32))+1):
+                cells.setdefault((ix, iz), []).append((f,bounds))
     return cells
 
 
@@ -59,11 +60,18 @@ def permits(city, x, z, open_ground=True, buildings=True):
     if not math.isfinite(x) or not math.isfinite(z):
         return False
     allowed = False
-    for f in grid(city).get((math.floor(x/32), math.floor(z/32)), []):
+    for f,bounds in grid(city).get((math.floor(x/32), math.floor(z/32)), []):
+        if not bounds[0]<=x<=bounds[1] or not bounds[2]<=z<=bounds[3]:
+            continue
         p, kind = f['points'], f['kind']
-        inside = len(p) >= 4 and p[0] == p[-1] and point_inside(x, z, p) and not any(point_inside(x, z, h) for h in f['holes'])
-        near = any(segment_distance(x, z, a, b) <= (6 if kind == 'road' else .35) for a, b in zip(p, p[1:]))
-        if (kind in {'blocked', 'barrier'} or kind == 'building' and buildings) and ((near and kind != 'building') or (inside and kind in {'blocked','building'})):
+        if kind == 'building' and not buildings or kind == 'public' and not open_ground:
+            continue
+        if kind == 'road':
+            allowed |= any(segment_distance(x,z,a,b)<=6 for a,b in zip(p,p[1:]))
+            continue
+        inside = kind != 'barrier' and len(p) >= 4 and p[0] == p[-1] and point_inside(x,z,p) and not any(point_inside(x,z,h) for h in f['holes'])
+        if kind == 'public':
+            allowed |= inside
+        elif inside or kind != 'building' and any(segment_distance(x,z,a,b)<=.35 for a,b in zip(p,p[1:])):
             return False
-        allowed |= kind == 'road' and near or open_ground and kind == 'public' and inside
     return allowed

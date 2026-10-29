@@ -5,8 +5,8 @@ from collections import deque
 from pathlib import Path
 from uuid import uuid5,NAMESPACE_URL
 from sqlalchemy import select
-from .geography import district,safe_spawn,traversable,safe_step,point_inside,segment_distance
-from .models import Collectible,Mission
+from .geography import district,safe_spawn,traversable,safe_step,point_inside,segment_distance,terrain_position_corrections
+from .models import Collectible,Mission,Audit
 from .economy import config
 
 ROOT=Path(__file__).resolve().parents[1]/'data'
@@ -72,8 +72,20 @@ def prepared_points(city,count):
     # A small district may exhaust its safe positions before the requested count.
     # Preserve that complete result instead of regenerating it on every cold load.
     if item and item.get('version')==3 and item['map_sha256']==checksum and (len(item['points'])>=count or item.get('prepared_count',0)>=count):
-        return item['points'][:count]
+        corrections={c['index']:c for c in terrain_position_corrections(city).get('trails',[])}
+        return [corrections[i]['new'] if i in corrections and p==corrections[i]['old'] else p for i,p in enumerate(item['points'][:count])]
     return trail_points(city,count)
+
+def repair_terrain_positions(db,city):
+    # Only move unchanged authored IDs from the reviewed map-bound correction list.
+    # Claims, balances, reward settings and operator-edited items are untouched.
+    corrections={str(uuid5(NAMESPACE_URL,f"mylilworlds:trail:{city}:{c['index']}")):c for c in terrain_position_corrections(city).get('trails',[])}
+    if not corrections:return
+    for item in db.scalars(select(Collectible).where(Collectible.city==city,Collectible.origin=='authored',Collectible.id.in_(corrections)).with_for_update()):
+        correction=corrections[item.id]
+        if [item.x,item.z]!=correction['old']:continue
+        item.x,item.z=correction['new']
+        db.add(Audit(actor_id=None,action='world.terrain_position_repaired',target=item.id,details={'city':city,'old':correction['old'],'new':correction['new'],'reason':'public pedestrian access correction'}))
 
 def seed_world(db,city,name):
     # One lock shared by startup and admin activation; no duplicate item grants.
@@ -86,6 +98,7 @@ def seed_world(db,city,name):
             kind='gem' if index%4==3 else 'fruit'
             title='Crystal' if kind=='gem' else ['Apple','Orange','Bananas'][index%3]
             db.add(Collectible(id=str(uuid5(NAMESPACE_URL,f'mylilworlds:trail:{city}:{index}')),city=city,title=title,kind=kind,x=x,z=z))
+    repair_terrain_positions(db,city)
     if not db.scalar(select(Mission.id).where(Mission.city==city).limit(1)):
         db.add(Mission(id=str(uuid5(NAMESPACE_URL,'mylilworlds:mission:'+city)),city=city,title='Explore '+name,description='Follow the public paths. Collect 3 fruit and 1 crystal.',requirements={'fruit':3,'gem':1},credits=30,xp=50))
     db.flush()
