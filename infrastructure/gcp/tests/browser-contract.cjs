@@ -42,3 +42,17 @@ const ui=read('infrastructure/gcp/browser-ui.cjs');
 assert.ok(ui.includes('trial:true'));assert.ok(ui.includes('document.elementFromPoint'));
 const profile=read('apps/consumer-web/components/UserProfile.tsx');
 for(const label of ['Player profile','Follow','Unfollow','Avatar','Close profile'])assert.ok(profile.includes(label));
+
+// Execute the actual harness initialisation, including imports, in every profile.
+// No browser/network is started and no release evidence is written by this unit test.
+const vm=require('node:vm'),loader=require('node:module').createRequire(path.join(__dirname,'../browser.cjs'));
+for(const profile of ['full','limited-public-beta-v1'])for(const forced of ['0','1']){
+ const init=script.slice(0,script.indexOf('async function until'));
+ const result=vm.runInNewContext(init+'\n({beta,checks:acceptanceRequired})',{
+  process:{env:{QA_NODE_MODULES:'/unit-test',QA_FORCE_TURN:forced}},
+  require:id=>id==='/unit-test/playwright'?{chromium:{}}:id==='fs'?{...fs,mkdirSync:()=>{},readFileSync:(p,...args)=>p==='deployment-result.json'?JSON.stringify({environment:'staging',origin:'https://mindaam-staging.test.run.app',profile}):fs.readFileSync(p,...args)}:loader(id)
+ });
+ assert.equal(result.beta,profile==='limited-public-beta-v1');
+ assert.equal(result.checks.includes('venue_booking'),profile==='full');
+ if(result.beta){assert.ok(result.checks.includes('auditorium_reentry'));assert.ok(result.checks.includes('payment_gate'))}
+}

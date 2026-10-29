@@ -3,13 +3,13 @@ const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=requ
 const {chromium}=require(process.env.QA_NODE_MODULES+'/playwright');
 const release=JSON.parse(fs.readFileSync('deployment-result.json'));
 assert.equal(release.environment,'staging');
+const {required,safeText,safeUrl,validatePolicy}=require('./browser-contract.cjs');
 const betaPolicy=require('./beta-policy.json'),beta=release.profile===betaPolicy.profile;
 const acceptanceRequired=beta?[...required.filter(k=>k!=='venue_booking'),...betaPolicy.additional_checks.filter(k=>k!=='direct_webrtc'||process.env.QA_FORCE_TURN!=='1')]:required;
 const origin=release.origin;assert.match(origin,/^https:\/\/[a-z0-9.-]+\.run\.app$/);
 const out='gcp-evidence';fs.mkdirSync(out,{recursive:true});
 const {act,inspectControl,expectedAnonymous}=require('./browser-ui.cjs');
 const {authenticateAndEnter}=require('./browser-flow.cjs');
-const {required,safeText,safeUrl,validatePolicy}=require('./browser-contract.cjs');
 const activeUsers=[],sensitive=[],mode=process.env.QA_FORCE_TURN==='1'?'relay':'direct';let stage='initialization';
 const mixedRenderer=false,errors=[],wait=ms=>new Promise(r=>setTimeout(r,ms));let browser;
 async function until(fn,label,timeout=25000){const end=Date.now()+timeout;let error;while(Date.now()<end){try{const value=await fn();if(value)return value}catch(e){error=e}await wait(200)}throw Error(label+' timed out'+(error?' · '+error.message:''))}
