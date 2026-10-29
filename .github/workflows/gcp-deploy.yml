@@ -9,7 +9,7 @@ on:
       operation:
         description: Resume at this step (foundation creates paid startup resources)
         type: choice
-        options: [foundation, staging, verify, verify-resources, recovery, security, review, production, finalize, rollback]
+        options: [foundation, staging, verify, verify-resources, recovery, recovery-cleanup, security, review, production, finalize, rollback]
         required: true
       release_profile:
         description: Expiring owner-requested beta policy; payments remain server-gated
