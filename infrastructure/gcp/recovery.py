@@ -90,7 +90,8 @@ def run(c, sha):
         try:
             with urlopen(request,timeout=60) as response: operation=json.load(response)
         except HTTPError as error:
-            raise Blocked('Recovery create HTTP '+str(error.code)) from None
+            detail=json.loads(error.read()).get('error',{}).get('message','No provider detail')
+            raise Blocked('Recovery create HTTP '+str(error.code)+': '+detail[:1000]) from None
         created=True
         c.gc('sql','operations','wait',operation['name'],'--timeout=1800')
         guard(c.gc('sql','instances','describe',name),name,run_id)
