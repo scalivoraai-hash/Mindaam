@@ -67,6 +67,7 @@ def run(c,sha):
  ordinary,secrets=environment(c,'production','https://mindaam.com')
  spec={'serviceAccountName':c.sa('production'),'timeoutSeconds':'120','maxRetries':0,'containers':[{'image':release['image'],'command':['python'],'args':['-c',PROBE], 'resources':{'limits':{'cpu':'1','memory':'512Mi'}},'env':[{'name':k,'value':v} for k,v in ordinary.items()]+[{'name':k,'valueFrom':{'secretKeyRef':{'name':v,'key':'latest'}}} for k,v in secrets.items()]}]}
  manifest={'apiVersion':'run.googleapis.com/v1','kind':'Job','metadata':{'name':name,'labels':{'application':'mindaam','security_run':run_id}},'spec':{'template':{'spec':{'taskCount':1,'parallelism':1,'template':{'metadata':{'annotations':{'run.googleapis.com/cloudsql-instances':f'{c.project}:{c.region}:mindaam-postgres','run.googleapis.com/network-interfaces':'[{"network":"mindaam","subnetwork":"mindaam-run"}]','run.googleapis.com/vpc-access-egress':'private-ranges-only'}},'spec':spec}}}}}
+ manifest['spec']['template']['metadata']=manifest['spec']['template']['spec']['template'].pop('metadata')
  evidence={'sha':sha,'image':release['image'],'run_id':run_id,'runtime_roles':roles,'reserved_apex_ip':address['address'],'status':'FAIL','checks':{},'cleanup':False}
  created=False
  try:

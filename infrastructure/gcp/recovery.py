@@ -107,6 +107,7 @@ def run(c, sha):
            'serviceAccountName':c.sa('migrate'),'timeoutSeconds':'300','maxRetries':0,'containers':[{'image':release['image'],'command':['python'],'args':['-c',PROBE],
            'resources':{'limits':{'cpu':'1','memory':'512Mi'}},'env':[{'name':'RECOVERY_CONNECTION','value':connection},
            {'name':'DATABASE_URL','valueFrom':{'secretKeyRef':{'name':'mindaam-staging-migration-url','key':'latest'}}}]}]}}}}}}
+        manifest['spec']['template']['metadata']=manifest['spec']['template']['spec']['template'].pop('metadata')
         with tempfile.NamedTemporaryFile(mode='w',suffix='.json') as f:
             json.dump(manifest,f);f.flush();c.gc('run','jobs','replace',f.name,'--region='+c.region)
         job_created=True
