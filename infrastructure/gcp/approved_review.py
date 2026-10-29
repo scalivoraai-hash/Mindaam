@@ -1,7 +1,7 @@
 """Finalise the owner's approved cost model only from actual exact-release evidence."""
 import time
 from common import Blocked
-from review import save
+from review import save,inventory
 from recovery import SHA
 
 
@@ -23,6 +23,8 @@ def finalise(c,sha):
  checks=runtime['checks']
  required=('secret_injection','database_identity','restricted_role','staging_denied','staging_role_denied_production','postgis','owner_credential_verified','unauthenticated_admin_denied','wrong_password_denied','owner_login','secure_cookie','initial_change_enforced','logout','payments_gated')
  if not all(checks.get(k) is True for k in required):raise Blocked('Incomplete production runtime evidence')
+ current=inventory(c)
+ if current['sql']['settings']['tier']!=review['inventory']['sql']['settings']['tier'] or current['vm']['machineType']!=review['inventory']['vm']['machineType'] or current['production_limits']!=review['inventory']['production_limits']:raise Blocked('Infrastructure configuration differs from approved model')
  security={'sha':sha,'image':review['image'],'evidence_object':f'gs://{c.bucket}/{prefix}security-review.json',
  'owner_access_verified':True,'production_secrets_verified':True,'database_isolation_verified':True,
  'backup_restore_verified':True,'public_launch_safeguards_verified':True,

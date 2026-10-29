@@ -1,4 +1,4 @@
-"""Read-only production credential, database and IAM verification using the release image."""
+"""Prepare the approved production database and verify runtime security with its exact image."""
 import json,os,tempfile,time
 from pathlib import Path
 from common import Blocked
@@ -57,6 +57,8 @@ def run(c,sha):
  recovery=c.get_json(f'releases/{sha}/recovery.json')
  if not recovery or recovery.get('status')!='PASS' or recovery.get('cleanup') is not True:raise Blocked('Actual restore and cleanup must pass first')
  run_id=os.environ['GITHUB_RUN_ID'];name=target(run_id,os.environ['GITHUB_RUN_ATTEMPT']).replace('recovery','security')
+ address=c.gc('compute','addresses','describe','mindaam-media','--region='+c.region)
+ if address.get('address')!=c.get_json('foundation.json').get('media_ip'):raise Blocked('Reserved apex address drift')
  policy=c.gc('projects','get-iam-policy',c.project)
  roles=[b['role'] for b in policy.get('bindings',[]) if 'serviceAccount:'+c.sa('production') in b.get('members',[])]
  if set(roles)-{'roles/cloudsql.client','roles/logging.logWriter','roles/monitoring.metricWriter'}:raise Blocked('Unexpected project-wide production runtime permission')
@@ -65,7 +67,7 @@ def run(c,sha):
  ordinary,secrets=environment(c,'production','https://mindaam.com')
  spec={'serviceAccountName':c.sa('production'),'timeoutSeconds':'120','maxRetries':0,'containers':[{'image':release['image'],'command':['python'],'args':['-c',PROBE], 'resources':{'limits':{'cpu':'1','memory':'512Mi'}},'env':[{'name':k,'value':v} for k,v in ordinary.items()]+[{'name':k,'valueFrom':{'secretKeyRef':{'name':v,'key':'latest'}}} for k,v in secrets.items()]}]}
  manifest={'apiVersion':'run.googleapis.com/v1','kind':'Job','metadata':{'name':name,'labels':{'application':'mindaam','security_run':run_id}},'spec':{'template':{'spec':{'taskCount':1,'parallelism':1,'template':{'metadata':{'annotations':{'run.googleapis.com/cloudsql-instances':f'{c.project}:{c.region}:mindaam-postgres','run.googleapis.com/network-interfaces':'[{"network":"mindaam","subnetwork":"mindaam-run"}]','run.googleapis.com/vpc-access-egress':'private-ranges-only'}},'spec':spec}}}}}
- evidence={'sha':sha,'image':release['image'],'run_id':run_id,'runtime_roles':roles,'status':'FAIL','checks':{},'cleanup':False}
+ evidence={'sha':sha,'image':release['image'],'run_id':run_id,'runtime_roles':roles,'reserved_apex_ip':address['address'],'status':'FAIL','checks':{},'cleanup':False}
  created=False
  try:
   with tempfile.NamedTemporaryFile(mode='w',suffix='.json') as f:
