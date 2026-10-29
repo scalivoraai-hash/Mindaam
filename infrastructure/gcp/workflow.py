@@ -63,6 +63,16 @@ def main():
         raise Blocked('Release is not in Mindaam main history')
     if selected == BETA and subprocess.run(['git','merge-base','--is-ancestor',POLICY['base_sha'],sha],capture_output=True).returncode:
         raise Blocked('Beta policy is limited to descendants of the reviewed Mindaam release')
+    if operation == 'recovery-status':
+        from recovery_cleanup import NAME, RUN
+        from recovery import guard
+        item=c.gc('sql','instances','describe',NAME)
+        guard(item,NAME,RUN)
+        operations=c.gc('sql','operations','list','--instance='+NAME,'--limit=20')
+        value={'name':NAME,'state':item.get('state'),'operations':[{k:x.get(k) for k in ('name','operationType','status','startTime','endTime','error')} for x in operations]}
+        Path('gcp-evidence').mkdir(exist_ok=True)
+        Path('gcp-evidence/recovery-status.json').write_text(json.dumps(value,indent=2))
+        print(json.dumps(value)); return
     if operation == 'recovery-cleanup':
         from recovery_cleanup import run
         run(c,sha); return
