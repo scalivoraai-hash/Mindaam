@@ -11,7 +11,10 @@ def test_real_map_and_spawn(city):
     assert walkable(city,*d['spawn'])
     assert any('building' in f['tags'] for f in d['features'])
     assert any('highway' in f['tags'] for f in d['features'])
-    assert not walkable(city,351,351)
+    # District sizes vary; verify the configured boundary, not an old 350m fixture.
+    edge=d["radius"]+1
+    for x,z in [(edge,0),(-edge,0),(0,edge),(0,-edge),(edge,edge),(-edge,-edge)]:
+        assert not walkable(city,x,z)
 
 
 def test_mapped_enter_move_and_claim(system,monkeypatch):
