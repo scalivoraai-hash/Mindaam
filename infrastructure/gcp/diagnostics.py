@@ -45,6 +45,7 @@ def collect(c):
         result["memory_error_logs_limit"] = 100
     except Exception:
         result["errors"]["memory_error_logs"] = "Read unavailable; not verified"
+    result["production_secret_metadata"] = secret_metadata(c)
     result["public_prices"] = prices(c, token)
     return result
 
@@ -71,4 +72,21 @@ def prices(c, token):
             else: result["errors"][service["displayName"]] = "SKU pagination incomplete"
     except (HTTPError, OSError, ValueError) as error:
         result["errors"]["catalog"] = "HTTP " + str(error.code) if isinstance(error, HTTPError) else type(error).__name__
+    return result
+
+
+def secret_metadata(c):
+    from render import environment
+    _, names = environment(c, 'production', 'https://mindaam.com')
+    names['MIGRATION_URL']='mindaam-production-migration-url'
+    result={}
+    for key,name in names.items():
+        try:
+            versions=c.gc('secrets','versions','list',name,'--filter=state:ENABLED')
+            policy=c.gc('secrets','get-iam-policy',name)
+            readers=[m for binding in policy.get('bindings',[]) if binding.get('role')=='roles/secretmanager.secretAccessor' for m in binding.get('members',[])]
+            principal='serviceAccount:'+c.sa('migrate' if key=='MIGRATION_URL' else 'production')
+            result[key]={'enabled_version_present':bool(versions),'expected_reader_bound':principal in readers,'value_inspected':False}
+        except Exception:
+            result[key]={'verified':False,'error':'Metadata read unavailable'}
     return result

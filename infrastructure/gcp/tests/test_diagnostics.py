@@ -13,7 +13,7 @@ class Diagnostics(unittest.TestCase):
    calls.append(url);self.assertEqual(project,c.project)
    if '/services?' in url:return {'services':[]}
    return {'timeSeries':[{'metric':{'labels':{'component':'usage'}},'points':[{'value':{'doubleValue':.4}}]}]}
-  with patch('diagnostics.command',return_value='test-token'),patch('diagnostics.get_json',side_effect=get),patch.object(c,'gc',return_value=[]) as gc:
+  with patch('diagnostics.command',return_value='test-token'),patch('diagnostics.get_json',side_effect=get),patch.object(c,'gc',return_value=[]) as gc,patch('diagnostics.secret_metadata',return_value={}):
    result=diagnostics.collect(c)
    self.assertEqual(len(result['metrics']),8);self.assertFalse(result['release_approval'])
    self.assertEqual(result['memory_gate_threshold'],.9);self.assertEqual(result['errors'],{})

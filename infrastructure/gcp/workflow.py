@@ -69,6 +69,11 @@ def main():
         value = packet(c, sha)
         from diagnostics import collect
         value["database_diagnostics"] = collect(c)
+        from cost_model import estimate
+        try:
+            value.update(estimate(value))
+        except (Blocked, KeyError, ValueError) as error:
+            value['cost_model_blocker'] = str(error)
         c.put_json(f'releases/{sha}/review-draft.json', value)
         Path('gcp-evidence/review-draft.json').write_text(json.dumps(value, indent=2))
         return
