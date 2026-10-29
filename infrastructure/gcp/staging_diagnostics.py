@@ -1,0 +1,47 @@
+"""Read-only, exact-revision failure evidence. Never exports log payloads or secrets."""
+import datetime,json,re
+from pathlib import Path
+from common import Blocked,command
+from readiness import ready_service
+from diagnostics import get_json
+from urllib.parse import urlencode
+
+PATTERNS={
+ 'pool_exhaustion':r'QueuePool limit of size \d+ overflow \d+ reached, connection timed out, timeout [\d.]+',
+ 'statement_timeout':r'canceling statement due to statement timeout',
+ 'lock_timeout':r'canceling statement due to lock timeout',
+ 'deadlock':r'deadlock detected',
+ 'connection_limit':r'(?:too many clients already|remaining connection slots are reserved)',
+ 'connection_closed':r'(?:server closed the connection unexpectedly|SSL connection has been closed unexpectedly)',
+ 'out_of_memory':r'(?:out of memory|Memory limit of [\d.]+ [A-Za-z]+ exceeded)',
+ 'exception_type':r'(?:sqlalchemy\.exc|psycopg\.errors|psycopg)\.[A-Za-z]+Error',
+}
+
+def summarize(rows):
+ result=[]
+ for row in rows:
+  text=row.get('textPayload','')+' '+str(row.get('jsonPayload',{}).get('message',''))
+  matches={key:sorted(set(re.findall(pattern,text,re.I))) for key,pattern in PATTERNS.items()}
+  result.append({'timestamp':row.get('timestamp'),'severity':row.get('severity'),'signals':{k:v for k,v in matches.items() if v}})
+ return result
+
+def run(c,sha):
+ release=c.get_json(f'releases/{sha}/staging.json')
+ if not release or release.get('sha')!=sha:raise Blocked('Exact staging release required')
+ current=ready_service(c,'mindaam-staging')
+ if current['status']['latestReadyRevisionName']!=release['revision'] or current['spec']['template']['spec']['containers'][0]['image']!=release['image']:
+  raise Blocked('Refuse diagnostics for a stale staging release')
+ start=datetime.datetime.fromtimestamp(release['deployed_at'],datetime.timezone.utc).isoformat()
+ end=datetime.datetime.now(datetime.timezone.utc).isoformat()
+ query=f'resource.type="cloud_run_revision" AND resource.labels.service_name="mindaam-staging" AND resource.labels.revision_name="{release["revision"]}" AND timestamp>="{start}" AND severity>=ERROR'
+ rows=c.gc('logging','read',query,'--limit=200','--format=json(timestamp,severity,textPayload,jsonPayload.message)')
+ result={'sha':sha,'revision':release['revision'],'read_only':True,'release_approval':False,'error_log_limit':200,'errors':summarize(rows),'metrics':{}}
+ token=command(['gcloud','auth','print-access-token'],sensitive=True)
+ for metric in ['cloudsql.googleapis.com/database/postgresql/num_backends','cloudsql.googleapis.com/database/cpu/utilization','cloudsql.googleapis.com/database/memory/components','run.googleapis.com/container/memory/utilizations','run.googleapis.com/container/cpu/utilizations']:
+  scope=f'resource.labels.database_id="{c.project}:mindaam-postgres"' if metric.startswith('cloudsql.') else f'resource.labels.revision_name="{release["revision"]}"'
+  params={'filter':f'metric.type="{metric}" AND {scope}','interval.startTime':start,'interval.endTime':end,'pageSize':1000}
+  data=get_json('https://monitoring.googleapis.com/v3/projects/'+c.project+'/timeSeries?'+urlencode(params),token,c.project)
+  result['metrics'][metric]=data
+ Path('gcp-evidence').mkdir(exist_ok=True)
+ Path('gcp-evidence/staging-diagnostics.json').write_text(json.dumps(result,indent=2))
+ print('Exact staging error categories and numeric resource evidence collected; no log payloads exported.')

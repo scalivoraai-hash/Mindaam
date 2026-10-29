@@ -63,6 +63,9 @@ def main():
         raise Blocked('Release is not in Mindaam main history')
     if selected == BETA and subprocess.run(['git','merge-base','--is-ancestor',POLICY['base_sha'],sha],capture_output=True).returncode:
         raise Blocked('Beta policy is limited to descendants of the reviewed Mindaam release')
+    if operation == 'inspect-staging':
+        from staging_diagnostics import run
+        run(c,sha); return
     if operation == 'recovery-status':
         from recovery_cleanup import NAME, RUN
         from recovery import guard
