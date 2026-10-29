@@ -6,6 +6,7 @@ from sqlalchemy import select,func
 from backend.tests.test_core import system,register
 from backend.api.models import Collectible,Claim,Audit,Ledger
 from backend.api.geography import district,traversable,terrain_position_corrections
+from backend.api.grand_arena import placement
 from backend.api.world_content import prepared_points,excluded,seed_world,repair_terrain_positions
 
 
@@ -14,6 +15,8 @@ def test_corrections_are_map_bound_safe_and_keep_trail_slots():
     for city,entry in json.loads((root/'terrain-position-corrections.json').read_text()).items():
         assert terrain_position_corrections(city)==entry
         points=prepared_points(city,96)
+        arena=placement(city)
+        assert all(math.dist(p,(arena['x'],arena['z']))>=23 for p in points)
         if 'spawn' in entry:
             assert district(city)['spawn']==entry['spawn']['new']
             assert traversable(city,*district(city)['spawn'])
