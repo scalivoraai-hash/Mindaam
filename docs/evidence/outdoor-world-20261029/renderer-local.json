@@ -1,0 +1,318 @@
+{
+  "results": [
+    {
+      "quality": "low",
+      "index": 0,
+      "reduce": false,
+      "weather": "Sunny",
+      "rain": false,
+      "splashes": false,
+      "count": 200,
+      "moved": false,
+      "blades": 100,
+      "textures": 1,
+      "geometries": 5
+    },
+    {
+      "quality": "low",
+      "index": 0,
+      "reduce": true,
+      "weather": "Sunny",
+      "rain": false,
+      "splashes": false,
+      "count": 70,
+      "moved": false,
+      "blades": 100,
+      "textures": 1,
+      "geometries": 5
+    },
+    {
+      "quality": "low",
+      "index": 4,
+      "reduce": false,
+      "weather": "Light rain",
+      "rain": true,
+      "splashes": true,
+      "count": 90,
+      "moved": true,
+      "blades": 100,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "quality": "low",
+      "index": 4,
+      "reduce": true,
+      "weather": "Light rain",
+      "rain": true,
+      "splashes": true,
+      "count": 48,
+      "moved": true,
+      "blades": 100,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "quality": "low",
+      "index": 5,
+      "reduce": false,
+      "weather": "Heavy rain",
+      "rain": true,
+      "splashes": true,
+      "count": 200,
+      "moved": true,
+      "blades": 100,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "quality": "low",
+      "index": 5,
+      "reduce": true,
+      "weather": "Heavy rain",
+      "rain": true,
+      "splashes": true,
+      "count": 70,
+      "moved": true,
+      "blades": 100,
+      "textures": 1,
+      "geometries": 7
+    },
+    {
+      "quality": "balanced",
+      "index": 0,
+      "reduce": false,
+      "weather": "Sunny",
+      "rain": false,
+      "splashes": false,
+      "count": 840,
+      "moved": false,
+      "blades": 350,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "balanced",
+      "index": 0,
+      "reduce": true,
+      "weather": "Sunny",
+      "rain": false,
+      "splashes": false,
+      "count": 294,
+      "moved": false,
+      "blades": 350,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "balanced",
+      "index": 4,
+      "reduce": false,
+      "weather": "Light rain",
+      "rain": true,
+      "splashes": true,
+      "count": 378,
+      "moved": true,
+      "blades": 350,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "balanced",
+      "index": 4,
+      "reduce": true,
+      "weather": "Light rain",
+      "rain": true,
+      "splashes": true,
+      "count": 132,
+      "moved": true,
+      "blades": 350,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "balanced",
+      "index": 5,
+      "reduce": false,
+      "weather": "Heavy rain",
+      "rain": true,
+      "splashes": true,
+      "count": 840,
+      "moved": true,
+      "blades": 350,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "balanced",
+      "index": 5,
+      "reduce": true,
+      "weather": "Heavy rain",
+      "rain": true,
+      "splashes": true,
+      "count": 294,
+      "moved": true,
+      "blades": 350,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "high",
+      "index": 0,
+      "reduce": false,
+      "weather": "Sunny",
+      "rain": false,
+      "splashes": false,
+      "count": 1800,
+      "moved": false,
+      "blades": 700,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "high",
+      "index": 0,
+      "reduce": true,
+      "weather": "Sunny",
+      "rain": false,
+      "splashes": false,
+      "count": 630,
+      "moved": false,
+      "blades": 700,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "high",
+      "index": 4,
+      "reduce": false,
+      "weather": "Light rain",
+      "rain": true,
+      "splashes": true,
+      "count": 810,
+      "moved": true,
+      "blades": 700,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "high",
+      "index": 4,
+      "reduce": true,
+      "weather": "Light rain",
+      "rain": true,
+      "splashes": true,
+      "count": 282,
+      "moved": true,
+      "blades": 700,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "high",
+      "index": 5,
+      "reduce": false,
+      "weather": "Heavy rain",
+      "rain": true,
+      "splashes": true,
+      "count": 1800,
+      "moved": true,
+      "blades": 700,
+      "textures": 1,
+      "geometries": 9
+    },
+    {
+      "quality": "high",
+      "index": 5,
+      "reduce": true,
+      "weather": "Heavy rain",
+      "rain": true,
+      "splashes": true,
+      "count": 630,
+      "moved": true,
+      "blades": 700,
+      "textures": 1,
+      "geometries": 9
+    }
+  ],
+  "sky": {
+    "wing": true,
+    "flight": true,
+    "rotor": true,
+    "parachute": true,
+    "visibleSamples": 206
+  },
+  "cleanup": [
+    {
+      "weather": "Heavy rain",
+      "rain": true,
+      "splashes": true,
+      "count": 840,
+      "moved": true,
+      "blades": 350,
+      "textures": 1,
+      "geometries": 5
+    },
+    {
+      "weather": "Heavy rain",
+      "rain": true,
+      "splashes": true,
+      "count": 840,
+      "moved": true,
+      "blades": 350,
+      "textures": 1,
+      "geometries": 5
+    },
+    {
+      "weather": "Heavy rain",
+      "rain": true,
+      "splashes": true,
+      "count": 840,
+      "moved": true,
+      "blades": 350,
+      "textures": 1,
+      "geometries": 5
+    },
+    {
+      "weather": "Heavy rain",
+      "rain": true,
+      "splashes": true,
+      "count": 840,
+      "moved": true,
+      "blades": 350,
+      "textures": 1,
+      "geometries": 5
+    }
+  ],
+  "performance": [
+    {
+      "width": 1120,
+      "height": 700,
+      "kind": "baseline",
+      "medianMs": 0.2000000011175871,
+      "p95Ms": 0.30000000074505806
+    },
+    {
+      "width": 1120,
+      "height": 700,
+      "kind": "grass",
+      "medianMs": 0.19999999925494194,
+      "p95Ms": 0.30000000074505806
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "kind": "baseline",
+      "medianMs": 0.09999999962747097,
+      "p95Ms": 0.40000000037252903
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "kind": "grass",
+      "medianMs": 0.19999999925494194,
+      "p95Ms": 0.30000000074505806
+    }
+  ],
+  "renderer": "Chromium SwiftShader; viewport emulation, not physical-device certification"
+}

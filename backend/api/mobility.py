@@ -91,7 +91,7 @@ def seed_assets(db):
    if db.get(RentalAsset,id):continue
    # Only install at a mapped traversable point, never inside a building.
    candidates=[(h['x']+math.cos(a)*r,h['z']+math.sin(a)*r) for r in [3,5,8,12] for a in [j*math.tau/16 for j in range(16)]]
-   point=next((p for p in candidates[i:]+candidates[:i] if traversable(city,*p,'car' if kind=='car' else 'walk')),None)
+   point=next((p for p in candidates[i:]+candidates[:i] if traversable(city,*p,kind)),None)
    if point:db.add(RentalAsset(id=id,city=city,kind=kind,x=point[0],z=point[1]))
   for a in placements(city):
    if a['classification']=='RENTABLE' and a['id'] not in existing:
@@ -171,7 +171,7 @@ def rent(id:str,data:Rent,u=Depends(current_user),db=Depends(get_db)):
  if not db.get(RentalConsent,(u.id,POLICY['version'])):raise HTTPException(409,'Accept the virtual rental policy first')
  zone=db.get(WaterZone,a.water_zone_id) if a.water_zone_id else None
  if a.kind in ['boat','swim'] and (not zone or not zone.enabled):raise HTTPException(409,'Water activity is not approved here')
- if not zone and not traversable(a.city,a.x,a.z,'car' if a.kind=='car' else 'walk'):raise HTTPException(409,'Vehicle pickup is unavailable')
+ if not zone and not traversable(a.city,a.x,a.z,a.kind):raise HTTPException(409,'Vehicle pickup is unavailable')
  entitlement=db.get(Entitlement,(u.id,a.kind));cost=0 if entitlement and entitlement.expires_at>time.time() else cfg['price']
  if data.expected_cost!=cost:raise HTTPException(409,{'code':'PRICE_CHANGED','cost':cost,'message':'Review the current rental price'})
  denomination=charge(db,u.id,a.kind,cost,a.id,'rental:'+str(data.id),data.expected_currency)
@@ -211,7 +211,7 @@ def drive(data:Drive,u=Depends(current_user),db=Depends(get_db)):
    x,z=p.x+dx/steps,p.z+dz/steps
    if point_inside(x,z,zone.boundary) and not any(point_inside(x,z,h) for h in zone.holes):p.x,p.z=x,z
    else:lease.speed=0;break
- else:p.x,p.z=safe_step(p.city,p.x,p.z,dx,dz,'car' if a.kind=='car' else 'walk')
+ else:p.x,p.z=safe_step(p.city,p.x,p.z,dx,dz,a.kind)
  blocked=bool(lease.speed>.1 and dt>.03 and math.dist(old,(p.x,p.z))<.01)
  from .motion_diagnostics import observe
  observe(u.id,p.city,p.zone_id,a.kind,p.x,p.z,data.throttle>0,blocked)
@@ -254,7 +254,7 @@ class AssetInput(Strict):
 @router.put('/super-admin/vehicles/assets/{id}')
 def edit_asset(id:str,data:AssetInput,u=Depends(super_admin),db=Depends(get_db)):
  if len(id)>100:raise HTTPException(422,'Asset ID too long')
- if not traversable(data.city,data.x,data.z,'car' if data.kind=='car' else 'walk'):raise HTTPException(422,'Choose a valid mapped pickup point')
+ if not traversable(data.city,data.x,data.z,data.kind):raise HTTPException(422,'Choose a valid mapped pickup point')
  a=db.scalar(select(RentalAsset).where(RentalAsset.id==id).with_for_update())
  if a and a.active_user_id:raise HTTPException(409,'Wait for the active rental to end')
  if not a:a=RentalAsset(id=id);db.add(a)

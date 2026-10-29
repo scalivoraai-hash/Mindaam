@@ -62,7 +62,7 @@ export function buildCityEnvironment(parent:T.Group,geo:Geography,city=''){
     if(f.points.length<2)continue;
     if(f.tags.natural==='water'||['park','playground','pitch','garden'].includes(f.tags.leisure)){
       const colour=f.tags.natural==='water'?'#559da9':f.tags.leisure==='pitch'?'#608c74':f.tags.leisure==='playground'?'#c9a77b':'#72976e';
-      const m=mesh(new T.ShapeGeometry(shapeFor(f)),colour,parent,0,.01,0);m.rotation.x=-Math.PI/2;
+      const m=mesh(new T.ShapeGeometry(shapeFor(f)),colour,parent,0,.01,0);m.rotation.x=-Math.PI/2;m.userData.grassSurface=f.tags.natural!=='water'&&f.tags.leisure!=='playground';
     }
     if(!f.tags.highway)continue;
     const foot=['footway','pedestrian','path','steps','cycleway'].includes(f.tags.highway);

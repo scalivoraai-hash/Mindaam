@@ -3,7 +3,7 @@ import * as T from 'three';
 export function seasonalSurfaces(district:T.Object3D){
  const uniforms={snow:{value:0},autumn:{value:0},spring:{value:0},wet:{value:0},night:{value:0},time:{value:0},wind:{value:0}},clones=new Map<T.Material,T.MeshStandardMaterial>();
  district.traverse(o=>{if(!(o instanceof T.Mesh))return;const convert=(source:T.Material)=>{
-  if(!(source instanceof T.MeshStandardMaterial))return source;
+  if(!(source instanceof T.MeshStandardMaterial)||source.userData.outdoorGround)return source;
   if(clones.has(source))return clones.get(source)!;
   const mat=source.clone();mat.userData.cityOwned=true;clones.set(source,mat);
   mat.onBeforeCompile=shader=>{

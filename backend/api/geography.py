@@ -28,13 +28,15 @@ def walkable(city,x,z):
     from .grand_arena import traversable_plaza
     if traversable_plaza(city,x,z):return True
     if abs(x)>d['radius'] or abs(z)>d['radius']:return False
-    return any(segment_distance(x,z,a,b)<=6 for a,b in street_grid(city).get((math.floor(x/32),math.floor(z/32)),[]))
+    from .terrain import permits
+    return permits(city,x,z,buildings=False)
 @router.get('/geography/{city}')
 def geometry(city:str):
     from .street_vehicles import placements
     from .grand_arena import placement
     geo=district(city);arena=placement(city);radius=max(geo['radius'],max(abs(arena['x']),abs(arena['z']))+25) if arena else geo['radius']
-    return {**geo,'radius':radius,'arena':arena,'street_vehicles':placements(city)}
+    from .terrain import navigation
+    return {**geo,'radius':radius,'navigation':navigation(city),'arena':arena,'street_vehicles':placements(city)}
 
 @lru_cache(maxsize=64)
 def footprints(city):
@@ -53,6 +55,10 @@ def driving_segments(city):
  return [(a,b) for f in district(city)['features'] if f['tags'].get('highway') in {'residential','service','unclassified','tertiary','secondary','primary','living_street'} for a,b in zip(f['points'],f['points'][1:])]
 def traversable(city,x,z,mode='walk'):
  if not walkable(city,x,z) or inside_building(city,x,z):return False
+ if mode not in {'walk','run','car'}:
+  from .terrain import permits
+  from .grand_arena import traversable_plaza
+  if not traversable_plaza(city,x,z) and not permits(city,x,z,open_ground=False):return False
  return mode!='car' or any(segment_distance(x,z,a,b)<=3.5 for a,b in street_grid(city,True).get((math.floor(x/32),math.floor(z/32)),[]))
 
 def safe_step(city, x, z, dx, dz, mode='walk'):

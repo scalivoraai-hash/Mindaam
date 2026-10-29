@@ -118,3 +118,9 @@ Production preparation reuses the exact approved image and existing migration/bo
 Recovery/security Cloud Run jobs place Cloud SQL and VPC annotations on the execution template (`spec.template.metadata`), as required by the v1 Jobs API; task templates contain only task specifications.
 
 First-production deployment recognizes the provider’s optional terminal period in exact managed Cloud Run job/service absence messages. Command/name scoping and fatal permission/transport checks remain enforced.
+
+## 2026-10-29 — public terrain and bounded outdoor atmosphere
+
+Server-classified bundled OSM coverage adds public park/grass polygons to the existing 32m spatial grid. Unmapped ground and unapproved gardens/fields do not acquire access. Explicit access restrictions, water, solid footprints, holes and mapped barriers remain blocking; the existing swept movement and speed integration are unchanged. Geography exposes this same classification for guest preview collision/slide checks, without authenticated capabilities. Rental movement now passes its actual vehicle kind to traversal so expanding pedestrian coverage cannot expand bicycle/scooter/car routes. Future licensed imports preserve access, foot, barrier, landuse and waterway tags; existing map snapshots are unchanged.
+
+A reusable original 256px grass atlas, world-coordinate shading and at most 700 nearby instanced blades provide bounded terrain detail. Rain uses camera-local moving streaks and pooled ground splashes; reduced effects retain a lower-density weather cue. Existing shared climate timing controls all effects. Existing sky entities gain articulated bird wings, rotor motion and bounded paths, with an ambient parachutist that exits the visible simulation aloft instead of inventing a landing permission. Scene teardown disposes owned GPU resources. No new worker, GPU service, paid asset API, database write, reward or payment behavior is introduced.

@@ -201,3 +201,9 @@ Production preparation reuses the exact approved image and existing migration/bo
 Recovery/security Cloud Run jobs place Cloud SQL and VPC annotations on the execution template (`spec.template.metadata`), as required by the v1 Jobs API; task templates contain only task specifications.
 
 First-production deployment recognizes the provider’s optional terminal period in exact managed Cloud Run job/service absence messages. Command/name scoping and fatal permission/transport checks remain enforced.
+
+## 2026-10-29 — outdoor terrain release candidate
+
+Local implementation adds server-authoritative mapped public-ground traversal, matching preview collision/sweeping, vehicle-kind separation, original grass detail, visible rain/splashes and bounded animated sky activity. Backend terrain/authenticated movement, existing speed/collectible checks, rental regression checks and 61 frontend unit tests passed locally. Full-page browser road-to-grass checks passed Milton Keynes, London, New York and Abu Dhabi, plus mobile joystick viewport acceptance, with no page exceptions. Renderer tests passed light/heavy rain at every quality/reduced-effects setting, actual animation position/wing/rotor/descent changes and repeated GPU-resource cleanup. Evidence under `docs/evidence/outdoor-world-20261029` is explicitly local, using Chromium software rendering and controlled anonymous preview spawn fixtures. It is not physical-device certification or deployed acceptance.
+
+Remote CI, staging acceptance and exact-SHA production approval must still pass before promotion. The existing apex HTTPS failure remains a separate open launch blocker; no public production success is claimed by these local results. Payment gates and existing data/infrastructure remain unchanged.

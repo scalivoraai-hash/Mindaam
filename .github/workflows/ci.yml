@@ -127,8 +127,11 @@ jobs:
               QA_OUTPUT=/tmp/mylil-presentation-evidence/avatars node scripts/tests/remote-renderer.cjs
               QA_OUTPUT=/tmp/mylil-presentation-evidence/cities node scripts/tests/city-upgrade-renderer.cjs
               QA_OUTPUT=/tmp/mylil-presentation-evidence/weather node scripts/tests/living-world-renderer.cjs
+              QA_OUTPUT=/tmp/mylil-presentation-evidence/outdoor node scripts/tests/outdoor-environment.cjs
               QA_OUTPUT=/tmp/mylil-presentation-evidence/traffic node scripts/tests/traffic-motion.cjs ;;
-            movement) node scripts/tests/movement-camera.cjs ;;
+            movement)
+              node scripts/tests/movement-camera.cjs
+              QA_OUTPUT=/tmp/mylil-presentation-evidence/public-terrain node scripts/tests/public-terrain-browser.cjs ;;
             outdoor-xp)
               for width in 1440 390 820; do
                 QA_WIDTH="$width" QA_OUTPUT="/tmp/mylil-presentation-evidence/width-$width" node scripts/tests/outdoor-xp.cjs

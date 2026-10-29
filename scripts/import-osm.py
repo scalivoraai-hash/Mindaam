@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from backend.api.locations import CITIES
 DATA=ROOT/'backend/data'
-TAGS={'building','building:levels','height','name','highway','natural','leisure','amenity','shop','entrance','surface','access'}
+TAGS={'building','building:levels','height','name','highway','natural','leisure','amenity','shop','entrance','surface','access','foot','barrier','landuse','waterway','area'}
 def inside(p,ring):
  x,y=p;result=False
  for a,b in zip(ring,ring[1:]+ring[:1]):
@@ -33,7 +33,7 @@ def convert(raw,origin):
  def refs(w):return [n.attrib['ref'] for n in w.findall('nd')]
  for rel in root.findall('relation'):
   t=tags(rel)
-  if not any(k in t for k in ['building','natural','leisure']):continue
+  if not any(k in t for k in ['building','natural','leisure','landuse','access']):continue
   members=[m for m in rel.findall('member') if m.attrib['type']=='way'];outer=[refs(ways[m.attrib['ref']]) for m in members if m.attrib.get('role','outer') in ['','outer'] and m.attrib['ref'] in ways];inner=[refs(ways[m.attrib['ref']]) for m in members if m.attrib.get('role')=='inner' and m.attrib['ref'] in ways]
   outs=rings(outer);ins=rings(inner)
   for i,ring in enumerate(outs):
@@ -43,7 +43,7 @@ def convert(raw,origin):
    used.update(m.attrib['ref'] for m in members if m.attrib.get('role','outer') in ['','outer'] and m.attrib['ref'] in ways and set(refs(ways[m.attrib['ref']])).issubset(set(ring)))
  for id,w in ways.items():
   t=tags(w);ids=refs(w)
-  if id in used or not any(k in t for k in ['building','highway','natural','leisure','shop','amenity']) or not all(i in nodes for i in ids):continue
+  if id in used or not any(k in t for k in ['building','highway','natural','leisure','shop','amenity','landuse','barrier','waterway','access']) or not all(i in nodes for i in ids):continue
   if 'building' in t and (len(ids)<4 or ids[0]!=ids[-1]):continue
   if len(ids)>=2:features.append({'id':id,'tags':t,'points':[point(i) for i in ids]})
  for id,n in nodes.items():
@@ -60,6 +60,8 @@ def save(city,raw,old=None):
  output=DATA/(city+'.json.gz');output.write_bytes(gzip.compress(json.dumps(d,separators=(',',':')).encode(),mtime=0))
  from backend.api import geography
  for name in ['district','road_segments','footprints','collision_grid','driving_segments','street_grid','safe_spawn']:getattr(geography,name).cache_clear()
+ from backend.api import terrain
+ terrain.navigation.cache_clear();terrain.grid.cache_clear()
  spawn=geography.safe_spawn(city);d['spawn']=list(spawn);output.write_bytes(gzip.compress(json.dumps(d,separators=(',',':')).encode(),mtime=0))
  print(city,'features',len(d['features']),'buildings',sum('building' in f['tags'] for f in d['features']),'spawn',spawn,flush=True)
  return d

@@ -1,0 +1,35 @@
+{
+  "results": [
+    {
+      "city": "milton-keynes",
+      "x": 1006.0705542925061,
+      "z": -419.19119898291774,
+      "roadToGrass": true
+    },
+    {
+      "city": "london",
+      "x": 269.1386865173782,
+      "z": 314.570382646806,
+      "roadToGrass": true
+    },
+    {
+      "city": "new-york",
+      "x": -86.89646934733304,
+      "z": 25.725280603664544,
+      "roadToGrass": true
+    },
+    {
+      "city": "abu-dhabi",
+      "x": 297.53090076541497,
+      "z": -133.28500001197227,
+      "roadToGrass": true
+    },
+    {
+      "city": "milton-keynes",
+      "mobileJoystick": true,
+      "x": 1006.0705542925061,
+      "z": -419.19119898291774
+    }
+  ],
+  "errors": []
+}
