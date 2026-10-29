@@ -8,3 +8,10 @@ class StagingDiagnostics(unittest.TestCase):
   result=summarize(rows)
   self.assertEqual(result[0]['signals']['pool_exhaustion'],['QueuePool limit of size 5 overflow 5 reached, connection timed out, timeout 5.00'])
   self.assertNotIn('secret',str(result));self.assertNotIn('private',str(result));self.assertNotIn('SQL:',str(result))
+
+ def test_only_code_locations_and_statement_kind_exported(self):
+  row={'textPayload':'File "/app/backend/api/talk.py", line 82, in member\n[SQL: SELECT media_sessions.id FROM media_sessions WHERE token=secret]'}
+  signals=summarize([row])[0]['signals']
+  self.assertEqual(signals['backend_frames'],[{'file':'talk.py','line':82,'function':'member'}])
+  self.assertEqual(signals['statement_kinds'],[{'operation':'SELECT','relation':'media_sessions'}])
+  self.assertNotIn('secret',str(signals))

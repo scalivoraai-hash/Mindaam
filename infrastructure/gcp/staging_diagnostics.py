@@ -22,6 +22,10 @@ def summarize(rows):
  for row in rows:
   text=row.get('textPayload','')+' '+str(row.get('jsonPayload',{}).get('message',''))
   matches={key:sorted(set(re.findall(pattern,text,re.I))) for key,pattern in PATTERNS.items()}
+  frames=re.findall(r'File "[^"\n]*/backend/api/([a-z_]+\.py)", line (\d+), in ([A-Za-z_][A-Za-z_0-9]*)',text)
+  if frames:matches['backend_frames']=[{'file':f,'line':int(n),'function':fn} for f,n,fn in frames]
+  statements=re.findall(r'\[SQL: (SELECT|UPDATE|INSERT INTO|DELETE FROM)\s+([a-z_]+)',text)
+  if statements:matches['statement_kinds']=[{'operation':op,'relation':table} for op,table in statements]
   result.append({'timestamp':row.get('timestamp'),'severity':row.get('severity'),'signals':{k:v for k,v in matches.items() if v}})
  return result
 
