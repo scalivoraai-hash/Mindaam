@@ -36,7 +36,7 @@ def test_road_to_park_continuous_and_back(public_ground):
 
 
 def test_blocked_ground_fence_and_bounds(public_ground):
-    for point in [(20,2),(30,2),(20,-12),(10,-10),(51,0),(-20,20),(math.nan,0)]:
+    for point in [(20,2),(30,2),(20,-12),(10,-10),(51,0),(math.nan,0)]:
         assert not g.traversable('test',*point)
     x,z=g.safe_step('test',8,-10,5,0)
     assert x<9.66 and z==-10
@@ -98,3 +98,17 @@ def test_authenticated_movement_crosses_road_edge(system, monkeypatch):
     assert not t.permits('london',position['x'],position['z'],open_ground=False)
     with sessions() as db:
         p=db.get(Presence,user['id']);assert p.x==pytest.approx(position['x'])
+
+
+def test_unclassified_open_ground_continuous_without_road_limit(public_ground):
+    # Previously denied: no road or public polygon covers the negative-x grass.
+    for mode in ['walk', 'run']:
+        x,z = 0,0
+        for dx,dz in [(-40,0),(0,35),(35,0),(5,-35)]:
+            expected = (x+dx,z+dz)
+            x,z = g.safe_step('test',x,z,dx,dz,mode)
+            assert (x,z) == pytest.approx(expected)
+    for mode in ['car','bike','scooter']:
+        assert not g.traversable('test',-30,20,mode)
+    assert not t.permits('test',51,0)
+    assert not t.permits('test',-30,20,open_ground=False)

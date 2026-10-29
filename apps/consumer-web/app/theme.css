@@ -217,3 +217,12 @@ input[type=checkbox],input[type=radio],progress{accent-color:var(--action)}
 @media(max-height:550px) and (orientation:landscape){.in-auditorium .drawer.glass{inset:52px 10px 68px auto;width:min(330px,calc(100vw - 20px));max-height:none}}
 .user-profile[data-theme="Minimal Light"]{--surface:#fff;--elevated:#f4f6ff;--field:#fff;--text:#06122b;--muted:#435575;--border:#7d8ba5;--subtle-border:#d4daee;--action:#075caa;--selected:#e6eafe;--focus:#075caa;--disabled-background:#e5e9f3;--disabled-text:#53617a}
 .user-profile .profile-tabs button[aria-pressed=true]{background:var(--action-gradient);color:#fff}
+
+/* World selection: shared alignment and bounded live-card layout. */
+.world-discovery{width:100%;max-width:1160px;margin-inline:auto;padding:24px clamp(16px,3vw,32px);box-sizing:border-box}
+.world-discovery>h2{margin:12px 0 20px}
+.world-discovery .world-search{max-width:none;width:100%}
+.world-discovery .destination-grid{align-items:stretch}
+.world-discovery .destination-grid-live{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+@media(min-width:768px){.destination-grid-live .destination-card:only-child{max-width:420px}.destination-grid-live .destination-card:only-child>*{min-width:0}}
+@media(max-width:767px){.world-discovery{padding:16px max(12px,env(safe-area-inset-left)) 24px}.world-discovery .destination-grid{gap:14px}.world-discovery .starter-progress{padding:14px}.world-discovery .world-chips span{overflow-wrap:anywhere;max-width:100%}.world-access-modal{padding:24px 16px max(20px,env(safe-area-inset-bottom))}.world-access-modal .actions>*{min-width:0;flex:1 1 140px}}

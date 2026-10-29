@@ -8,7 +8,7 @@ export function terrainNavigator(nav:Navigation){
  for(const f of nav.features){if(!f.points.length)continue;const pad=f.kind==='road'?6:.35,x=f.points.map(p=>p[0]),z=f.points.map(p=>p[1]);for(let ix=Math.max(lo,Math.floor((Math.min(...x)-pad)/32));ix<=Math.min(hi,Math.floor((Math.max(...x)+pad)/32));ix++)for(let iz=Math.max(lo,Math.floor((Math.min(...z)-pad)/32));iz<=Math.min(hi,Math.floor((Math.max(...z)+pad)/32));iz++){const key=ix+':'+iz,list=grid.get(key)||[];list.push(f);grid.set(key,list);}}
  const permits=(x:number,z:number)=>{
   if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>nav.radius||Math.abs(z)>nav.radius)return false;
-  let allowed=false;
+  let allowed=true;
   for(const f of grid.get(Math.floor(x/32)+':'+Math.floor(z/32))||[]){const p=f.points,closed=p.length>=4&&p[0][0]===p[p.length-1][0]&&p[0][1]===p[p.length-1][1],contains=closed&&inside(x,z,p)&&!f.holes.some(h=>inside(x,z,h)),near=p.slice(1).some((b,i)=>distance(x,z,p[i],b)<=(f.kind==='road'?6:.35));if(['blocked','building','barrier'].includes(f.kind)&&((near&&f.kind!=='building')||contains&&['blocked','building'].includes(f.kind)))return false;allowed ||= f.kind==='road'&&near||f.kind==='public'&&contains;}
   return allowed;
  };

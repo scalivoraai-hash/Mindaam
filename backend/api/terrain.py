@@ -1,4 +1,4 @@
-"""Conservative OSM pedestrian coverage; no inferred access to unmapped land."""
+"""Bounded virtual outdoor traversal; explicit mapped restrictions take precedence."""
 import math
 from functools import lru_cache
 
@@ -59,7 +59,10 @@ def permits(city, x, z, open_ground=True, buildings=True):
     from .geography import point_inside, segment_distance
     if not math.isfinite(x) or not math.isfinite(z):
         return False
-    allowed = False
+    radius = navigation(city)["radius"]
+    if abs(x) > radius or abs(z) > radius:
+        return False
+    allowed = open_ground
     for f,bounds in grid(city).get((math.floor(x/32), math.floor(z/32)), []):
         if not bounds[0]<=x<=bounds[1] or not bounds[2]<=z<=bounds[3]:
             continue

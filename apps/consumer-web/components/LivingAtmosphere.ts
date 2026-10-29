@@ -102,6 +102,14 @@ export function livingAtmosphere(scene:T.Scene,city:string,features:RoadFeature[
   skyObjects.forEach((g,i)=>{const age=((seconds+i*29+seed%120)%120)/120,kind=i%4;g.visible=i<budget.sky&&age<.82&&(i!==8||state.seasonIndex===0||state.weather==='Windy');
    const x=(age-.41)*(kind===2?160:kind===0?280:650),z=-70+(i%3)*37+Math.sin(age*Math.PI*2+i)*12;
    g.position.set(player.x+x,kind===0?25+i*2+Math.sin(age*6+i)*5:45+kind*16+Math.sin(age*5+i)*3,player.z+z);g.rotation.y=Math.PI/2+Math.cos(age*Math.PI*2+i)*.12;
+   if(g.userData.birds){
+    // Anchor a flight once per pass, not to the moving player on every frame.
+    const pass=Math.floor((seconds+i*29+seed%120)/120);
+    if(g.userData.flightPass!==pass){g.userData.flightPass=pass;g.userData.flightOrigin={x:player.x,z:player.z};}
+    const anchor=g.userData.flightOrigin,direction=pass%2===0?1:-1;
+    g.position.set(anchor.x+direction*(age-.41)*280,18+i*2+Math.sin(age*6+i)*5,anchor.z-30+(i%3)*18+Math.sin(age*Math.PI*2+i)*14);
+    g.rotation.y=direction*Math.PI/2+Math.cos(age*Math.PI*2+i)*.3;
+   }
    if(g.userData.rotor)g.userData.rotor.rotation.y=seconds*(reduce?5:24);if(g.userData.navigationLights)g.userData.navigationLights.visible=state.night;
    if(i===0&&g.userData.birds)g.userData.birds[1].bird.visible=Math.floor(seconds/120)%2===0;
    for(const {bird,wings,phase} of g.userData.birds||[]){const flap=Math.sin(seconds*(reduce?2:6)+phase)*(Math.sin(seconds*.4+phase)>.2?.55:.08);wings[0].rotation.z=flap;wings[1].rotation.z=-flap;bird.rotation.y=Math.sin(seconds*.35+phase)*.1;}
