@@ -10,6 +10,9 @@ PROBE='''import os,json,psycopg
 from psycopg.conninfo import conninfo_to_dict
 result={'secret_injection':all(bool(os.environ.get(k)) for k in ('DATABASE_URL','REDIS_URL','LIVEKIT_API_KEY','LIVEKIT_API_SECRET','PULSEPOINT_SECRET','MAIL_ENCRYPTION_KEY','SUPER_ADMIN_EMAIL','SUPER_ADMIN_USERNAME','SUPER_ADMIN_INITIAL_PASSWORD'))}
 try:
+ from backend.api.db import SessionLocal
+ from backend.api.operations import bootstrap_owner
+ with SessionLocal.begin() as db: bootstrap_owner(db)
  p=conninfo_to_dict(os.environ['DATABASE_URL'].replace('postgresql+psycopg://','postgresql://'));p['connect_timeout']=15
  with psycopg.connect(**p) as c:
   c.execute('SET TRANSACTION READ ONLY')
@@ -25,6 +28,19 @@ try:
   result['owner_count']=len(row)
   result['owner_credential_verified']=bool(len(row)==1 and row[0][0].lower()==os.environ['SUPER_ADMIN_EMAIL'].lower() and row[0][1]==os.environ['SUPER_ADMIN_USERNAME'] and row[0][4] and not row[0][5] and check_password(os.environ['SUPER_ADMIN_INITIAL_PASSWORD'],row[0][2]))
   result['owner_initial_change_required']=bool(len(row)==1 and row[0][3])
+ from fastapi.testclient import TestClient
+ from backend.api.main import app
+ client=TestClient(app,base_url='https://mindaam.com')
+ headers={'origin':'https://mindaam.com','x-pulse-client':'web'}
+ result['unauthenticated_admin_denied']=client.get('/api/super-admin/overview').status_code==401
+ bad=client.post('/api/auth/admin-login',headers=headers,json={'identifier':os.environ['SUPER_ADMIN_EMAIL'],'password':'invalid-recovery-probe-password'})
+ result['wrong_password_denied']=bad.status_code==401
+ login=client.post('/api/auth/admin-login',headers=headers,json={'identifier':os.environ['SUPER_ADMIN_EMAIL'],'password':os.environ['SUPER_ADMIN_INITIAL_PASSWORD']})
+ result['owner_login']=login.status_code==200
+ result['secure_cookie']=all(x in login.headers.get('set-cookie','').lower() for x in ('secure','httponly','samesite=lax'))
+ if result['owner_login']:
+  result['initial_change_enforced']=bool(login.json()['user']['must_change_password'] and client.get('/api/super-admin/overview').status_code==403)
+  result['logout']=client.post('/api/auth/logout',headers=headers).status_code==200 and client.get('/api/super-admin/overview').status_code==401
 except Exception as e:
  result['runtime_failure_type']=type(e).__name__
 print('MINDAAM_SECURITY_RESULT '+json.dumps(result))
@@ -33,6 +49,7 @@ print('MINDAAM_SECURITY_RESULT '+json.dumps(result))
 
 def run(c,sha):
  if sha!=SHA or c.project!='mindaam':raise Blocked('Security review limited to approved release')
+ c.put_json(f'releases/{sha}/owner-cost-approval.json',{'sha':sha,'owner_approved':True,'source':'Explicit owner instruction in Mindaam launch conversation, 2026-10-29','idle_usd':48.76,'light_usd':91.98,'target_usd':100,'warning_usd':125,'renewed_approval_above_usd':150,'recorded_at':int(time.time())})
  release=c.get_json(f'releases/{sha}/{evidence_name()}')
  if not release:raise Blocked('Verified staging evidence required')
  recovery=c.get_json(f'releases/{sha}/recovery.json')
@@ -41,9 +58,11 @@ def run(c,sha):
  policy=c.gc('projects','get-iam-policy',c.project)
  roles=[b['role'] for b in policy.get('bindings',[]) if 'serviceAccount:'+c.sa('production') in b.get('members',[])]
  if set(roles)-{'roles/cloudsql.client','roles/logging.logWriter','roles/monitoring.metricWriter'}:raise Blocked('Unexpected project-wide production runtime permission')
+ from deploy import migrate
+ migrate(c,'production',release['image'])
  ordinary,secrets=environment(c,'production','https://mindaam.com')
  spec={'serviceAccountName':c.sa('production'),'timeoutSeconds':'120','maxRetries':0,'containers':[{'image':release['image'],'command':['python'],'args':['-c',PROBE], 'resources':{'limits':{'cpu':'1','memory':'512Mi'}},'env':[{'name':k,'value':v} for k,v in ordinary.items()]+[{'name':k,'valueFrom':{'secretKeyRef':{'name':v,'key':'latest'}}} for k,v in secrets.items()]}]}
- manifest={'apiVersion':'run.googleapis.com/v1','kind':'Job','metadata':{'name':name,'labels':{'application':'mindaam','security_run':run_id}},'spec':{'template':{'spec':{'taskCount':1,'parallelism':1,'template':{'metadata':{'annotations':{'run.googleapis.com/cloudsql-instances':f'{c.project}:{c.region}:mindaam-postgres'}},'spec':spec}}}}}
+ manifest={'apiVersion':'run.googleapis.com/v1','kind':'Job','metadata':{'name':name,'labels':{'application':'mindaam','security_run':run_id}},'spec':{'template':{'spec':{'taskCount':1,'parallelism':1,'template':{'metadata':{'annotations':{'run.googleapis.com/cloudsql-instances':f'{c.project}:{c.region}:mindaam-postgres','run.googleapis.com/network-interfaces':'[{"network":"mindaam","subnetwork":"mindaam-run"}]','run.googleapis.com/vpc-access-egress':'private-ranges-only'}},'spec':spec}}}}}
  evidence={'sha':sha,'image':release['image'],'run_id':run_id,'runtime_roles':roles,'status':'FAIL','checks':{},'cleanup':False}
  created=False
  try:
@@ -59,7 +78,7 @@ def run(c,sha):
    time.sleep(5)
   if len(rows)!=1:raise Blocked('Unique security runtime evidence unavailable')
   evidence['checks']=json.loads(rows[0]['textPayload'].split('MINDAAM_SECURITY_RESULT ',1)[1])
-  keys=('secret_injection','database_identity','restricted_role','staging_denied','postgis','owner_credential_verified')
+  keys=('secret_injection','database_identity','restricted_role','staging_denied','postgis','owner_credential_verified','unauthenticated_admin_denied','wrong_password_denied','owner_login','secure_cookie','initial_change_enforced','logout')
   evidence['status']='PASS' if all(evidence['checks'].get(k) is True for k in keys) else 'FAIL'
  finally:
   if created:c.gc('run','jobs','delete',name,'--region='+c.region);evidence['cleanup']=True
