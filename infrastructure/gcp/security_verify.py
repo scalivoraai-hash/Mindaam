@@ -51,7 +51,7 @@ print('MINDAAM_SECURITY_RESULT '+json.dumps(result))
 
 def run(c,sha):
  if sha!=SHA or c.project!='mindaam':raise Blocked('Security review limited to approved release')
- c.put_json(f'releases/{sha}/owner-cost-approval.json',{'sha':sha,'owner_approved':True,'source':'Explicit owner instruction in Mindaam launch conversation, 2026-10-29','idle_usd':48.76,'light_usd':91.98,'target_usd':100,'warning_usd':125,'renewed_approval_above_usd':150,'recorded_at':int(time.time())})
+ c.put_json(f'releases/{sha}/owner-cost-approval.json',{'sha':sha,'owner_approved':True,'source':'Standing owner cost approval plus explicit targeted outdoor release instruction, 2026-10-29','idle_usd':48.76,'light_usd':91.98,'target_usd':100,'warning_usd':125,'renewed_approval_above_usd':150,'recorded_at':int(time.time())})
  release=c.get_json(f'releases/{sha}/{evidence_name()}')
  if not release:raise Blocked('Verified staging evidence required')
  recovery=c.get_json(f'releases/{sha}/recovery.json')

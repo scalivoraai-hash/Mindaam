@@ -10,7 +10,8 @@ from render import postgres
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from release_policy import evidence_name
-SHA = 'da2a01b72ba4052dd42e2527466164dadd3c5c5b'
+# Exact targeted outdoor release authorised by the owner; never accept arbitrary SHAs.
+SHA = '1af2051d13e56aff76ec69ad0cbcec73146aa7df'
 
 
 def target(run, attempt):
