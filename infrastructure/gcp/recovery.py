@@ -81,6 +81,7 @@ def run(c, sha):
     created=False; job_created=False
     try:
         payload=postgres(c);payload['name']=name
+        payload['settings'].pop('storageAutoResizeLimit',None)
         payload['settings'].update({'deletionProtectionEnabled':False,'storageAutoResize':False,
             'dataDiskSizeGb':settings['dataDiskSizeGb'], 'backupConfiguration':{'enabled':False},
             'userLabels':{'application':'mindaam','recovery_run':run_id}})
