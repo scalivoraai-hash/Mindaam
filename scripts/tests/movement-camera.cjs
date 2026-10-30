@@ -44,11 +44,35 @@ async function main(){
  async function place(){fixture({city,users:[user.user.id]});await wait(900)}
  await place();await page.getByRole('button',{name:'walk',exact:true}).click();const walk=await measure('authenticated default hold');
  await place();await page.getByRole('button',{name:'run',exact:true}).click();const run=await measure('authenticated explicit run');
- await place();await page.getByRole('button',{name:'walk',exact:true}).click();await measure('authenticated light walk',route.direction.map(n=>n*.6));
+ await place();await page.getByRole('button',{name:'walk',exact:true}).click();const lightWalk=await measure('authenticated light walk',route.direction.map(n=>n*.6));
  await place();const marker=frames.length;await input(...route.direction);await wait(160);await input(0,0);await wait(300);check('short press remains walk',frames.slice(marker).filter(f=>f.type==='motion').every(f=>f.position.mode==='walk'));
  if(!baseline){
   await place();const marker=frames.length;await input(...route.direction);await wait(1000);await input(0,0);await wait(300);const moving=frames.slice(marker).filter(f=>f.type==='motion'&&f.position.speed>0);console.log('Held input acknowledgements',JSON.stringify(moving.map(f=>({seq:f.seq,mode:f.position.mode,speed:f.position.speed}))));check('held input walks then runs',moving[0].position.mode==='walk'&&moving.some(f=>f.position.mode==='run'));
  }
+ // Physical touch input through the real joystick, with authoritative displacement.
+ await page.getByRole('button',{name:'walk',exact:true}).click();
+ for(const width of [390,820]){
+  await page.setViewportSize({width,height:844});await place();
+  const session=await context.newCDPSession(page);
+  try{
+   for(const [label,strength,endType] of [['walk',.6,'touchEnd'],['run',1,'touchCancel']]){
+    await place();const box=await page.locator('.mobile-joystick').boundingBox();assert.ok(box);
+    const start=frames.length,at=Date.now();
+    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width/2+route.direction[0]*box.width*.36*strength,y:box.y+box.height/2+route.direction[1]*box.height*.36*strength,id:1}]});
+    await wait(3000);await session.send('Input.dispatchTouchEvent',{type:endType,touchPoints:[]});
+    await until(()=>frames.slice(start).filter(f=>f.type==='motion').at(-1)?.position.speed===0,'touch release acknowledgement');
+    const samples=frames.slice(start).filter(f=>f.type==='motion'),moving=samples.filter(f=>f.position.speed>0),last=samples.at(-1).position;
+    const displacement=Math.hypot(last.x-route.x,last.z-route.z),seconds=(Date.now()-at)/1000,mps=displacement/seconds;
+    check(width+' touch '+label+' controlled displacement',mps>(label==='walk'?.8:3.4)&&mps<(label==='walk'?1.4:5));
+    check(width+' touch '+label+' intended direction',(last.x-route.x)*route.direction[0]+(last.z-route.z)*route.direction[1]>displacement*.98);
+    check(width+' touch '+label+' speed bounded',moving.every(f=>f.position.speed<=(f.position.mode==='walk'?2:4.6875)+.001));
+    await wait(400);const stopped=(await api('/world/'+city)).position;
+    check(width+' '+endType+' stops movement',Math.hypot(stopped.x-last.x,stopped.z-last.z)<.01);
+    results.speeds.push({name:width+' touch '+label,mps,distance:displacement,seconds});
+   }
+  }finally{await session.detach()}
+ }
+ await page.setViewportSize({width:1280,height:720});
  // Real rented vehicles, route collision and server time; no constant-only speed assertion.
  const listing=await api('/mobility');await api('/mobility/policy',{version:listing.policy.version,accepted:true});
  for(const kind of ['bike','car']){
@@ -64,7 +88,7 @@ async function main(){
  }
  results.frames=frames.filter(f=>f.type==='motion').map(f=>({at:f.at,position:f.position}));
  check('no browser errors',errors.length===0);
- if(!baseline){check('held input reaches running state',results.frames.some(f=>f.position.mode==='run'));check('authenticated held movement exceeds preview pace',walk.mps>=preview.mps*.98);check('run is faster than preview baseline',run.mps>preview.mps*1.3)}
+ if(!baseline){check('held input reaches running state',results.frames.some(f=>f.position.mode==='run'));check('held movement stays within controlled outdoor run range',walk.mps>=3.5&&walk.mps<=5.0);check('outdoor run measures approved pace',run.mps>=4.0&&run.mps<=5.0);check('light joystick walk measures proportional approved pace',lightWalk.mps>=.85&&lightWalk.mps<=1.3);check('authoritative outdoor speed is bounded',results.frames.filter(f=>['walk','run'].includes(f.position.mode)).every(f=>f.position.speed<=(f.position.mode==='walk'?2:4.6875)+.001))}
  if(!baseline){
   check('actual bike faster than run',results.speeds.find(s=>s.name==='bike').mps>run.mps);
   check('actual car faster than bike',results.speeds.find(s=>s.name==='car').mps>results.speeds.find(s=>s.name==='bike').mps);

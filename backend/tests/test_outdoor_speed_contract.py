@@ -14,7 +14,8 @@ def test_outdoor_speed_contract(system, monkeypatch, mode, strength, gaps):
     client, sessions = system
     headers, user = register(client)
     onboard(client, headers)
-    assert world.MOVEMENT['normalWorldMultiplier'] == 3
+    assert world.OUTDOOR_WALK_SPEED == pytest.approx(2.0)
+    assert world.OUTDOOR_RUN_SPEED == pytest.approx(4.6875)
     assert world.RUN_SPEED / world.WALK_SPEED == pytest.approx(1.875)
     clock = [1000.]
     monkeypatch.setattr(world, 'time', SimpleNamespace(time=lambda: clock[0]))
