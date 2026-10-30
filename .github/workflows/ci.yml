@@ -86,7 +86,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        check: [layout, media, world, lighting, movement, outdoor-xp]
+        check: [layout, media, world, lighting, movement, outdoor-xp, outdoor-xp-cities]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -136,6 +136,8 @@ jobs:
               for width in 1440 390 820; do
                 QA_WIDTH="$width" QA_OUTPUT="/tmp/mylil-presentation-evidence/width-$width" node scripts/tests/outdoor-xp.cjs
               done
+              ;;
+            outdoor-xp-cities)
               for city in london madrid dubai mumbai new-york; do
                 QA_CITY="$city" QA_OUTPUT="/tmp/mylil-presentation-evidence/$city" node scripts/tests/outdoor-xp.cjs
               done ;;
