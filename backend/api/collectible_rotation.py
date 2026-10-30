@@ -50,7 +50,7 @@ def wave(db,city,now=None):
  result=[]
  for index in range(count):
   x,z=points[(offset+cycle*count+index)%len(points)];kind,title=kinds[(cycle+index)%len(kinds)]
-  key=f'mylilworlds:rotation:v2:{city}:{interval}:{cycle}:{index}'
+  key=f'mindaam:rotation:v2:{city}:{interval}:{cycle}:{index}'
   result.append(Collectible(id=str(uuid5(NAMESPACE_URL,key)),city=city,title=title,kind=kind,x=x,z=z,active=True,starts_at=cycle*interval,ends_at=(cycle+1)*interval,max_claims=100000,claims=0,origin="rotation"))
  return result
 
