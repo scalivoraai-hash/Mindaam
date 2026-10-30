@@ -90,7 +90,7 @@ def test_other_activity_admin_limits_are_preserved(system):
             response=c.put('/api/super-admin/vehicles/types/'+kind,headers=h,json={**DEFAULTS[kind],**override})
             assert response.status_code==422
 
-def test_indoor_speed_unchanged_outdoor_walk_reduced_and_run_three_times(system,monkeypatch):
+def test_indoor_speed_unchanged_outdoor_uses_controlled_pace(system,monkeypatch):
     from backend.api import world
     c,sessions=system
     h,user,_=rental_setup(c,sessions,'bike')
@@ -105,4 +105,4 @@ def test_indoor_speed_unchanged_outdoor_walk_reduced_and_run_three_times(system,
                 clock[0]+=.12
                 world.move(world.Movement(dx=1,dz=0,mode=mode),u,db)
                 distances[zone]=p.x
-            assert distances['world']==pytest.approx(distances['building:test-indoor']*(1.8 if mode=='walk' else 3))
+            assert distances['world']==pytest.approx(distances['building:test-indoor']*(.16 if mode=='walk' else .2))

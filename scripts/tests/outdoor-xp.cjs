@@ -10,7 +10,7 @@ async function until(fn,label,timeout=60000){const end=Date.now()+timeout;while(
 function check(name,value){assert.ok(value,name);results.checks.push(name);console.log(name,'PASS')}
 async function main(){
  execFileSync(python,['-m','scripts.tests.multiplayer_fixture','init'],{cwd:root,env,stdio:'pipe'});
- // Prove the 3x release contract using the real handler and controlled server ticks.
+ // Prove the approved pedestrian contract using the real handler and controlled server ticks.
  execFileSync(python,['-m','pytest','backend/tests/test_outdoor_speed_contract.py','-q'],{cwd:root,env:{...env,APP_ENV:'test'},stdio:'inherit'});
  check('controlled server ticks preserve outdoor walk/run contract',true);
  const diagnostics={errors:[],requests:[],sockets:[],processes:[]};let page,browser;
@@ -32,16 +32,18 @@ async function main(){
  await page.route('**/api/world-preview/'+city,async r=>{const response=await r.fetch(),v=await response.json();v.position={...v.position,x:route.x,z:route.z};await r.fulfill({response,json:v})});
  await page.goto(origin+'/explore');if(city!=='milton-keynes')await page.locator('#preview-city').selectOption(city);
  await page.locator('.world-canvas[data-ready=true]').waitFor();
- async function measure(name,direction=route.direction){
+ async function measure(name,direction=route.direction,expectedSpeed=4.6875){
+   // Preserve the 60-second deadline with 15 seconds of headroom at the approved pace.
+   const target=Math.min(180,route.length*.7,expectedSpeed*45);
    const frameStart=frames.length;
    const {a,b,elapsed,longTasks}=await page.evaluate(async ({direction,target})=>{
     const pos=()=>document.querySelector('.world-minimap svg g[transform]').getAttribute('transform').match(/-?[\d.]+/g).map(Number);
     const a=pos(),at=performance.now();window.dispatchEvent(new CustomEvent('pulse-drive-input',{detail:direction}));
     while(Math.hypot(pos()[0]-a[0],pos()[1]-a[1])<target){if(performance.now()-at>60000)throw Error('Route timeout');await new Promise(r=>setTimeout(r,10))}window.dispatchEvent(new CustomEvent('pulse-drive-input',{detail:[0,0]}));const elapsed=(performance.now()-at)/1000;
     await new Promise(r=>setTimeout(r,350));return {a,b:pos(),elapsed,longTasks:window.__qaLongTasks.filter(e=>e.start+e.duration>=at)};
-   },{direction,target:Math.min(180,route.length*.7)});
+   },{direction,target});
    const measured=frames.slice(frameStart).filter(f=>f.type==='motion'),latencies=measured.map(f=>f.roundTripMs).filter(Number.isFinite).sort((a,b)=>a-b);
-   const row={name,distance:Math.hypot(b[0]-a[0],b[1]-a[1]),seconds:elapsed,start:a,end:b,longTasks};if(latencies.length)row.acknowledgements={count:latencies.length,p50Ms:latencies[Math.floor(latencies.length*.5)],p95Ms:latencies[Math.floor(latencies.length*.95)],maxMs:latencies.at(-1),maxServerGapMs:Math.max(...measured.slice(1).map((f,i)=>(f.position.last_move-measured[i].position.last_move)*1000))};row.mps=row.distance/elapsed;results.speeds.push(row);console.log(JSON.stringify(row));return row;
+   const row={name,target,expectedSpeed,distance:Math.hypot(b[0]-a[0],b[1]-a[1]),seconds:elapsed,start:a,end:b,longTasks};if(latencies.length)row.acknowledgements={count:latencies.length,p50Ms:latencies[Math.floor(latencies.length*.5)],p95Ms:latencies[Math.floor(latencies.length*.95)],maxMs:latencies.at(-1),maxServerGapMs:Math.max(...measured.slice(1).map((f,i)=>(f.position.last_move-measured[i].position.last_move)*1000))};row.mps=row.distance/elapsed;results.speeds.push(row);console.log(JSON.stringify(row));return row;
  }
  const name='motion'+Date.now();const user=await api('/auth/register',{email:name+'@example.test',username:name,password:'LocalMotionQA2026!pass',confirm_password:'LocalMotionQA2026!pass',adult:true,accepted_terms:true,accepted_privacy:true});
  await api('/onboarding',{city,interests:[],avatar:{color:'#e58a50'},privacy:'City Mode',location_consent:false,analytics_consent:false});
@@ -50,12 +52,13 @@ async function main(){
  async function place(){fixture({city,users:[user.user.id]});await wait(900)}
  async function mode(value){const desktop=page.getByRole('button',{name:value,exact:true});if(await desktop.isVisible())await desktop.click();else{const toggle=page.locator('.mobile-run');if((await toggle.getAttribute('aria-pressed')==='true')!==(value==='run'))await toggle.click()}}
  results.city=city;results.viewport=Number(process.env.QA_WIDTH||1440);results.route=route;
- await place();await mode('walk');const walk=await measure('authenticated light walk',route.direction.map(n=>n*.6));
+ await place();await mode('walk');const walk=await measure('authenticated light walk',route.direction.map(n=>n*.6),1.2);
  await place();await mode('run');const run=await measure('authenticated explicit run');
  // Wall-clock m/s and acknowledgement delays remain diagnostics, not a speed-law gate.
  // Browser integration still has to deliver the selected mode and real authoritative movement.
  for(const [mode,row] of [['walk',walk],['run',run]]){
-  check(mode+' authoritative movement reaches mapped target',row.distance>=Math.min(180,route.length*.7));
+  check(mode+' authoritative movement reaches mapped target',row.distance>=row.target);
+  check(mode+' measured speed is controlled',row.mps>=row.expectedSpeed*.75&&row.mps<=row.expectedSpeed*1.1);
   check(mode+' selected mode reaches server',frames.some(f=>f.type==='motion'&&f.position?.mode===mode&&f.position.speed>0));
  }
  if(results.viewport<1000){

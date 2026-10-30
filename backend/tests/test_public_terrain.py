@@ -88,7 +88,8 @@ def test_authenticated_movement_crosses_road_edge(system, monkeypatch):
     monkeypatch.setattr(world,'time',SimpleNamespace(time=lambda:now[0]))
     with sessions.begin() as db:
         p=db.get(Presence,user['id']);p.x,p.z=start;p.last_move=now[0];p.motion_speed=0
-    for _ in range(48):
+    # Simulate enough approved walking ticks to cross the same >12m road edge.
+    for _ in range(64):
         now[0]+=.12
         response=client.post('/api/world/move',headers=headers,json={'dx':math.cos(.7),'dz':-math.sin(.7),'mode':'walk'})
         assert response.status_code==200,response.text
