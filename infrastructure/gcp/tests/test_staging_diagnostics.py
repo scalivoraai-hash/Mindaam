@@ -15,3 +15,12 @@ class StagingDiagnostics(unittest.TestCase):
   self.assertEqual(signals['backend_frames'],[{'file':'talk.py','line':82,'function':'member'}])
   self.assertEqual(signals['statement_kinds'],[{'operation':'SELECT','relation':'media_sessions'}])
   self.assertNotIn('secret',str(signals))
+
+ def test_production_requests_redact_private_path_query_and_headers(self):
+  from production_diagnostics import request_summary
+  rows=[{'httpRequest':{'requestUrl':'https://mindaam.com/api/auth/login?password=secret','status':503,'remoteIp':'private'}},
+        {'httpRequest':{'requestUrl':'https://mindaam.com/api/users/private@example.test','status':500}}]
+  value=request_summary(rows)
+  self.assertEqual(value[0]['path'],'/api/auth/login')
+  self.assertEqual(value[1]['path'],'[other route]')
+  self.assertNotIn('secret',str(value));self.assertNotIn('private',str(value))
