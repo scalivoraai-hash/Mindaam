@@ -371,6 +371,7 @@ def mission_views(db, u):
     return [
         {
             **serialize(m),
+            "credits": 0,
             "progress": {
                 k: min(counts.get(k, 0), v) for k, v in m.requirements.items()
             },
@@ -442,7 +443,6 @@ def collect(object_id: str, u=Depends(current_user), db=Depends(get_db)):
     for m in mission_views(db, u):
         if m["eligible"] and not m["completed"]:
             db.add(MissionCompletion(user_id=u.id, mission_id=m["id"]))
-            credit(db, u.id, m["credits"], "mission", m["id"], "mission:" + m["id"])
             credit(
                 db,
                 u.id,
@@ -458,7 +458,6 @@ def collect(object_id: str, u=Depends(current_user), db=Depends(get_db)):
             if r and not r.rewarded and u.verified:
                 parent = db.get(User, r.referrer_id)
                 if parent and not parent.suspended:
-                    credit(db, parent.id, 20, "referral", u.id, "referral:" + u.id)
                     r.rewarded = True
     return {
         "claimed": True,

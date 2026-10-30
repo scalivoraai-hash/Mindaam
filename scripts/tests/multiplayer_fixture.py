@@ -37,7 +37,7 @@ else:
                 x,z=safe_spawn(city)
             for i,u in enumerate(users):
                 p=db.get(Presence,u.id);p.city=city;p.x=x;p.z=z;p.zone_id='world';p.mode='walk';p.motion_speed=0;p.last_move=time.time();p.updated_at=time.time()
-                credit(db,u.id,100,'local_browser_qa','local-only-'+str(time.time()),'local-qa:'+u.id+':'+str(time.time()))
+                credit(db,u.id,100,'purchase','local-only-'+str(time.time()),'local-qa:'+u.id+':'+str(time.time()))
                 credit(db,u.id,100,'local_browser_qa','xp-local-only-'+str(time.time()),'xp-local-qa:'+u.id+':'+str(time.time()),currency='xp')
             directions=[(math.sin(i*math.pi/8),math.cos(i*math.pi/8)) for i in range(16)]
             direction=max(directions,key=lambda v:sum(traversable(city,x+v[0]*d,z+v[1]*d,'walk') for d in [j*.25 for j in range(1,33)]))

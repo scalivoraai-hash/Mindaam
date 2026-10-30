@@ -8,8 +8,10 @@ from backend.api.mobility import RentalAsset,RentalLease,RentalConsent,POLICY,DE
 from backend.api.gifts import GiftDelivery
 from backend.api.geography import safe_spawn,traversable,driving_segments
 
+from backend.tests.economy_fixtures import purchased_fixture
+
 def login(c,name):
- h,u=register(c,name);onboard(c,h);return h,u
+ h,u=register(c,name);onboard(c,h);purchased_fixture(u['id']);return h,u
 
 def test_exit_survives_presence_timeout_and_closed_building(system):
  c,dbs=system;h,u=login(c,'exit_recovery');x,z=safe_spawn('london')

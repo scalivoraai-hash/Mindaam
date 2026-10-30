@@ -1,4 +1,4 @@
-"""Atomic event entitlements using existing Credits. No creator cash-out or transfers."""
+"""Atomic event entitlements and conserved attendee-to-organiser PC transfers."""
 import time
 from uuid import UUID
 from fastapi import APIRouter,Depends,HTTPException
@@ -6,7 +6,7 @@ from pydantic import Field
 from sqlalchemy import String,Integer,Float,ForeignKey,UniqueConstraint,select,func
 from sqlalchemy.orm import Mapped,mapped_column
 from .db import Base,get_db
-from .models import Event,Attendee,User,uid,Audit
+from .models import Event,Attendee,User,uid,Audit,Ledger
 from .auth import current_user
 from .core import Strict,serialize
 from .economy import credit
@@ -43,7 +43,9 @@ def purchase(id:str,data:Purchase,u=Depends(current_user),db=Depends(get_db)):
  from . import events
  from .payment_policy import require_payment_actions
  require_payment_actions()
- e=events.get(db,id,u);db.scalar(select(User.id).where(User.id==u.id).with_for_update())
+ e=events.get(db,id,u)
+ # Stable account order also serializes concurrent cross-event purchases.
+ list(db.scalars(select(User.id).where(User.id.in_([u.id,e.host_id])).order_by(User.id).with_for_update()))
  prior=db.scalar(select(EventTicket).where(EventTicket.user_id==u.id,EventTicket.request_id==str(data.request_id)))
  if prior:
   if prior.event_id!=id or prior.cost!=data.expected_cost:raise HTTPException(409,'This confirmation belongs to a different ticket')
@@ -56,6 +58,8 @@ def purchase(id:str,data:Purchase,u=Depends(current_user),db=Depends(get_db)):
  if e.ends_at and e.ends_at<=time.time():raise HTTPException(409,'This event has ended')
  from .venue_modes import mode
  if mode(db,e)=='grand_arena':
+  from .payment_policy import require_grand_arena
+  require_grand_arena()
   from .venue_rentals import booking
   if not booking(db,e.id):raise HTTPException(409,'The organiser must confirm the arena reservation before selling tickets')
  a=events.eligible(db,e,u)
@@ -66,13 +70,25 @@ def purchase(id:str,data:Purchase,u=Depends(current_user),db=Depends(get_db)):
  if sales(db,id)>=e.capacity-1:raise HTTPException(409,'All audience tickets have been sold')
  row=EventTicket(id=uid(),event_id=id,user_id=u.id,request_id=str(data.request_id),cost=e.ticket_price)
  row.ledger_id=credit(db,u.id,-e.ticket_price,'event_ticket',row.id,'event-ticket:'+str(data.request_id)).id
+ proceeds=credit(db,e.host_id,e.ticket_price,'event_ticket_sale',row.id,'event-ticket-sale:'+row.id)
+ db.add(Audit(actor_id=u.id,action='event.ticket_transfer',target=row.id,details={'attendee_ledger_id':row.ledger_id,'organiser_ledger_id':proceeds.id,'organiser_id':e.host_id,'amount':e.ticket_price}))
  db.add(row);db.flush();events.notify(db,u.id,'event.ticket','Ticket confirmed for '+e.title,id)
  db.add(Audit(actor_id=u.id,action='event.ticket_confirmed',target=id,details={'ticket_id':row.id,'cost':row.cost}))
  return serialize(row)
 
 def refund_cancelled(db,e):
  # Called under the event lock. Deterministic ledger keys make repeated cancellation harmless.
- for row in db.scalars(select(EventTicket).where(EventTicket.event_id==e.id,EventTicket.refunded_at==None).order_by(EventTicket.user_id)):
+ rows=list(db.scalars(select(EventTicket).where(EventTicket.event_id==e.id,EventTicket.refunded_at==None).order_by(EventTicket.user_id)))
+ proceeds={row.id:db.scalar(select(Ledger).where(Ledger.currency=='credits',Ledger.kind=='event_ticket_sale',Ledger.source==row.id)) for row in rows}
+ accounts=sorted({row.user_id for row in rows}|{sale.user_id for sale in proceeds.values() if sale})
+ list(db.scalars(select(User.id).where(User.id.in_(accounts)).order_by(User.id).with_for_update()))
+ for row in rows:
+  sale=proceeds[row.id]
+  if sale:
+   # Use the original recipient, never a later host edit. If funds are absent,
+   # fail the entire cancellation instead of minting a refund or going negative.
+   credit(db,sale.user_id,-row.cost,'event_ticket_sale_reversal',row.id,'event-ticket-sale-reversal:'+row.id)
+  # Legacy tickets never credited an organiser; refund their original debit only.
   credit(db,row.user_id,row.cost,'event_ticket_refund',row.id,'event-ticket-refund:'+row.id)
   row.refunded_at=time.time()
   from .events import notify

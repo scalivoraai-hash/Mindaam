@@ -26,6 +26,12 @@ def credit(db, user_id, amount, kind, source, key, currency="credits"):
         or currency not in {"credits", "xp"}
     ):
         raise HTTPException(400, "Invalid ledger amount or currency")
+    # Gameplay/admin grants cannot mint purchased currency. Refunds return an
+    # existing debit; event sales transfer existing PC in the same transaction.
+    if currency == "credits" and amount > 0 and kind not in {
+        "purchase", "subscription", "event_ticket_sale", "event_ticket_refund", "venue_refund"
+    }:
+        raise HTTPException(409, "Pulse Credits require a verified purchase or a conserved transfer/refund")
     db.scalar(select(User).where(User.id == user_id).with_for_update())
     row = db.scalar(
         select(Ledger).where(

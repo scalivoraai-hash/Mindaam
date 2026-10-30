@@ -65,8 +65,8 @@ def conflict(db,city,start,end,event_id):
 def catalogue(city:str,u=Depends(current_user),db=Depends(get_db)):
  from .venue_time import city_timezone
  d=destination(db,city)
- from .payment_policy import actions_enabled,MESSAGE
- return {**settings(db),'enabled':bool(settings(db).get('enabled') and actions_enabled()),'unavailable_reason':None if actions_enabled() else MESSAGE,'city':city,'timezone':str(city_timezone(d)),'purchased_credits':purchased_available(db,u.id),
+ from .payment_policy import actions_enabled,MESSAGE,grand_arena_enabled,ARENA_MESSAGE
+ return {**settings(db),'enabled':bool(settings(db).get('enabled') and actions_enabled() and grand_arena_enabled()),'unavailable_reason':ARENA_MESSAGE if not grand_arena_enabled() else (None if actions_enabled() else MESSAGE),'city':city,'timezone':str(city_timezone(d)),'purchased_credits':purchased_available(db,u.id),
   'reservations':[{'starts_at':b.starts_at,'ends_at':b.ends_at} for b in db.scalars(select(VenueBooking).join(Event,Event.id==VenueBooking.event_id).where(Event.status!='cancelled',VenueBooking.city==city,VenueBooking.ends_at>time.time(),VenueBooking.starts_at<time.time()+86400*30).order_by(VenueBooking.starts_at).limit(100))]}
 
 class BookingInput(Strict):
@@ -98,8 +98,9 @@ def my_reservations(u=Depends(current_user),db=Depends(get_db)):
 
 @router.post('/events/{id}/venue/booking')
 def reserve(id:str,data:BookingInput,u=Depends(current_user),db=Depends(get_db)):
- from .payment_policy import require_payment_actions
+ from .payment_policy import require_grand_arena,require_payment_actions
  require_payment_actions()
+ require_grand_arena()
  e=events.get(db,id,u,True)
  if e.host_id!=u.id:raise HTTPException(403,'Only the event creator can purchase a reservation')
  db.scalar(select(User.id).where(User.id==u.id).with_for_update())

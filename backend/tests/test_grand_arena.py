@@ -6,6 +6,7 @@ from backend.tests.test_core import system,register,onboard
 from backend.tests.test_venue_credits_rotation import create
 from backend.api.models import User,Ledger
 from backend.api.economy import credit,balance
+from backend.tests.economy_fixtures import historical_gameplay_fixture,purchased_fixture
 from backend.api.venue_time import local_slots
 from backend.api import world
 from sqlalchemy import select,func
@@ -60,7 +61,7 @@ def test_ticket_refund_preserves_only_purchased_eligibility(system):
  c,dbs=system;h,u=register(c);onboard(c,h)
  with dbs.begin() as db:
   credit(db,u['id'],20,'purchase','fixture','partial-purchase')
-  credit(db,u['id'],100,'mission','fixture','earned-fixture')
+  historical_gameplay_fixture(db,u['id'],100,'earned-fixture')
   assert purchased_available(db,u['id'])==20
   credit(db,u['id'],-50,'event_ticket','test-ticket','test-ticket-debit')
   assert purchased_available(db,u['id'])==0
@@ -122,6 +123,7 @@ def test_ticket_holder_reminder_and_suspended_host_refund(system):
  from backend.api.event_tickets import ticket
  c,dbs=system;host,owner=register(c,'reminder_host');guest,user=register(c,'reminder_guest')
  for h in [host,guest]:onboard(c,h)
+ purchased_fixture(user['id'],sessions=dbs)
  e=c.post('/api/events',headers=host,json={'title':'Ticket reminder test','city':'london','starts_at':time.time()+250,'ticket_price':10}).json()
  with dbs() as db:before=balance(db,user['id'])
  assert c.post('/api/events/'+e['id']+'/tickets',headers=guest,json={'request_id':str(uuid.uuid4()),'expected_cost':10}).status_code==200
@@ -151,3 +153,7 @@ def test_approved_default_price_debit_and_retry(system,hours,cost):
  retry=c.post('/api/events/'+e['id']+'/venue/booking',headers=h,json=data)
  assert retry.status_code==200 and retry.json()['id']==first.json()['id']
  assert c.get('/api/wallet',headers=h).json()['credits']==before-cost
+
+@pytest.fixture(autouse=True)
+def enable_arena_for_preserved_booking_regressions(monkeypatch):
+ monkeypatch.setenv("MINDAAM_GRAND_ARENA_ENABLED","true")

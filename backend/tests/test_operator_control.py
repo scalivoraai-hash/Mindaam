@@ -26,20 +26,20 @@ def test_directory_detail_permissions_and_private_fields(system):
 def test_adjustment_idempotency_audit_and_limits(system):
  c,dbs=system;ordinary,user=register(c,'customer');admin,owner=operator(c,dbs)
  path='/api/super-admin/users/'+user['id']+'/adjustments'
- body={'request_id':str(uuid.uuid4()),'currency':'credits','amount':20,'purpose':'support','reason':'Documented support correction','confirmed':True}
+ body={'request_id':str(uuid.uuid4()),'currency':'xp','amount':20,'purpose':'xp_award','reason':'Documented support correction','confirmed':True}
  assert c.post(path,headers=ordinary,json=body).status_code==403
- with dbs() as db:before=balance(db,user['id'])
+ with dbs() as db:before=balance(db,user['id'],'xp')
  first=c.post(path,headers=admin,json=body);assert first.status_code==200,first.text
  second=c.post(path,headers=admin,json=body);assert second.status_code==200 and second.json()['replayed']
  assert c.post(path,headers=admin,json={**body,'amount':21}).status_code==409
- assert c.post(path,headers=admin,json={**body,'request_id':str(uuid.uuid4()),'amount':1001}).status_code==409
+ assert c.post(path,headers=admin,json={**body,'request_id':str(uuid.uuid4()),'amount':5001}).status_code==409
  assert c.post(path,headers=admin,json={**body,'request_id':str(uuid.uuid4()),'amount':-999,'purpose':'correction'}).status_code==409
  assert c.post(path,headers=admin,json={**body,'confirmed':False}).status_code==422
  with dbs() as db:
-  assert balance(db,user['id'])==before+20
+  assert balance(db,user['id'],'xp')==before+20
   rows=list(db.scalars(select(Audit).where(Audit.action=='wallet.adjusted')));assert len(rows)==1
   assert rows[0].actor_id==owner['id'] and rows[0].details['reason']==body['reason']
-  assert db.scalar(select(func.count()).select_from(Ledger).where(Ledger.kind=='admin_support'))==1
+  assert db.scalar(select(func.count()).select_from(Ledger).where(Ledger.kind=='admin_xp_award'))==1
 
 def test_status_requires_reason_and_records_operator(system):
  c,dbs=system;_,user=register(c,'customer');admin,owner=operator(c,dbs)
@@ -54,19 +54,19 @@ def test_status_requires_reason_and_records_operator(system):
 def test_independent_review_cannot_self_approve_or_duplicate(system):
  c,dbs=system;_,user=register(c,'customer');admin,owner=operator(c,dbs);reviewer,other=register(c,'reviewer')
  with dbs.begin() as db:db.get(User,other['id']).role='super_admin'
- body={'request_id':str(uuid.uuid4()),'currency':'credits','amount':2000,'purpose':'support','reason':'Documented exceptional support','confirmed':True}
+ body={'request_id':str(uuid.uuid4()),'currency':'xp','amount':2000,'purpose':'xp_award','reason':'Documented exceptional support','confirmed':True}
  path='/api/super-admin/users/'+user['id']+'/adjustment-requests'
- with dbs() as db:before=balance(db,user['id'])
+ with dbs() as db:before=balance(db,user['id'],'xp')
  r=c.post(path,headers=admin,json=body);assert r.status_code==200,r.text
  assert c.post(path,headers=admin,json=body).json()['id']==r.json()['id']
  decision='/api/super-admin/adjustment-requests/'+r.json()['id']+'/decision'
  payload={'approve':True,'confirmed':True,'reason':'Independent evidence review completed'}
  assert c.post(decision,headers=admin,json=payload).status_code==403
- with dbs() as db:assert balance(db,user['id'])==before
+ with dbs() as db:assert balance(db,user['id'],'xp')==before
  for _ in range(2):
   r=c.post(decision,headers=reviewer,json=payload);assert r.status_code==200,r.text
  with dbs() as db:
-  assert balance(db,user['id'])==before+2000
+  assert balance(db,user['id'],'xp')==before+2000
   from backend.api.venue_rentals import purchased_available
   assert purchased_available(db,user['id'])==0
   assert db.scalar(select(func.count()).select_from(Audit).where(Audit.action=='wallet.review_approved'))==1
@@ -99,12 +99,18 @@ def test_presence_counts_exclude_stale_and_suspended_and_separate_xp(system):
  with dbs.begin() as db:
   db.add(Presence(user_id=user['id'],city='london',zone_id='world',updated_at=time.time()))
   db.add(Presence(user_id=stale['id'],city='london',zone_id='world',updated_at=time.time()-200))
-  credit(db,user['id'],5,'qa_kind','local','pc')
+  credit(db,user['id'],5,'purchase','local','pc')
   credit(db,user['id'],50,'qa_kind','local','xp','xp')
  r=c.get('/api/super-admin/live?city=london',headers=admin);assert r.status_code==200,r.text
  assert r.json()['online_users']==1 and r.json()['zones'][0]['online']==1
  assert not any(k in r.json()['zones'][0] for k in ['x','z','latitude','longitude'])
  r=c.get('/api/super-admin/overview',headers=admin);assert r.status_code==200,r.text
- assert next(row for row in r.json()['credit_activity'] if row['kind']=='qa_kind')['amount']==5
+ assert next(row for row in r.json()['credit_activity'] if row['kind']=='purchase')['amount']==5
  with dbs.begin() as db:db.get(User,user['id']).suspended=True
  assert c.get('/api/super-admin/live',headers=admin).json()['online_users']==0
+
+def test_operator_cannot_mint_pulse_credits(system):
+ c,dbs=system;_,user=register(c,'no_grant');admin,_=operator(c,dbs)
+ response=c.post('/api/super-admin/users/'+user['id']+'/adjustments',headers=admin,json={'request_id':str(uuid.uuid4()),'currency':'credits','amount':20,'purpose':'support','reason':'No unpurchased currency','confirmed':True})
+ assert response.status_code==409
+ with dbs() as db:assert balance(db,user['id'])==0

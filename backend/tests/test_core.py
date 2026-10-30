@@ -86,7 +86,7 @@ def test_auth_onboarding_wallet_logout(system):
     onboard(c, h)
     onboard(c, h)
     w = c.get("/api/wallet", headers=h).json()
-    assert (w["credits"], w["xp"]) == (50, 20)
+    assert (w["credits"], w["xp"]) == (0, 20)
     assert c.get("/api/admin/users", headers=h).status_code == 403
     assert (
         c.post(
@@ -127,7 +127,7 @@ def test_collection_authority_mission_and_no_replay(system):
             "/api/collectibles/london-local-" + str(i) + "/claim", headers=h
         ).json()["already_claimed"]
     w = c.get("/api/wallet", headers=h).json()
-    assert w["credits"] == 80 and w["xp"] == 100
+    assert w["credits"] == 0 and w["xp"] == 100
     m = c.get("/api/missions", headers=h).json()
     assert m[0]["completed"]
     assert c.get("/api/passport", headers=h).status_code == 200
@@ -142,7 +142,8 @@ def test_concurrent_daily_reward_exactly_once(system):
             executor.map(lambda _: c.post("/api/rewards/daily", headers=h), range(6))
         )
     assert all(r.status_code == 200 for r in replies)
-    assert c.get("/api/wallet", headers=h).json()["credits"] == 60
+    assert c.get("/api/wallet", headers=h).json()["credits"] == 0
+    assert c.get("/api/wallet", headers=h).json()["xp"] == 30
     with sessions() as db:
         assert (
             db.scalar(
@@ -228,19 +229,19 @@ def test_ledger_atomic_rollback_conflict_and_overdraft(system):
     onboard(c, h)
     with pytest.raises(RuntimeError):
         with sessions.begin() as db:
-            credit(db, u["id"], 25, "test", "x", "k")
+            credit(db, u["id"], 25, "purchase", "local-purchase", "k")
             raise RuntimeError("Abort transaction")
-    assert c.get("/api/wallet", headers=h).json()["credits"] == 50
+    assert c.get("/api/wallet", headers=h).json()["credits"] == 0
     from fastapi import HTTPException
 
     with pytest.raises(HTTPException):
         with sessions.begin() as db:
             credit(db, u["id"], -60, "spend", "x", "overdraft")
     with sessions.begin() as db:
-        credit(db, u["id"], 10, "test", "x", "k")
+        credit(db, u["id"], 10, "purchase", "local-purchase", "k")
     with pytest.raises(HTTPException):
         with sessions.begin() as db:
-            credit(db, u["id"], 20, "test", "x", "k")
+            credit(db, u["id"], 20, "purchase", "local-purchase", "k")
 
 
 def test_authenticated_realtime_and_revoked_session(system):

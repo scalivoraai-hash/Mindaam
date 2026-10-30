@@ -265,7 +265,6 @@ def onboarding(data: Onboarding, u=Depends(current_user), db=Depends(get_db)):
         setattr(u, k, v)
     if not u.onboarded:
         pack = config(db, "welcome_pack", {"credits": 50, "xp": 20, "bike_days": 7})
-        credit(db, u.id, int(pack["credits"]), "welcome", "onboarding", "welcome")
         credit(
             db, u.id, int(pack["xp"]), "welcome", "onboarding", "welcome", currency="xp"
         )
@@ -350,15 +349,17 @@ def daily(u=Depends(current_user), db=Depends(get_db)):
         return {
             "claimed": True,
             "amount": existing.amount,
+            "currency": existing.currency,
             "credits": balance(db, u.id),
             "already_claimed": True,
         }
     amount = int(schedule[streak % len(schedule)])
-    credit(db, u.id, amount, "daily", day, "daily:" + day)
+    credit(db, u.id, amount, "daily", day, "daily:" + day, currency="xp")
     emit(db, u, "daily_reward_claimed", day)
     return {
         "claimed": True,
         "amount": amount,
+        "currency": "xp",
         "credits": balance(db, u.id),
         "streak": streak + 1,
     }
@@ -394,6 +395,7 @@ def export(u=Depends(current_user), db=Depends(get_db)):
     import base64
     from .profile_media import ProfilePhoto
     from .identity import commerce_export
+    from .feedback import ProductFeedback
     from .discovery import PassportStamp, CityInterest
     from .transit import Ticket
     from .operations import AdEnquiry
@@ -410,6 +412,7 @@ def export(u=Depends(current_user), db=Depends(get_db)):
         'business_interactions':[serialize(r) for r in db.scalars(select(BusinessInteraction).where(BusinessInteraction.user_id==u.id))],
         "profile_photos": [{"kind":p.kind,"mime":"image/jpeg","content":base64.b64encode(p.data).decode()} for p in db.scalars(select(ProfilePhoto).where(ProfilePhoto.user_id==u.id))],
         "commerce": commerce_export(db, u),
+        "feedback": [{k:v for k,v in serialize(r).items() if k!="internal_notes"} for r in db.scalars(select(ProductFeedback).where(ProductFeedback.user_id==u.id))],
         "transport_tickets": [serialize(x) for x in db.scalars(select(Ticket).where(Ticket.user_id==u.id))],
         "advertising_enquiries": [serialize(x) for x in db.scalars(select(AdEnquiry).where(AdEnquiry.user_id==u.id))],
         "passport": [

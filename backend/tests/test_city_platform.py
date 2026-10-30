@@ -8,9 +8,11 @@ from backend.api.operations import AdBoard,AdCampaign,AdEnquiry,Creative
 from backend.api.civic import PublicBuilding
 from backend.api.economy import balance
 
+from backend.tests.economy_fixtures import purchased_fixture
+
 def pair(c):
  a=register(c,'city_alice');b=register(c,'city_bob')
- for h,u in [a,b]:onboard(c,h)
+ for h,u in [a,b]:onboard(c,h);purchased_fixture(u['id'])
  return a,b
 
 def test_friends_mutual_requests_remove_block_and_cross_world_media(system):
@@ -132,7 +134,8 @@ def test_super_admin_campaign_enquiry_and_schedule(system,monkeypatch):
  with dbs.begin() as db:db.get(User,a[1]['id']).must_change_password=True
  assert c.get('/api/super-admin/overview',headers=a[0]).status_code==403
 
-def test_auditorium_gifts_idempotent_and_chat_setting(system):
+def test_auditorium_gifts_idempotent_and_chat_setting(system,monkeypatch):
+ monkeypatch.setenv("MINDAAM_GRAND_ARENA_ENABLED","true")
  c,dbs=system;a,b=pair(c)
  for h,u in [a,b]:c.post('/api/world/enter',headers=h,json={'city':'london'})
  event=c.post('/api/events',headers=a[0],json={'title':'Test auditorium','city':'london','starts_at':time.time()+60,'capacity':100,'venue_experience_type':'auditorium','venue_mode':'grand_arena','communication_mode':'text'}).json();id=event['id']

@@ -1,10 +1,11 @@
+/* Preserved Arena regression runs opt in only in disposable local databases; public default-closed behavior is tested separately. */
 /* Real production Next build + existing API + local LiveKit, isolated user contexts.
  * Synthetic camera and sine-wave microphone exercise WebRTC; no physical-device claim. */
 const {spawn,execFileSync}=require('child_process'),fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('assert/strict');
 const {chromium}=require((process.env.QA_NODE_MODULES||process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES)+'/playwright');
 const root=path.resolve(__dirname,'../..'),out=process.env.QA_OUTPUT||'/tmp/mylil-multiplayer-evidence';fs.mkdirSync(out,{recursive:true});
 const python=process.env.QA_PYTHON||'/tmp/mylil-visual-testenv/bin/python',origin='http://127.0.0.1:3000';
-const env={...process.env,APP_ENV:'local',PUBLIC_ORIGIN:origin,DATABASE_URL:'sqlite:////tmp/mylil-multi-'+Date.now()+'.db',LIVEKIT_URL:'ws://127.0.0.1:7880',LIVEKIT_API_KEY:'local-browser-qa',LIVEKIT_API_SECRET:crypto.randomBytes(32).toString('hex')};
+const env={...process.env,APP_ENV:'local',MINDAAM_GRAND_ARENA_ENABLED:'true',PUBLIC_ORIGIN:origin,DATABASE_URL:'sqlite:////tmp/mylil-multi-'+Date.now()+'.db',LIVEKIT_URL:'ws://127.0.0.1:7880',LIVEKIT_API_KEY:'local-browser-qa',LIVEKIT_API_SECRET:crypto.randomBytes(32).toString('hex')};
 const skipMedia=process.env.QA_SKIP_MEDIA==='1',mapRenderer=process.env.QA_RENDERER==='map',mixedRenderer=process.env.QA_RENDERER==='mixed';const children=[],results=[],errors=[];let browser;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const fixture=(action,data={})=>JSON.parse(execFileSync(python,['-m','scripts.tests.multiplayer_fixture',action,JSON.stringify(data)],{cwd:root,env,encoding:'utf8'}));

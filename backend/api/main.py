@@ -426,3 +426,6 @@ app.include_router(public_profiles_router)
 
 from .profile_media import router as profile_media_router
 app.include_router(profile_media_router)
+
+from .feedback import router as feedback_router
+app.include_router(feedback_router)
