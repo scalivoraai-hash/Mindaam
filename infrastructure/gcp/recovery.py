@@ -10,8 +10,10 @@ from render import postgres
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from release_policy import evidence_name
-# Exact targeted outdoor release authorised by the owner; never accept arbitrary SHAs.
+# Existing production approval remains pinned separately from a recovery drill.
 SHA = '1af2051d13e56aff76ec69ad0cbcec73146aa7df'
+# Owner-authorised verification only; this does not approve production promotion.
+RECOVERY_SHA = '7ffc0b0c349ac7209c1a124a4ec62f35bb6152d9'
 
 
 def target(run, attempt):
@@ -59,7 +61,7 @@ print('MINDAAM_RECOVERY_RESULT '+json.dumps(result))
 
 
 def run(c, sha):
-    if sha != SHA or c.project != 'mindaam':
+    if sha != RECOVERY_SHA or c.project != 'mindaam':
         raise Blocked('Recovery approval is limited to the exact Mindaam release')
     release=c.get_json(f'releases/{sha}/{evidence_name()}')
     if not release or release.get('sha') != sha:
