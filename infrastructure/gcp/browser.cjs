@@ -111,6 +111,34 @@ async function main(){
   for(const u of [a,b]){assert.equal(await u.page.evaluate(()=>window.__gcpPeers.length),0);assert.ok((await u.api('/friends')).some(p=>p.friend&&p.id===(u===a?b.id:a.id)))}
   await act(a,a.page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'PEOPLE',exact:true}),'Acceptance control');
   await a.page.getByRole('heading',{name:'Your people',exact:true}).waitFor();await act(a,a.page.getByRole('tab',{name:'Friends',exact:true}),'Acceptance control');
+  stage='settings-feedback';
+  await act(a,a.page.getByRole('button',{name:'Close panel',exact:true}),'Close people panel');
+  await act(a,a.page.getByRole('button',{name:'Account settings',exact:true}),'Open Settings');
+  await act(a,a.page.getByRole('button',{name:'Edit Profile · Identity, Location & Avatar',exact:true}),'Edit Profile');
+  assert.equal(await a.page.getByRole('heading',{name:'Help Shape Mindaam',exact:true}).count(),0);
+  const profileForm=a.page.locator('.profile-editor');await profileForm.getByLabel('Display name',{exact:true}).fill('Staging settings acceptance');
+  await act(a,profileForm.getByRole('button',{name:'Save Profile',exact:true}),'Save existing profile');
+  await profileForm.getByText('Profile saved.',{exact:true}).waitFor();assert.equal((await a.api('/me')).profile.display_name,'Staging settings acceptance');
+  await act(a,a.page.getByRole('button',{name:'Close panel',exact:true}),'Close profile');
+  await act(a,a.page.getByRole('button',{name:'Account settings',exact:true}),'Open Settings');
+  await act(a,a.page.getByRole('button',{name:'Help Shape Mindaam',exact:true}),'Open feedback');
+  const feedbackForm=a.page.getByRole('dialog',{name:'Help Shape Mindaam',exact:true}).locator('form');assert.equal(await feedbackForm.count(),1);
+  for(const category of ['feature','feedback']){
+   await feedbackForm.getByRole('combobox',{name:/^Category/}).selectOption(category);
+   await feedbackForm.getByLabel('Title',{exact:true}).fill('Staging acceptance '+category);
+   await feedbackForm.getByLabel('Description',{exact:true}).fill('Disposable staging acceptance of the existing Settings feedback form.');
+   const response=a.page.waitForResponse(r=>new URL(r.url()).pathname==='/api/feedback'&&r.request().method()==='POST');
+   await act(a,feedbackForm.getByRole('button',{name:'Submit',exact:true}),'Submit '+category);assert.equal((await response).status(),201);
+   await feedbackForm.getByText('Thank you. Your submission has been saved for review.',{exact:true}).waitFor();
+  }
+  for(const size of [{width:390,height:844},{width:820,height:1180},{width:1180,height:820},{width:1440,height:900}]){
+   await a.page.setViewportSize(size);assert.ok(await feedbackForm.locator('input,textarea,select,button').evaluateAll(es=>es.every(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1})));
+   await screenshot(a,'settings-feedback-'+size.width+(result.forced_turn?'-turn':''));
+  }
+  await a.page.setViewportSize({width:1100,height:760});await act(a,a.page.getByRole('button',{name:'Close panel',exact:true}),'Close feedback');
+  checks.settings_feedback=true;checks.profile_edit_preserved=true;
+  await act(a,a.page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'PEOPLE',exact:true}),'Restore people panel');
+  await a.page.getByRole('heading',{name:'Your people',exact:true}).waitFor();await act(a,a.page.getByRole('tab',{name:'Friends',exact:true}),'Restore friends tab');
   stage='profiles';await b.api('/me/profile',{display_name:'Staging profile check',bio:'Automated staging acceptance',links:{instagram:{url:'@mindaamqa',visible:true},facebook:{url:'mindaamqa',visible:false}}},'PUT');
   await act(a,a.page.locator('.friend-card').filter({hasText:b.username}).getByRole('button',{name:'View profile',exact:true}),'Acceptance control');const profile=a.page.getByRole('dialog',{name:'Player profile',exact:true});await profile.getByRole('heading',{name:'Staging profile check',exact:true}).waitFor();assert.equal(await profile.locator('a[href*="facebook.com"]').count(),0);await act(a,profile.getByRole('button',{name:'Follow',exact:true}),'Player profile control');await profile.getByRole('button',{name:'Unfollow',exact:true}).waitFor();await act(a,profile.getByRole('button',{name:'Avatar',exact:true}),'Player profile control');await profile.locator('.avatar-preview canvas').waitFor();assert.equal(await profile.getByText('3D preview is unavailable in this browser.',{exact:false}).count(),0);await act(a,profile.getByRole('button',{name:'Close profile',exact:true}),'Player profile control');checks.profiles=true;checks.avatar_rendering=true;
   await act(a,a.page.getByRole('button',{name:'Close panel',exact:true}),'Acceptance control');
@@ -182,6 +210,7 @@ async function main(){
   }
   for(const key of acceptanceRequired)assert.equal(checks[key],true,'Missing acceptance '+key);
   assert.equal(errors.length,0,'No uncaught browser errors');
+  result.request_observations=activeUsers.map(u=>({index:u.index,failures:u.failures,console:u.logs}));
   fs.writeFileSync(path.join(out,result.forced_turn?'relay.json':'direct.json'),JSON.stringify(result,null,2));
   if(result.forced_turn){const direct=JSON.parse(fs.readFileSync(path.join(out,'direct.json')));assert.equal(direct.sha,result.sha);assert.equal(direct.origin,origin);fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify({...result,checks:{...direct.checks,...result.checks}},null,2));}
  }catch(e){await diagnostics(e);throw e}finally{

@@ -14,11 +14,14 @@ from backend.api.db import SessionLocal
 from sqlalchemy import text
 '''+source+'''
 with SessionLocal.begin() as db:
+ db.execute(text('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ'))
  db.execute(text('SET TRANSACTION READ ONLY'))
  identity=tuple(db.execute(text('SELECT current_database(),current_user')).one())
  assert identity==('mindaam_production','mindaam_production')
  assert db.execute(text('SHOW transaction_read_only')).scalar()=='on'
- result=inspect(db);result.pop('accounts')
+ result=inspect(db)
+ for account in result['accounts']:account.pop('user_id')
+ result['report_sha256']=hashlib.sha256(json.dumps(result,sort_keys=True,separators=(',',':')).encode()).hexdigest()
  result['database_identity_verified']=True
  print('MINDAAM_LEDGER_DRY_RUN '+json.dumps(result,sort_keys=True))
 '''
@@ -47,9 +50,9 @@ def run(c,sha):
   time.sleep(5)
  if len(rows)!=1:raise Blocked('Unique read-only ledger evidence unavailable')
  result=json.loads(rows[0]['textPayload'].split('MINDAAM_LEDGER_DRY_RUN ',1)[1])
- if result.get('adjustments_applied') is not False or result.get('mode')!='DRY_RUN_ONLY' or 'accounts' in result or result.get('database_identity_verified') is not True:raise Blocked('Invalid aggregate-only ledger evidence')
+ if result.get('adjustments_applied') is not False or result.get('mode')!='DRY_RUN_ONLY' or any('user_id' in a for a in result.get('accounts',[])) or result.get('database_identity_verified') is not True:raise Blocked('Invalid redacted ledger evidence')
  result.update({'sha':sha,'image':image,'revision':release['revision'],'execution':execution,'observed_at':int(time.time())})
  Path('gcp-evidence').mkdir(exist_ok=True)
  Path('gcp-evidence/ledger-review.json').write_text(json.dumps(result,indent=2))
  c.put_json(f'releases/{sha}/ledger-review.json',result)
- print('Actual aggregate ledger dry run recorded. No balances changed; owner review and backup required before adjustments.')
+ print('Actual redacted account-level ledger dry run recorded. No balances changed; owner review and backup required before adjustments.')

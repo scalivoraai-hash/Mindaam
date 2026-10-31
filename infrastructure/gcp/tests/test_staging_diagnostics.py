@@ -35,3 +35,9 @@ class StagingDiagnostics(unittest.TestCase):
   signals=summarize([row])[0]['signals']
   self.assertEqual(signals,{'exception_type':['sqlalchemy.orm.exc.ObjectDeletedError'],'http_status':499})
   self.assertNotIn('private',str(signals));self.assertNotIn('secret',str(signals))
+
+ def test_payment_gate_routes_hide_ids_and_queries(self):
+  row={'httpRequest':{'status':503,'requestUrl':'https://mindaam.com/api/events/private-event/venue/booking?token=secret'}}
+  signals=summarize([row])[0]['signals']
+  self.assertEqual(signals,{'http_status':503,'request_route':'/api/events/[id]/venue/booking'})
+  self.assertNotIn('secret',str(signals));self.assertNotIn('private-event',str(signals))

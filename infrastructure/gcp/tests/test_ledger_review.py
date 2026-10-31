@@ -11,7 +11,8 @@ class LedgerReviewTests(unittest.TestCase):
   source=probe_source();compile(source,'ledger-probe','exec')
   self.assertIn("os.environ['RUNTIME_DATABASE_URL']",source)
   self.assertIn('SET TRANSACTION READ ONLY',source)
-  self.assertIn("result.pop('accounts')",source)
+  self.assertIn("account.pop('user_id')",source)
+  self.assertIn("result['report_sha256']",source)
   self.assertNotIn('bootstrap_owner',source)
  def test_candidate_source_lookup_is_anchored_to_checkout(self):
   from types import SimpleNamespace
