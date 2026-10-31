@@ -13,6 +13,11 @@ class LedgerReviewTests(unittest.TestCase):
   self.assertIn('SET TRANSACTION READ ONLY',source)
   self.assertIn("result.pop('accounts')",source)
   self.assertNotIn('bootstrap_owner',source)
+ def test_candidate_source_lookup_is_anchored_to_checkout(self):
+  from types import SimpleNamespace
+  with patch('ledger_review.Path.exists',return_value=False),patch('ledger_review.subprocess.run',return_value=SimpleNamespace(stdout='def inspect(db):return {}')) as command:
+   compile(probe_source(),'fallback-probe','exec')
+  self.assertEqual(command.call_args.kwargs['cwd'],Path(__file__).resolve().parents[3])
  def test_existing_job_execution_only_and_aggregate_evidence(self):
   class Cloud:
    project='mindaam';region='europe-west2'

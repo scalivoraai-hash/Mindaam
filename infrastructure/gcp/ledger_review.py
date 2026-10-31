@@ -7,7 +7,7 @@ from readiness import ready_service
 def probe_source():
  path=Path(__file__).resolve().parents[2]/'backend/api/ledger_reconciliation.py'
  # The already CI-validated candidate supplies the read-only reviewer before merge.
- source=(path.read_text() if path.exists() else subprocess.run(['git','show','99fdcf7f20ca171592782c7e68bfdd0a28b6a4cc:backend/api/ledger_reconciliation.py'],check=True,capture_output=True,text=True).stdout).split("if __name__=='__main__':")[0].replace('from .models import Ledger','from backend.api.models import Ledger')
+ source=(path.read_text() if path.exists() else subprocess.run(['git','show','99fdcf7f20ca171592782c7e68bfdd0a28b6a4cc:backend/api/ledger_reconciliation.py'],check=True,capture_output=True,text=True,cwd=Path(__file__).resolve().parents[2]).stdout).split("if __name__=='__main__':")[0].replace('from .models import Ledger','from backend.api.models import Ledger')
  return '''import os,json
 os.environ['DATABASE_URL']=os.environ['RUNTIME_DATABASE_URL']
 from backend.api.db import SessionLocal
