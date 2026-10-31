@@ -1,7 +1,7 @@
 import * as T from 'three';
-import {architectureRegion,regionalPalette} from '../lib/cityArchitecture';
-import {buildingStyle} from '../lib/buildingStyle';
-import {box, material, mesh, oval} from './WorldAssets';
+import {architectureRegion,regionalPalette} from '../lib/cityArchitecture.ts';
+import {buildingStyle} from '../lib/buildingStyle.ts';
+import {box, material, mesh, oval} from './WorldAssets.ts';
 
 type Feature={id:string;tags:Record<string,string>;points:number[][];holes?:number[][][]};
 type Geography={features:Feature[];spawn:number[]};
@@ -19,7 +19,7 @@ const distance=(a:number[],b:number[])=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 const hash=(id:string)=>Array.from(id).reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7);
 
 /** Fixed-size atlases and shared materials, batched by the existing world tile renderer. */
-export function buildCityEnvironment(parent:T.Group,geo:Geography,city=''){
+function* buildEnvironment(parent:T.Group,geo:Geography,city='',cancelled=()=>false){
   const region=architectureRegion(city);
   const textures:T.Texture[]=[],materials:T.Material[]=[],buildings:T.Group[]=[];
   function atlas(index:number){
@@ -58,6 +58,8 @@ export function buildCityEnvironment(parent:T.Group,geo:Geography,city=''){
     const m=new T.Mesh(new T.BoxGeometry(width,height,length+.12),mat);m.position.set((a[0]+b[0])/2,y,(a[1]+b[1])/2);m.rotation.y=Math.atan2(b[0]-a[0],b[1]-a[1]);m.receiveShadow=true;parent.add(m);return m;
   };
   for(const f of geo.features){
+    yield;
+    if(cancelled())break;
     if(f.tags.highway==='traffic_signals'&&f.points.length===1){const [x,z]=f.points[0],g=new T.Group();g.position.set(x,0,z);parent.add(g);mesh(new T.CylinderGeometry(.07,.09,3.3,8),'#334b55',g,0,1.65,0);box(g,'#20343e',0,3.02,0,.31,.91,.24);for(const [i,c] of ['#ed796f','#bfaa62','#88b6a1'].entries())oval(g,c,0,3.31-i*.28,.127,.082,.082,.02)}
     if(f.points.length<2)continue;
     if(f.tags.natural==='water'||['park','playground','pitch','garden'].includes(f.tags.leisure)){
@@ -67,6 +69,8 @@ export function buildCityEnvironment(parent:T.Group,geo:Geography,city=''){
     if(!f.tags.highway)continue;
     const foot=['footway','pedestrian','path','steps','cycleway'].includes(f.tags.highway);
     for(let i=1;i<f.points.length;i++){
+      yield;
+      if(cancelled())break;
       const a=f.points[i-1],b=f.points[i],len=distance(a,b);if(len<.1)continue;
       const nx=(b[1]-a[1])/len,nz=-(b[0]-a[0])/len,angle=Math.atan2(b[0]-a[0],b[1]-a[1]);
       if(foot&&(f.tags.footway==='crossing'||f.tags.crossing)){for(let k=.6;k<len;k+=1.1){const m=box(parent,'#f5efdd',a[0]+(b[0]-a[0])*k/len,.226,a[1]+(b[1]-a[1])*k/len,2.8,.022,.52);m.rotation.y=angle}continue}
@@ -86,6 +90,8 @@ export function buildCityEnvironment(parent:T.Group,geo:Geography,city=''){
   }
   let details=0;
   for(const f of geo.features){
+    yield;
+    if(cancelled())break;
     if(!f.tags.building||f.points.length<4)continue;
     const points=f.points.slice(0,-1),c=points.reduce((v,p)=>[v[0]+p[0]/points.length,v[1]+p[1]/points.length],[0,0]);
     const style=buildingStyle(f.tags,f.id),n=style.hash,palette=regionalPalette(city,style.palette,palettes[style.palette],f.tags),height=style.height;
@@ -150,4 +156,21 @@ export function buildCityEnvironment(parent:T.Group,geo:Geography,city=''){
     if(commercial){for(const x of [-width/2,width/2]){box(frontage,'#645344',x,.33,1.2,.7,.65,.7);oval(frontage,'#558069',x,.88,1.2,.48,.43,.45)}}
   }
   return {buildings,dispose:()=>{textures.forEach(t=>t.dispose());materials.forEach(m=>m.dispose())}};
+}
+
+/** Preserve the synchronous construction contract for non-interactive callers. */
+export function buildCityEnvironment(parent:T.Group,geo:Geography,city=''){
+  const work=buildEnvironment(parent,geo,city);let step=work.next();
+  while(!step.done)step=work.next();
+  return step.value;
+}
+/** Keep network responses and scene cancellation responsive during city construction. */
+export async function buildCityEnvironmentAsync(parent:T.Group,geo:Geography,city='',cancelled=()=>false,yieldControl?:()=>Promise<void>){
+  const channel=yieldControl?null:new MessageChannel();
+  const yieldTask=yieldControl||(()=>new Promise<void>(resolve=>{channel!.port1.onmessage=()=>resolve();channel!.port2.postMessage(null)}));
+  try{
+    const work=buildEnvironment(parent,geo,city,cancelled);let step=work.next();
+    while(!step.done){await yieldTask();step=work.next()}
+    return step.value;
+  }finally{channel?.port1.close();channel?.port2.close()}
 }

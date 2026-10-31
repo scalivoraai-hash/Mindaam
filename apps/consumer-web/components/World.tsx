@@ -22,7 +22,7 @@ import {buildingSign,buildingSignSpecs} from './BuildingSigns';
 import {worldScoreboard,scoreboardLocation} from './WorldScoreboard';
 import {storefront} from './Storefront';
 import {DEFAULT_CAMERA,dragCamera,smoothCamera,CameraGesture,boundedZoom} from '@/lib/cameraMotion';
-import {buildCityEnvironment} from './WorldScenery';
+import {buildCityEnvironmentAsync} from './WorldScenery';
 import {orbitOffset,indoorOrbit,indoorFocus,stableIndoorOrbit} from '@/lib/worldCamera';
 import {cameraRelative,MOVEMENT} from '@/lib/movement';
 import {peerConnection} from '@/lib/peerConnection';
@@ -84,7 +84,7 @@ export default function World({cameraOpen=false,onCloseCamera,hudHidden=false,in
  const district=new T.Group();scene.add(district);const buildingGroups:T.Group[]=interiorGroup?[interiorGroup]:[],interact:T.Object3D[]=[],labelData:{object:T.Object3D;text:string;kind:string;data?:Data}[]=[];
  const line=(points:number[][],width:number,color:string,y:number)=>{for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],len=dist(a,b);if(!len)continue;const m=box(district,color,(a[0]+b[0])/2,y,(a[1]+b[1])/2,width,.07,len+.1);m.rotation.y=Math.atan2(b[0]-a[0],b[1]-a[1]);}};
  const patch=(f:Feature,color:string,y:number)=>{const s=new T.Shape(f.points.map(p=>new T.Vector2(p[0],-p[1])));const m=mesh(new T.ShapeGeometry(s),color,district,0,y,0);m.rotation.x=-Math.PI/2;};
- const environment=buildCityEnvironment(district,geo,city);buildingGroups.push(...environment.buildings);
+ const environment=await buildCityEnvironmentAsync(district,geo,city,()=>cancelled);if(cancelled){extras.dispose();scoreboard?.dispose();sun.shadow.dispose();environment.dispose();disposeSceneResources(scene);return;}buildingGroups.push(...environment.buildings);
  const roads=geo.features.filter(f=>f.tags.highway&&f.points.length>1).sort((a,b)=>dist(a.points[0],geo.spawn)-dist(b.points[0],geo.spawn));
  // Public map places are not represented as enrolled reward merchants.
  const signSpecs=buildingSignSpecs(geo.features.filter(f=>!latest.current?.indoor_business_sources?.includes(f.id))),signedNames=new Set(signSpecs.map(s=>s.name));const pois=geo.features.filter(f=>!signedNames.has(f.tags.name)&&f.tags.name&&(f.tags.amenity||f.tags.leisure||f.tags.shop)).sort((a,b)=>dist(center(a),geo.spawn)-dist(center(b),geo.spawn)).slice(0,180);for(const f of pois){const c=f.points.length===1?f.points[0]:center(f),anchor=new T.Object3D();anchor.position.set(c[0],5,c[1]);district.add(anchor);labelData.push({object:anchor,text:f.tags.name,kind:'place',data:{source_id:f.tags.shop||['cafe','restaurant','bank','pharmacy','fast_food','pub'].includes(f.tags.amenity)?f.id:undefined,city,title:f.tags.name,category:f.tags.amenity||f.tags.shop||'park',x:c[0],z:c[1],description:'OpenStreetMap place. Map information only; no merchant reward partnership is implied.'}});}
