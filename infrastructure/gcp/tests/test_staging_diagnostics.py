@@ -29,3 +29,9 @@ class StagingDiagnostics(unittest.TestCase):
   value=summarize([{'textPayload':'connection to server at private-host failed: Connection refused; password authentication failed for private-user; no available instance; database system is starting up'}])
   self.assertEqual(set(value[0]['signals']),{'connection_refused','auth_failed','no_available_instance','database_starting'})
   self.assertNotIn('private',str(value))
+
+ def test_orm_cleanup_exception_and_http_status_are_redacted(self):
+  row={'textPayload':"sqlalchemy.orm.exc.ObjectDeletedError: private@example.test secret row",'httpRequest':{'status':499,'requestUrl':'https://private/?token=secret'}}
+  signals=summarize([row])[0]['signals']
+  self.assertEqual(signals,{'exception_type':['sqlalchemy.orm.exc.ObjectDeletedError'],'http_status':499})
+  self.assertNotIn('private',str(signals));self.assertNotIn('secret',str(signals))

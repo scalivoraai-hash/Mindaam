@@ -23,7 +23,7 @@ PATTERNS={
  'malformed_response':r'(?:malformed response|connection to the instance had an error|instance could not start successfully|container failed to start)',
  'auth_failed':r'password authentication failed',
  'dns_failure':r'could not translate host name',
- 'exception_type':r'(?:sqlalchemy\.exc|psycopg\.errors|psycopg)\.[A-Za-z]+Error',
+ 'exception_type':r'(?:sqlalchemy(?:\.orm)?\.exc|psycopg\.errors|psycopg)\.[A-Za-z]+Error',
 }
 
 def summarize(rows):
@@ -32,6 +32,8 @@ def summarize(rows):
   text=row.get('textPayload','')+' '+str(row.get('jsonPayload',{}).get('message',''))
   matches={key:sorted(set(re.findall(pattern,text,re.I))) for key,pattern in PATTERNS.items()}
   frames=re.findall(r'File "[^"\n]*/backend/api/([a-z_]+\.py)", line (\d+), in ([A-Za-z_][A-Za-z_0-9]*)',text)
+  status=row.get('httpRequest',{}).get('status')
+  if isinstance(status,int) and not isinstance(status,bool):matches['http_status']=status
   if frames:matches['backend_frames']=[{'file':f,'line':int(n),'function':fn} for f,n,fn in frames]
   statements=re.findall(r'\[SQL: (SELECT|UPDATE|INSERT INTO|DELETE FROM)\s+([a-z_]+)',text)
   if statements:matches['statement_kinds']=[{'operation':op,'relation':table} for op,table in statements]
@@ -47,7 +49,7 @@ def run(c,sha):
  start=datetime.datetime.fromtimestamp(release['deployed_at'],datetime.timezone.utc).isoformat()
  end=datetime.datetime.now(datetime.timezone.utc).isoformat()
  query=f'resource.type="cloud_run_revision" AND resource.labels.service_name="mindaam-staging" AND resource.labels.revision_name="{release["revision"]}" AND timestamp>="{start}" AND severity>=ERROR'
- rows=c.gc('logging','read',query,'--limit=200','--format=json(timestamp,severity,textPayload,jsonPayload.message)')
+ rows=c.gc('logging','read',query,'--limit=200','--format=json(timestamp,severity,textPayload,jsonPayload.message,httpRequest.status)')
  result={'sha':sha,'revision':release['revision'],'read_only':True,'release_approval':False,'error_log_limit':200,'errors':summarize(rows),'metrics':{}}
  token=command(['gcloud','auth','print-access-token'],sensitive=True)
  for metric in ['cloudsql.googleapis.com/database/postgresql/num_backends','cloudsql.googleapis.com/database/cpu/utilization','cloudsql.googleapis.com/database/memory/components','run.googleapis.com/container/memory/utilizations','run.googleapis.com/container/cpu/utilizations']:
