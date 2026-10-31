@@ -42,6 +42,9 @@ def run(c, sha):
               'revision': current['status']['latestReadyRevisionName'],
               'image': current['spec']['template']['spec']['containers'][0]['image'],
               'traffic': current['status'].get('traffic', []),
+              'runtime': {'annotations':current['spec']['template'].get('metadata',{}).get('annotations',{}),
+                          'concurrency':current['spec']['template']['spec'].get('containerConcurrency'),
+                          'containers':[{k:v for k,v in container.items() if k in ('resources','startupProbe','livenessProbe')} for container in current['spec']['template']['spec']['containers']]},
               'request_limit': 500, 'requests': request_summary(requests),
               'error_limit': 200, 'errors': summarize(errors)}
     Path('gcp-evidence').mkdir(exist_ok=True)

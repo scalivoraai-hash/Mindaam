@@ -24,3 +24,8 @@ class StagingDiagnostics(unittest.TestCase):
   self.assertEqual(value[0]['path'],'/api/auth/login')
   self.assertEqual(value[1]['path'],'[other route]')
   self.assertNotIn('secret',str(value));self.assertNotIn('private',str(value))
+
+ def test_runtime_error_categories_keep_connection_details_private(self):
+  value=summarize([{'textPayload':'connection to server at private-host failed: Connection refused; password authentication failed for private-user; no available instance; database system is starting up'}])
+  self.assertEqual(set(value[0]['signals']),{'connection_refused','auth_failed','no_available_instance','database_starting'})
+  self.assertNotIn('private',str(value))

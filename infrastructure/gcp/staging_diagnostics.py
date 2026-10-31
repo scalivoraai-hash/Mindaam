@@ -14,6 +14,15 @@ PATTERNS={
  'connection_limit':r'(?:too many clients already|remaining connection slots are reserved)',
  'connection_closed':r'(?:server closed the connection unexpectedly|SSL connection has been closed unexpectedly)',
  'out_of_memory':r'(?:out of memory|Memory limit of [\d.]+ [A-Za-z]+ exceeded)',
+ 'no_available_instance':r'no available instance',
+ 'connection_refused':r'Connection refused',
+ 'database_starting':r'database system is (?:starting up|shutting down|in recovery mode)',
+ 'connection_reset':r'(?:Connection reset by peer|SSL SYSCALL error: EOF detected|consuming input failed)',
+ 'connection_timeout':r'(?:connection timeout expired|timeout expired|could not receive data from server)',
+ 'worker_exit':r'(?:WORKER TIMEOUT|Worker failed to boot|SIGKILL|signal 9|signal 11)',
+ 'malformed_response':r'(?:malformed response|connection to the instance had an error|instance could not start successfully|container failed to start)',
+ 'auth_failed':r'password authentication failed',
+ 'dns_failure':r'could not translate host name',
  'exception_type':r'(?:sqlalchemy\.exc|psycopg\.errors|psycopg)\.[A-Za-z]+Error',
 }
 
