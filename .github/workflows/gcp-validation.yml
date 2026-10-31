@@ -49,3 +49,5 @@ jobs:
         run: |
           docker run --rm --network host -e APP_ENV=staging -e DATABASE_URL=postgresql+psycopg://postgres:deployment-ci-only@127.0.0.1:5432/mindaam_staging -e RUNTIME_DATABASE_URL=postgresql+psycopg://mindaam_staging:runtime-ci-only@127.0.0.1:5432/mindaam_staging mindaam-gcp-validation python infrastructure/gcp/migrate.py
           docker run --rm --network host -v "$PWD/infrastructure/gcp/tests/check_sql_role.py:/tmp/check_sql_role.py:ro" mindaam-gcp-validation python /tmp/check_sql_role.py
+      - name: Verify owner recovery against existing identity implementation
+        run: docker run --rm -e APP_ENV=test -e PYTHONPATH=/app -v "$PWD/infrastructure/gcp:/tmp/gcp-tests:ro" mindaam-gcp-validation python /tmp/gcp-tests/tests/check_owner_recovery.py -v
