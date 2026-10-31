@@ -18,6 +18,15 @@ with SessionLocal.begin() as db:
  if len(owners)==1:
   owner=owners[0]
   result.update({'email':owner['email'],'username':owner['username'],'must_change_password':owner['must_change_password'],'verified':owner['verified'],'suspended':owner['suspended'],'configured_email_matches':owner['email'].lower()==os.environ.get('SUPER_ADMIN_EMAIL','').lower(),'configured_username_matches':owner['username']==os.environ.get('SUPER_ADMIN_USERNAME',''),'initial_credential_matches':bool(os.environ.get('SUPER_ADMIN_INITIAL_PASSWORD')) and check_password(os.environ['SUPER_ADMIN_INITIAL_PASSWORD'],owner['password_hash'])})
+ db_clock=float(db.execute(text('SELECT extract(epoch from clock_timestamp())')).scalar())
+ import time
+ result['database_epoch']=db_clock
+ result['job_epoch']=time.time()
+ result['reset_tokens']=[]
+ result['identity_audit']=[]
+ if len(owners)==1 and owners[0]['username']=='mindaam_owner' and owners[0]['email']=='sain@scalivora.com':
+  result['reset_tokens']=[dict(row) for row in db.execute(text("SELECT created_at,expires_at,consumed_at FROM identity_tokens WHERE purpose='reset' AND user_id IN (SELECT id FROM users WHERE role='super_admin' AND username='mindaam_owner' AND email='sain@scalivora.com') ORDER BY created_at DESC LIMIT 10")).mappings()]
+  result['identity_audit']=[dict(row) for row in db.execute(text("SELECT action,created_at FROM audit_logs WHERE target IN (SELECT id FROM users WHERE role='super_admin' AND username='mindaam_owner' AND email='sain@scalivora.com') AND action IN ('owner.recovery_issued','identity.password_reset','identity.email_queued') ORDER BY created_at DESC LIMIT 20")).mappings()]
  print('MINDAAM_OWNER_RECOVERY_REVIEW '+json.dumps(result,sort_keys=True))
 '''
 
