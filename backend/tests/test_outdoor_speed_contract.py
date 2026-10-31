@@ -6,6 +6,7 @@ import pytest
 from backend.tests.test_core import system, register, onboard
 from backend.api import world
 from backend.api.models import Presence, User
+from backend.api.movement_policy import DEFAULTS, read, save
 
 
 @pytest.mark.parametrize('mode,strength', [('walk', .6), ('run', 1)])
@@ -21,12 +22,13 @@ def test_outdoor_speed_contract(system, monkeypatch, mode, strength, gaps):
     monkeypatch.setattr(world, 'time', SimpleNamespace(time=lambda: clock[0]))
 
     def integrate(multiplier):
-        monkeypatch.setitem(world.MOVEMENT, 'normalWorldMultiplier', multiplier)
         clock[0] = 1000.
         distances = []
         with sessions.begin() as db:
             player = db.get(Presence, user['id'])
             account = db.get(User, user['id'])
+            account.role = 'super_admin'
+            save(db,account,{**DEFAULTS,'walk':DEFAULTS['walk']*multiplier/3,'run':DEFAULTS['run']*multiplier/3},read(db)['version'],'Controlled server-clock regression')
             player.zone_id = 'world'
             player.motion_speed = 0
             player.last_move = clock[0]
@@ -54,10 +56,10 @@ def test_requested_forty_percent_walk_reduction(system,monkeypatch,mode,expected
     clock=[1000.]
     monkeypatch.setattr(world,'time',SimpleNamespace(time=lambda:clock[0]))
     def measured(factor):
-        monkeypatch.setitem(world.MOVEMENT,'outdoorWalkFactor',factor)
         clock[0]=1000.;total=0
         with sessions.begin() as db:
-            p=db.get(Presence,user['id']);account=db.get(User,user['id'])
+            p=db.get(Presence,user['id']);account=db.get(User,user['id']);account.role='super_admin'
+            save(db,account,{**DEFAULTS,'walk':DEFAULTS['walk']*factor/.6},read(db)['version'],'Controlled walk reduction regression')
             p.zone_id='world';p.motion_speed=0;p.last_move=clock[0]
             for _ in range(12):
                 p.x=p.z=0;clock[0]+=.12
