@@ -12,8 +12,6 @@ from urllib.error import HTTPError
 from release_policy import evidence_name
 # Existing production approval remains pinned separately from a recovery drill.
 SHA = '1af2051d13e56aff76ec69ad0cbcec73146aa7df'
-# Owner-authorised verification only; this does not approve production promotion.
-RECOVERY_SHA = '7ffc0b0c349ac7209c1a124a4ec62f35bb6152d9'
 
 
 def target(run, attempt):
@@ -61,11 +59,8 @@ print('MINDAAM_RECOVERY_RESULT '+json.dumps(result))
 
 
 def run(c, sha):
-    if sha != RECOVERY_SHA or c.project != 'mindaam':
-        raise Blocked('Recovery approval is limited to the exact Mindaam release')
-    release=c.get_json(f'releases/{sha}/{evidence_name()}')
-    if not release or release.get('sha') != sha:
-        raise Blocked('Verified release required')
+    from release_candidate import selected
+    release=selected(c,sha)
     run_id=os.environ['GITHUB_RUN_ID']; name=target(run_id,os.environ['GITHUB_RUN_ATTEMPT'])
     source=c.gc('sql','instances','describe','mindaam-postgres'); c.owned(source,'source')
     settings=source['settings']

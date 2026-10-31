@@ -124,3 +124,23 @@ Failed actions record matching count, tag, inferred/explicit role, visibility, e
 Validation uses a disposable local SQLite backend and existing locally built frontend whose 75 fetched frontend source files match main. Shared auth flow runs desktop and mobile while the first user's world remains open: signup, consents, onboarding, city selection, logout/login, reload/session and world entry. Controlled tests exercise delayed hydration/enabling, hidden duplicates, visible ambiguity and click interception. Local WebGL is disabled for this interaction test; it does not attest avatar rendering or live media. The existing deployed staging revision/image, application source, provider resources and workflow dispatch remain untouched. Live staging verification, including funded venue/media/TURN acceptance, still must be run by the owner.
 
 Results: all 62 GCP unit tests, Node browser-contract checks and JavaScript syntax checks pass. The local browser run also passes PEOPLE/Friends/View profile/Follow/Unfollow/Avatar-tab controls, desktop mouse and mobile touch input, and actionability diagnostics. Avatar GPU rendering and actual staging WebRTC/TURN are not claimed PASS by this local interaction test.
+
+## Exact-image preparation and owner confirmation (2026-10-31)
+Preparation authorization is recorded in `infrastructure/gcp/release-preparation.json`
+and binds the requested source SHA to an immutable, accepted current staging image.
+It does not grant production approval. Recovery checks this record and full existing
+staging acceptance; security runs the same image without bootstrapping accounts or
+migrating production. Production migration remains inside the approved deployment.
+
+The owner runs `python infrastructure/gcp/owner_release_access.py --release-sha SHA`
+privately in Cloud Shell authenticated as sain@scalivora.com. Existing passwords are
+entered via getpass, never saved or printed. Staging and production are authenticated
+independently, including dashboard access, secure cookies and logout. This operation
+never resets a password or creates an owner. Failure in either environment blocks
+owner evidence. Production credentials are separate from staging credentials.
+
+Only after fresh exact-image recovery/security and owner-access checks pass, the
+owner may run the same command with `--approve`. It verifies Google's authenticated
+identity and requires typing the exact immutable digest. It publishes the final
+private review through the existing release gate. CI never grants owner approval.
+Costs retain the standing $48.76/$91.98 policy; configuration or estimate drift blocks.

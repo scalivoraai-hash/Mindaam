@@ -1,7 +1,9 @@
 import sys,unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from recovery import target,guard,run,RECOVERY_SHA
+from recovery import target,guard,run
+import json
+RECOVERY_SHA=json.loads((Path(__file__).resolve().parents[1]/"release-preparation.json").read_text())["sha"]
 from common import Blocked
 class RecoverySafety(unittest.TestCase):
  def test_cannot_target_live_database(self):
@@ -17,12 +19,12 @@ class RecoverySafety(unittest.TestCase):
  def test_unreviewed_drill_target_cannot_read_or_create_cloud_resources(self):
   from unittest.mock import Mock
   cloud=Mock(project='mindaam')
-  with self.assertRaisesRegex(Blocked,'exact Mindaam release'):run(cloud,'0'*40)
+  with self.assertRaisesRegex(Blocked,'Exact-image preparation authorization'):run(cloud,'0'*40)
   cloud.get_json.assert_not_called();cloud.gc.assert_not_called()
  def test_scoped_drill_still_requires_actual_verified_release(self):
   from unittest.mock import Mock
   cloud=Mock(project='mindaam');cloud.get_json.return_value=None
-  with self.assertRaisesRegex(Blocked,'Verified release required'):run(cloud,RECOVERY_SHA)
+  with self.assertRaisesRegex(Blocked,'Verified release image mismatch'):run(cloud,RECOVERY_SHA)
   cloud.gc.assert_not_called()
  def test_other_project_rejected_before_any_resource_access(self):
   from unittest.mock import Mock
