@@ -22,6 +22,7 @@ def test_capacity_policy_rejects_untested_large_events_and_non_owner_updates(sys
 
 
 def test_stage_host_plus_three_and_demotion_stops_publication(system,monkeypatch):
+    monkeypatch.setenv("MINDAAM_GRAND_ARENA_ENABLED","true")
     c,dbs=system;users=[register(c,'stage_'+str(i)) for i in range(5)]
     for h,_ in users:onboard(c,h)
     host=users[0];e=c.post('/api/events',headers=host[0],json={'title':'Local stage test','city':'manchester','starts_at':time.time()+60,'event_type':'Public Talk','venue_experience_type':'auditorium','venue_mode':'grand_arena','communication_mode':'liveface'}).json()

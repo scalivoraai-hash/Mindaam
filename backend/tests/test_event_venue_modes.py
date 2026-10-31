@@ -35,7 +35,8 @@ def test_independent_venue_visibility_admission(system,mode,private,price):
    assert c.post(url+'/venue/enter',headers=auth).status_code==200
  assert c.get('/api/arenas/london',headers=g).json()['events']==[]
 
-def test_grand_arena_requires_reservation_and_virtual_does_not_block_it(system):
+def test_grand_arena_requires_reservation_and_virtual_does_not_block_it(system,monkeypatch):
+ monkeypatch.setenv("MINDAAM_GRAND_ARENA_ENABLED","true")
  c,dbs=system;h,u=register(c);onboard(c,h);c.get('/api/world/london',headers=h)
  def create(mode):
   r=c.post('/api/events',headers=h,json={'title':mode+' test','city':'london','starts_at':time.time(),'venue_mode':mode,'programme':{'arena_booking_required':False}});assert r.status_code==201,r.text;return r.json()

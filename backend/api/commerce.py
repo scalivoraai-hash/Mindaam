@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from .db import Base, get_db
 from .auth import current_user
-from .models import User
+from .models import Ledger, User
 from .economy import credit, config
 
 router = APIRouter(prefix="/api", tags=["commerce"])
@@ -606,7 +606,7 @@ def verify_visit(
     db.flush()
     c.spent_credits += c.reward_credits
     p.consumed_at = now()
-    credit(db, user.id, c.reward_credits, "visit", c.id, "visit:" + p.id)
+    credit(db, user.id, c.reward_credits, "visit", c.id, "visit:" + p.id, currency="xp")
     db.add(
         FundingLedger(
             business_id=b.id,
@@ -621,7 +621,8 @@ def verify_visit(
     audit(db, user, "visit.qr_geofence_verified", v.id)
     return {
         "visit_id": v.id,
-        "credits_awarded": c.reward_credits,
+        "credits_awarded": 0,
+        "xp_awarded": c.reward_credits,
         "verification": "merchant QR and consented device geofence",
         "precise_location_stored": False,
     }
@@ -700,10 +701,8 @@ def analytics(
         "available_funds": b.funds,
         "virtual_visitors": count(StoreVisit, StoreVisit.business_id == b.id),
         "verified_visits": count(Visit, Visit.business_id == b.id),
-        "credits_awarded": db.scalar(
-            select(func.sum(Visit.reward)).where(Visit.business_id == b.id)
-        )
-        or 0,
+        "credits_awarded": db.scalar(select(func.sum(Ledger.amount)).join(Campaign,Ledger.source==Campaign.id).where(Campaign.business_id==b.id,Ledger.kind=='visit',Ledger.currency=='credits')) or 0,
+        "xp_awarded": db.scalar(select(func.sum(Ledger.amount)).join(Campaign,Ledger.source==Campaign.id).where(Campaign.business_id==b.id,Ledger.kind=='visit',Ledger.currency=='xp')) or 0,
         "perks_used": db.scalar(
             select(func.count())
             .select_from(Perk)

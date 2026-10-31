@@ -72,12 +72,12 @@ try:
     while all(child.poll() is None for child in children):
         time.sleep(5)
         try:
-            with urlopen("http://127.0.0.1:8000/ready",timeout=3) as response:
+            with urlopen("http://127.0.0.1:8000/api/live",timeout=3) as response:
                 if response.status != 200: raise RuntimeError("Readiness failed")
             failures = 0
         except Exception:
             failures += 1
-            if failures >= 3: raise RuntimeError("API readiness lost; restarting service")
+            if failures >= 3: raise RuntimeError("API liveness lost; restarting service")
 finally:
     stop()
     for child in children:

@@ -18,7 +18,7 @@ def test_clean_migration_and_immutable_ledger(tmp_path):
     engine=create_engine(url)
     with Session(engine) as db:
         u=User(id='migration-test',email='migration@example.test',username='migration',password_hash='test-only-no-login')
-        db.add(u);db.flush();credit(db,u.id,20,'test','test','test');db.commit()
+        db.add(u);db.flush();credit(db,u.id,20,'purchase','local-payment','local-payment');db.commit()
     for sql in ["UPDATE wallet_transactions SET amount=999","DELETE FROM wallet_transactions"]:
         with pytest.raises(IntegrityError):
             with engine.begin() as connection:connection.execute(text(sql))

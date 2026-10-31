@@ -173,7 +173,9 @@ def snapshot(db, u, city):
         if not blocked(db,u.id,target.id) and (target.privacy=='City Mode' or (target.privacy=='Friends Only' and friends(db,u.id,target.id))):district_online+=1
     from .events import visible as event_visible
     markers=[{'id':e.id,'title':e.title,'x':e.x,'z':e.z,'mode':e.communication_mode,'participants':db.scalar(select(func.count()).select_from(Attendee).where(Attendee.event_id==e.id,Attendee.state=='active'))} for e in db.scalars(select(Event).where(Event.city==city,Event.status=='live',Event.x!=None,Event.z!=None).limit(20)) if event_visible(db,e,u)]
+    from .movement_policy import public as movement_config
     return {
+        "movement_config":movement_config(db),
         "server_time":sampled_at,
         "events":markers,
         "scene":interior,
@@ -262,9 +264,9 @@ def move(data: Movement, u=Depends(current_user), db=Depends(get_db)):
     from .mobility import current as rental_current
     if rental_current(db,u):raise HTTPException(409,'Use your vehicle controls or Exit Vehicle')
     if p.zone_id.startswith('bus:'):raise HTTPException(409,'Choose a seat or wait for the bus to stop')
-    multiplier = MOVEMENT["normalWorldMultiplier"] if p.zone_id == "world" else 1
-    walk_factor = MOVEMENT['outdoorWalkFactor'] if p.zone_id == 'world' else 1
-    speeds = {"walk": WALK_SPEED*multiplier*walk_factor, "run": RUN_SPEED*multiplier, **MOVEMENT["vehicleSpeeds"]}
+    from .movement_policy import public as movement_config
+    policy=movement_config(db)
+    speeds = policy["speeds"] if p.zone_id == "world" else {"walk":WALK_SPEED,"run":RUN_SPEED}
     if data.mode not in speeds:
         raise HTTPException(422, "Unsupported movement mode")
     if data.mode not in {"walk", "run"}:
@@ -276,7 +278,7 @@ def move(data: Movement, u=Depends(current_user), db=Depends(get_db)):
     # Preview-matched walking and a distinct faster run use the same shared contract.
     # Released input stops immediately. Render interpolation supplies the soft stop.
     previous = p.motion_speed if now-p.last_move < .5 else 0
-    acceleration=(RUN_ACCELERATION if data.mode=='run' else WALK_ACCELERATION*walk_factor)*multiplier
+    acceleration=speeds[data.mode]/MOVEMENT['accelerationSeconds']
     speed = min(speeds[data.mode], previous+acceleration*dt)
     if not (data.dx or data.dz):speed=0
     old_x,old_z=p.x,p.z
@@ -324,7 +326,7 @@ def move(data: Movement, u=Depends(current_user), db=Depends(get_db)):
     return {"x": p.x, "z": p.z, "mode": p.mode, "zone_id":p.zone_id,
             "speed":math.hypot(p.x-old_x,p.z-old_z)/dt if dt else 0,
             "blocked":bool(speed and dt>.03 and math.hypot(p.x-old_x,p.z-old_z)<.01),
-            "recovered": recovered, "last_move": p.last_move}
+            "recovered": recovered, "last_move": p.last_move, "movement_config":policy}
 
 
 def recovery_radius():
@@ -371,6 +373,7 @@ def mission_views(db, u):
     return [
         {
             **serialize(m),
+            "credits": 0,
             "progress": {
                 k: min(counts.get(k, 0), v) for k, v in m.requirements.items()
             },
@@ -442,7 +445,6 @@ def collect(object_id: str, u=Depends(current_user), db=Depends(get_db)):
     for m in mission_views(db, u):
         if m["eligible"] and not m["completed"]:
             db.add(MissionCompletion(user_id=u.id, mission_id=m["id"]))
-            credit(db, u.id, m["credits"], "mission", m["id"], "mission:" + m["id"])
             credit(
                 db,
                 u.id,
@@ -458,7 +460,6 @@ def collect(object_id: str, u=Depends(current_user), db=Depends(get_db)):
             if r and not r.rewarded and u.verified:
                 parent = db.get(User, r.referrer_id)
                 if parent and not parent.suspended:
-                    credit(db, parent.id, 20, "referral", u.id, "referral:" + u.id)
                     r.rewarded = True
     return {
         "claimed": True,

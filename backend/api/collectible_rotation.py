@@ -16,15 +16,27 @@ from .operations import super_admin
 from .world_content import prepared_points
 from .expansion import Destination
 router=APIRouter(prefix='/api')
-DEFAULTS={'enabled':True,'density':12,'refresh_minutes':60,'daily_limit':96,'minimum_claim_seconds':.4}
+DEFAULTS={'enabled':True,'density':16,'refresh_minutes':60,'daily_limit':96,'minimum_claim_seconds':.4}
 class Settings(Strict):
  enabled:bool=True
- density:int=Field(default=12,ge=4,le=16,strict=True)
+ density:int=Field(default=16,ge=4,le=16,strict=True)
  refresh_minutes:int=Field(default=60,ge=30,le=360,strict=True)
  daily_limit:int=Field(default=96,ge=12,le=200,strict=True)
  minimum_claim_seconds:float=Field(default=.4,ge=.2,le=5,allow_inf_nan=False)
 
 def settings(db):return Settings(**config(db,'collectible_rotation',DEFAULTS)).model_dump()
+
+from functools import lru_cache
+@lru_cache(maxsize=64)
+def rotation_points(city):
+ import json
+ from pathlib import Path
+ root=Path(__file__).resolve().parents[1]/'data'
+ path=root/'exploration-rotation-points.json'
+ item=json.loads(path.read_text()).get(city,{}) if path.exists() else {}
+ if item.get('map_sha256')==hashlib.sha256((root/(city+'.json.gz')).read_bytes()).hexdigest():
+  return item['points'][:96]
+ return prepared_points(city,48)
 
 def wave(db,city,now=None):
  state=settings(db)
@@ -32,13 +44,13 @@ def wave(db,city,now=None):
  d=db.get(Destination,city)
  if not d or d.status!='ACTIVE' or not d.public or not d.joinable:return []
  now=time.time() if now is None else now
- interval=state['refresh_minutes']*60;cycle=int(now//interval);points=prepared_points(city,48);count=min(state['density'],len(points)//2)
+ interval=state['refresh_minutes']*60;cycle=int(now//interval);points=rotation_points(city);count=min(state['density'],len(points)//2)
  offset=int(hashlib.sha256(city.encode()).hexdigest()[:8],16)%len(points)
  kinds=[('fruit','Apple'),('fruit','Orange'),('fruit','Bananas'),('gem','Gem'),('gem','Crystal'),('treasure','Treasure')]
  result=[]
  for index in range(count):
   x,z=points[(offset+cycle*count+index)%len(points)];kind,title=kinds[(cycle+index)%len(kinds)]
-  key=f'mylilworlds:rotation:v1:{city}:{interval}:{cycle}:{index}'
+  key=f'mindaam:rotation:v2:{city}:{interval}:{cycle}:{index}'
   result.append(Collectible(id=str(uuid5(NAMESPACE_URL,key)),city=city,title=title,kind=kind,x=x,z=z,active=True,starts_at=cycle*interval,ends_at=(cycle+1)*interval,max_claims=100000,claims=0,origin="rotation"))
  return result
 

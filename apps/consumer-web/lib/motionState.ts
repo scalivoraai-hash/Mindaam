@@ -12,9 +12,12 @@ export function acceptMotion(current:State|null,result:State,city:string,zone:st
  if(!current||current.city!==city||current.position?.zone_id!==zone)return current;
  const position=result.position;
  if(!position||position.last_move<(current.position?.last_move||0))return current;
- return {...current,...result,position};
+ const incoming=result.movement_config||position.movement_config;
+ const policy=incoming&&incoming.version>=(current.movement_config?.version??-1)?incoming:current.movement_config;
+ return {...current,...result,position,movement_config:policy};
 }
 export function acceptSnapshot(current:State|null,next:State):State {
+ if(current?.movement_config&&(!next.movement_config||next.movement_config.version<current.movement_config.version))next={...next,movement_config:current.movement_config};
  if(current&&current.city===next.city&&current.server_time&&next.server_time&&next.server_time<current.server_time)return current;
  if(current&&current.city===next.city&&(current.position?.last_move||0)>(next.position?.last_move||0))
   return {...next,position:current.position,rental:current.rental,scene:current.scene,journey:current.journey};

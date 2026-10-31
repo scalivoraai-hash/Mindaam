@@ -135,3 +135,11 @@ class DeploymentSafety(unittest.TestCase):
 
 
 if __name__=='__main__': unittest.main()
+
+class ProcessLiveness(unittest.TestCase):
+    def test_readiness_still_checks_dependencies_but_liveness_does_not(self):
+        container=service(FakeCloud(),'staging','image','https://staging.example')['spec']['template']['spec']['containers'][0]
+        self.assertEqual(container['startupProbe']['httpGet']['path'],'/api/health')
+        self.assertEqual(container['livenessProbe']['httpGet']['path'],'/api/live')
+        self.assertEqual(container['livenessProbe']['periodSeconds'],30)
+        self.assertEqual(container['livenessProbe']['failureThreshold'],3)

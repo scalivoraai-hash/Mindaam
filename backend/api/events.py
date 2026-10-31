@@ -82,6 +82,9 @@ def listing(city:str|None=None,u=Depends(current_user),db=Depends(get_db)):
 def create(data:EventInput,u=Depends(current_user),db=Depends(get_db)):
  if not u.onboarded:raise HTTPException(409,'Complete your profile first')
  data.venue_mode=data.venue_mode or ('virtual_auditorium' if data.venue_experience_type=='auditorium' else 'standard')
+ if data.venue_mode=='grand_arena':
+  from .payment_policy import require_grand_arena
+  require_grand_arena()
  data.venue_experience_type='standard' if data.venue_mode=='standard' else 'auditorium'
  data.programme.arena_booking_required=data.venue_mode=='grand_arena'
  validate(data)
@@ -102,6 +105,9 @@ def edit(id:str,data:EventInput,u=Depends(current_user),db=Depends(get_db)):
  from .venue_rentals import booking
  reserved=booking(db,id)
  data.venue_mode=data.venue_mode or venue_mode(db,e)
+ if data.venue_mode=='grand_arena':
+  from .payment_policy import require_grand_arena
+  require_grand_arena()
  data.venue_experience_type='standard' if data.venue_mode=='standard' else 'auditorium'
  if reserved and data.venue_mode!=venue_mode(db,e):raise HTTPException(409,'A paid reservation cannot change venue mode')
  if reserved and (data.city!=reserved.city or data.starts_at!=reserved.starts_at or data.ends_at!=reserved.ends_at or data.venue_experience_type!='auditorium'):raise HTTPException(409,'A reserved venue’s location and time cannot be changed')

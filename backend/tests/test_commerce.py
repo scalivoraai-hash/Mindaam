@@ -166,7 +166,7 @@ def test_visit_replay_budget_daily_and_gps_privacy(commerce):
     t = token(client, camp)
     r = visit(client, t)
     assert r.status_code == 200, r.text
-    assert r.json()["credits_awarded"] == 10
+    assert r.json()["credits_awarded"] == 0 and r.json()["xp_awarded"] == 10
     assert visit(client, t).status_code == 409
     assert visit(client, token(client, camp)).status_code == 409
     assert visit(client, token(client, camp, "player2"), "player2").status_code == 409
@@ -178,7 +178,7 @@ def test_visit_replay_budget_daily_and_gps_privacy(commerce):
         assert db.get(c.Campaign, camp).spent_credits == 10
         assert not hasattr(db.scalar(select(c.Visit)), "latitude")
     a = client.get(f"/api/businesses/{b}/analytics", headers={"x-user": "owner"}).json()
-    assert a["verified_visits"] == 1 and a["credits_awarded"] == 10
+    assert a["verified_visits"] == 1 and a["credits_awarded"] == 0 and a["xp_awarded"] == 10
 
 
 def test_qr_wrong_user_forged_expired_and_consent(commerce):
@@ -220,7 +220,7 @@ def test_perks_debit_idempotence_merchant_confirmation(commerce):
     client, sessions = commerce
     b = setup_business(commerce)
     with sessions.begin() as db:
-        credit(db, "player", 20, "test", "test", "test")
+        credit(db, "player", 20, "purchase", "local-payment", "local-payment")
     o = post(
         client, f"/businesses/{b}/offers", {"title": "Free tea", "cost_credits": 10}
     ).json()["id"]

@@ -36,3 +36,12 @@ test('a delayed passenger snapshot cannot rewind a moving bus at the same motion
  const aboard={city:'london',server_time:100,position:{x:8,z:4,last_move:90,zone_id:'bus:1'}};
  assert.equal(acceptSnapshot(aboard,{...aboard,server_time:99,position:{...aboard.position,x:1}}),aboard);
 });
+test('speed configuration version never regresses across movement and idle snapshots',()=>{
+ const current={...state,movement_config:{version:3,speeds:{walk:2,run:4}}};
+ const motion=acceptMotion(current,{position:{...state.position,last_move:11,movement_config:{version:4,speeds:{walk:1,run:3}}}},'paris','world');
+ assert.equal(motion.movement_config.version,4);
+ const stale=acceptSnapshot(motion,{...state,movement_config:{version:2,speeds:{walk:4,run:6}}});
+ assert.equal(stale.movement_config.version,4);
+ const next=acceptMotion(stale,{position:{...state.position,last_move:12,movement_config:{version:3,speeds:{walk:2,run:4}}}},'paris','world');
+ assert.equal(next.movement_config.version,4);
+});

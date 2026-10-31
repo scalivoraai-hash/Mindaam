@@ -37,7 +37,7 @@ def service(c, env, image, origin, optional=None):
                          "env": [{"name": k, "value": v} for k, v in ordinary.items()] + [
                              {"name": k, "valueFrom": {"secretKeyRef": {"name": v, "key": "latest"}}} for k, v in secrets.items()],
                          "startupProbe": {"httpGet": {"path": "/api/health", "port": 3000}, "periodSeconds": 5, "failureThreshold": 48},
-                         "livenessProbe": {"httpGet": {"path": "/api/health", "port": 3000}, "periodSeconds": 30, "failureThreshold": 3}}]}}}}
+                         "livenessProbe": {"httpGet": {"path": "/api/live", "port": 3000}, "periodSeconds": 30, "failureThreshold": 3}}]}}}}
 
 
 def caddy_config(production_origin=None):

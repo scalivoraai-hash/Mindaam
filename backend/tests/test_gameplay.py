@@ -227,11 +227,11 @@ def test_admin_authoring_schedule_cap_treasure_mission_and_replay(game):
         assert db.scalar(select(func.count()).select_from(MissionCompletion)) == 1
         assert (
             db.scalar(
-                select(func.sum(Ledger.amount)).where(
+                select(func.coalesce(func.sum(Ledger.amount),0)).where(
                     Ledger.user_id == "owner", Ledger.currency == "credits"
                 )
             )
-            == 10
+            == 0
         )
     future = c.post(
         "/api/admin/collectibles", json={**data, "starts_at": now + 1800}, headers=admin

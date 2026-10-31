@@ -291,4 +291,6 @@ def edit_destination(id:str,data:DestinationInput,u=Depends(super_admin),db=Depe
  if d.status=='ACTIVE':
   from .world_content import seed_world
   seed_world(db,d.id,d.name)
+  from .operations import seed_inventory
+  seed_inventory(db,d.id)
  return destination_view(db,d)

@@ -187,7 +187,7 @@ async def security(request: Request, call_next):
                 return JSONResponse({"detail": "Request too large"}, 413)
             body.extend(chunk)
         request._body = bytes(body)
-    if request.url.path not in {"/health", "/ready", "/api/payments/webhook"}:
+    if request.url.path not in {"/health", "/ready", "/api/live", "/api/payments/webhook"}:
         ip = request.client.host if request.client else "unknown"
         sensitive = request.url.path.startswith("/api/auth")
         limit = 20 if sensitive else 1200
@@ -248,6 +248,12 @@ async def conflict(request, exc):
 @app.get("/health")
 def health():
     return {"status": "ok", "version": "0.1.0-alpha"}
+
+
+@app.get("/api/live")
+async def live():
+    # Process liveness must not restart a healthy worker during a database outage.
+    return {"status":"alive"}
 
 
 @app.get("/api/health")
@@ -426,3 +432,9 @@ app.include_router(public_profiles_router)
 
 from .profile_media import router as profile_media_router
 app.include_router(profile_media_router)
+
+from .feedback import router as feedback_router
+app.include_router(feedback_router)
+
+from .movement_policy import router as movement_policy_router
+app.include_router(movement_policy_router)

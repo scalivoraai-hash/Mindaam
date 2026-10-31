@@ -236,3 +236,9 @@ html[data-communication-layout=expanded] .camera-tools{bottom:182px;width:210px}
 .in-auditorium .hud-restore,.in-auditorium .fallback-people{display:none!important}.event-launchers>button{width:44px;height:44px;min-width:44px;min-height:44px;padding:10px;border-radius:13px;background:#12243bea;border:1px solid #6e94b144}.in-auditorium.hud-hidden .event-launchers>button:not([aria-label="Show controls"]){display:none!important}.stage-switch{flex-direction:row!important;justify-content:flex-start}.floating-chat.event-chat,.floating-chat.event-chat.expanded{height:auto;min-height:0}.event-chat .floating-messages{max-height:170px;min-height:64px;flex:1 1 auto}.event-chat form{flex:none}.map-business{cursor:pointer}.map-business:focus-visible{outline:2px solid #173248}
 
 .country-flag{display:inline-block;width:24px;height:18px;object-fit:cover;vertical-align:-2px;border-radius:3px;flex:none;margin-right:3px}.destination-name .country-flag,.world-access-modal h2 .country-flag{width:28px;height:21px}.business-meta svg{flex:none}
+/* Large touch tablets retain movement controls in landscape. */
+@media (min-width:1101px) and (pointer:coarse){
+ .mobile-joystick{display:grid;place-items:center;position:fixed;left:calc(var(--world-left,0px) + max(16px,env(safe-area-inset-left)));bottom:calc(96px + env(safe-area-inset-bottom));width:100px;height:100px;z-index:34;border-radius:50%;background:#0d213477;border:2px solid #d3eed778;touch-action:none;user-select:none;-webkit-user-select:none}
+ .mobile-joystick span{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:#e4f1dddb;color:#193b45;font-size:24px}
+ .world-inactive .mobile-joystick,.hud-hidden .mobile-joystick{display:none}
+}

@@ -131,6 +131,7 @@ jobs:
               QA_OUTPUT=/tmp/mylil-presentation-evidence/traffic node scripts/tests/traffic-motion.cjs ;;
             movement)
               node scripts/tests/movement-camera.cjs
+              QA_OUTPUT=/tmp/mylil-presentation-evidence/settings node scripts/tests/movement-settings.cjs
               QA_OUTPUT=/tmp/mylil-presentation-evidence/public-terrain node scripts/tests/public-terrain-browser.cjs ;;
             outdoor-xp)
               for width in 1440 390 820; do

@@ -85,15 +85,61 @@ def url(value):
  if value and (urlparse(value).scheme!='https' or not urlparse(value).netloc or urlparse(value).username):raise HTTPException(422,'Use a public HTTPS link')
  return value
 
-def seed_inventory(db):
+def seed_inventory(db,only_city=None):
  from .locations import CITIES
- from .transit import hub
+ from .expansion import Destination
+ from .billboard_placement import prepared_placements
  for city in CITIES:
-  id=city['id']+'-central-01'
-  if not db.get(AdBoard,id):
-   try:h=hub(city['id'])
-   except HTTPException:continue
-   db.add(AdBoard(id=id,city=city['id'],name=city['name']+' Central',x=h['x'],z=h['z']))
+  if only_city is not None and city['id']!=only_city:continue
+  destination=db.scalar(select(Destination).where(Destination.id==city['id']).with_for_update())
+  if not destination or destination.status!='ACTIVE' or not destination.public or not destination.joinable:continue
+  marker='billboard_initial_v2:'+city['id']
+  if db.get(Config,marker):continue
+  points=prepared_placements(city['id'])
+  if len(points)!=3:continue # Fail closed on stale/unsafe geometry; no obstructing fallback.
+  ids=[]
+  for index,(x,z) in enumerate(points,1):
+   id=city['id']+f'-central-{index:02d}';row=db.get(AdBoard,id)
+   if row:
+    # Preserve identity and campaigns while repairing the original unsafe hub.
+    row.x,row.z=x,z
+   else:db.add(AdBoard(id=id,city=city['id'],name=city['name']+f' · Placement {index}',x=x,z=z))
+   ids.append(id)
+  db.add(Config(key=marker,value={'boards':ids}))
+  db.add(Audit(actor_id=None,action='advertising.initial_placements',target=city['id'],details={'boards':ids}))
+
+class BoardInput(Strict):
+ city:str=Field(max_length=50)
+ name:str=Field(min_length=2,max_length=120)
+ x:float=Field(allow_inf_nan=False)
+ z:float=Field(allow_inf_nan=False)
+ enabled:bool=True
+
+@router.put('/super-admin/billboards/{id}')
+def board_save(id:str,data:BoardInput,u=Depends(super_admin),db=Depends(get_db)):
+ from .expansion import Destination
+ from .billboard_placement import safe
+ import math,re
+ if not re.fullmatch(r'[a-zA-Z0-9_-]{1,100}',id):raise HTTPException(422,'Invalid placement ID')
+ destination=db.scalar(select(Destination).where(Destination.id==data.city).with_for_update())
+ if not destination or destination.status!='ACTIVE' or not destination.public or not destination.joinable:raise HTTPException(422,'Choose an active city')
+ if not safe(data.city,data.x,data.z):raise HTTPException(422,'Placement must clear roads, buildings, water and restricted land')
+ row=db.scalar(select(AdBoard).where(AdBoard.id==id).with_for_update())
+ if row and row.city!=data.city:raise HTTPException(409,'Create a new placement to change city; existing campaign history must remain intact')
+ others=list(db.scalars(select(AdBoard).where(AdBoard.city==data.city,AdBoard.id!=id,AdBoard.enabled==True)))
+ if data.enabled and (len(others)>=12 or any(math.hypot(data.x-b.x,data.z-b.z)<30 for b in others)):raise HTTPException(409,'Use a separated placement; at most 12 active boards per city')
+ if not row:row=AdBoard(id=id,**data.model_dump());db.add(row)
+ else:
+  for k,v in data.model_dump().items():setattr(row,k,v)
+ audit(db,u,'advertising.placement_saved',id,data.model_dump());db.flush();return serialize(row)
+
+@router.delete('/super-admin/billboards/{id}')
+def board_remove(id:str,u=Depends(super_admin),db=Depends(get_db)):
+ row=db.scalar(select(AdBoard).where(AdBoard.id==id).with_for_update())
+ if not row:raise HTTPException(404,'Placement unavailable')
+ row.enabled=False
+ # Archive placement without destroying campaigns, enquiries or interaction history.
+ audit(db,u,'advertising.placement_removed',id,{'city':row.city});return {'ok':True,'archived':True}
 
 def active_campaign(db,id):return db.scalar(select(AdCampaign).where(AdCampaign.board_id==id,AdCampaign.status=='active',AdCampaign.starts_at<=time.time(),AdCampaign.ends_at>time.time()).order_by(AdCampaign.priority.desc(),AdCampaign.created_at.desc()).limit(1))
 def boards(db,city):
@@ -180,13 +226,19 @@ def upload(data:CreativeInput,u=Depends(super_admin),db=Depends(get_db)):
  try:raw=base64.b64decode(data.content,validate=True)
  except ValueError:raise HTTPException(422,'Invalid file')
  if len(raw)>5000000:raise HTTPException(413,'Use a creative smaller than 5 MB')
- if raw.startswith(b'\x89PNG\r\n\x1a\n') and len(raw)>32:
-  w,h=struct.unpack('>II',raw[16:24])
-  if not (1<=w<=4096 and 1<=h<=4096):raise HTTPException(422,'Image dimensions must be at most 4096 pixels')
-  mime='image/png'
- elif raw.startswith(b'\xff\xd8\xff') and raw.endswith(b'\xff\xd9'):mime='image/jpeg'
+ if raw.startswith(b'\x89PNG\r\n\x1a\n') or raw.startswith(b'\xff\xd8\xff'):
+  from PIL import Image,UnidentifiedImageError
+  from io import BytesIO
+  try:
+   with Image.open(BytesIO(raw)) as picture:
+    if picture.format not in {'PNG','JPEG'} or not (1<=picture.width<=4096 and 1<=picture.height<=4096):raise ValueError('Unsupported dimensions')
+    picture.load()
+    output=BytesIO();picture.convert('RGB').save(output,format='JPEG',quality=90)
+    raw=output.getvalue();mime='image/jpeg'
+  except (ValueError,OSError,Image.DecompressionBombError):raise HTTPException(422,'Upload a valid image of at most 4096 pixels per side')
  elif len(raw)>12 and raw[4:8]==b'ftyp':mime='video/mp4'
  else:raise HTTPException(422,'Upload a PNG, JPEG or MP4 creative')
+ if len(raw)>5000000:raise HTTPException(413,'Decoded creative must be smaller than 5 MB')
  c=Creative(data=raw,mime=mime);db.add(c);db.flush();audit(db,u,'advertising.creative_uploaded',c.id);return {'id':c.id,'url':'/api/ads/creatives/'+c.id,'mime':mime}
 class CampaignInput(Strict):
  advertiser:str=Field(min_length=2,max_length=160)

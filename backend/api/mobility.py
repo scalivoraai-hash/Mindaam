@@ -67,16 +67,21 @@ class RentalConsent(Base):
  version:Mapped[str]=mapped_column(String(60),primary_key=True)
  accepted_at:Mapped[float]=mapped_column(Float,default=time.time)
 
-def movement_settings(kind,cfg):
+def movement_settings(kind,cfg,db=None):
  # Speed calibration applies to existing leases too; commercial snapshots stay intact.
  from .world import MOVEMENT
+ if db is not None:
+  from .movement_policy import read
+  policy=read(db)
+  floor=MOVEMENT['vehicleSpeeds'].get(kind,0)
+  return {**cfg,'speed':policy['speeds'][kind],'acceleration':max(floor/2,cfg['acceleration'])}
  floor=MOVEMENT['vehicleSpeeds'].get(kind)
  if floor is None:return cfg
  return {**cfg,'speed':max(floor,cfg['speed']),'acceleration':max(floor/2,cfg['acceleration'])}
 
 DEFAULTS={kind:movement_settings(kind,cfg) for kind,cfg in DEFAULTS.items()}
 
-def settings(db):return {kind:movement_settings(kind,cfg) for kind,cfg in config(db,'rental_types',DEFAULTS).items()}
+def settings(db):return {kind:movement_settings(kind,cfg,db) for kind,cfg in config(db,'rental_types',DEFAULTS).items()}
 def seed_assets(db):
  from .locations import CITIES
  from .transit import hub
@@ -121,7 +126,7 @@ def snapshot(db,u):
  if not lease:return None
  if lease.expires_at<=time.time():finish(db,u,lease);return None
  a=db.get(RentalAsset,lease.asset_id)
- return {**serialize(lease),'settings':movement_settings(a.kind,lease.settings),'kind':a.kind,'name':lease.settings['name'],'city':a.city,'water':a.kind in ['boat','swim']}
+ return {**serialize(lease),'settings':movement_settings(a.kind,lease.settings,db),'kind':a.kind,'name':lease.settings['name'],'city':a.city,'water':a.kind in ['boat','swim']}
 def nearby(db,p):
  if p.zone_id!='world':return []
  types=settings(db);out=[]
@@ -194,7 +199,7 @@ def drive(data:Drive,u=Depends(current_user),db=Depends(get_db)):
  if not lease or not p:raise HTTPException(409,'No active vehicle')
  if (data.city is not None and data.city!=p.city) or (data.zone is not None and data.zone!=p.zone_id):raise HTTPException(409,'Your location changed. Movement was cleared.')
  if lease.expires_at<=time.time():finish(db,u,lease);return {'position':serialize(p),'rental':None,'exited':True}
- a=db.get(RentalAsset,lease.asset_id);cfg=movement_settings(a.kind,lease.settings);now=time.time();dt=min(.3,max(0,now-lease.last_update))
+ a=db.get(RentalAsset,lease.asset_id);cfg=movement_settings(a.kind,lease.settings,db);now=time.time();dt=min(.3,max(0,now-lease.last_update))
  if p.city!=a.city or p.zone_id!='world':raise HTTPException(409,'Exit your rental before entering another location')
  acceleration=cfg['acceleration']*data.throttle if data.throttle>0 else -cfg['brake']*abs(data.throttle) if data.throttle<0 else -cfg['acceleration']*.5
  lease.speed=max(0,min(cfg['speed'],lease.speed+acceleration*dt))
@@ -217,7 +222,8 @@ def drive(data:Drive,u=Depends(current_user),db=Depends(get_db)):
  observe(u.id,p.city,p.zone_id,a.kind,p.x,p.z,data.throttle>0,blocked)
  if blocked:lease.speed=0
  p.mode=a.kind;p.last_move=now;p.updated_at=now;lease.last_update=now
- return {'position':{'x':p.x,'z':p.z,'mode':p.mode,'zone_id':p.zone_id,'heading':lease.heading,'last_move':now,'blocked':blocked},'rental':snapshot(db,u)}
+ from .movement_policy import public as movement_config
+ return {'position':{'x':p.x,'z':p.z,'mode':p.mode,'zone_id':p.zone_id,'heading':lease.heading,'last_move':now,'blocked':blocked},'rental':snapshot(db,u),'movement_config':movement_config(db)}
 @router.post('/mobility/exit')
 def leave(u=Depends(current_user),db=Depends(get_db)):
  db.scalar(select(User.id).where(User.id==u.id).with_for_update());p=finish(db,u)
@@ -239,9 +245,10 @@ def update_type(kind:str,data:TypeInput,u=Depends(super_admin),db=Depends(get_db
  if kind not in DEFAULTS:raise HTTPException(422,'Unsupported vehicle type')
  if kind not in ['bike','ebike','car'] and (data.speed>45 or data.acceleration>20):raise HTTPException(422,'This activity retains its existing speed and acceleration limits')
  db.scalar(select(User.id).where(User.id==u.id).with_for_update());row=db.scalar(select(Config).where(Config.key=='rental_types').with_for_update())
- value={k:movement_settings(k,v) for k,v in (row.value if row else DEFAULTS).items()};value[kind]=data.model_dump()
- from .world import OUTDOOR_RUN_SPEED
- if not (OUTDOOR_RUN_SPEED<value['bike']['speed']<=value['ebike']['speed']<value['car']['speed'] and value['scooter']['speed']<value['car']['speed'] and value['swim']['speed']<value['boat']['speed']):raise HTTPException(422,'Preserve outdoor walk < run < bike < car, scooter < car and swim < boat')
+ value={k:movement_settings(k,v,db) for k,v in (row.value if row else DEFAULTS).items()};value[kind]=data.model_dump()
+ from .movement_policy import read as speed_policy, save as save_speeds
+ policy=speed_policy(db)
+ if policy['speeds'][kind]!=data.speed:save_speeds(db,u,{**policy['speeds'],kind:data.speed},policy['version'],'Vehicle catalogue speed adjustment')
  if row:row.value=value
  else:db.add(Config(key='rental_types',value=value))
  audit(db,u,'vehicle.type_updated',kind,data.model_dump());return value[kind]

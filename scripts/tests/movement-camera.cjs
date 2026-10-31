@@ -1,9 +1,10 @@
+/* Preserved Arena regression runs opt in only in disposable local databases; public default-closed behavior is tested separately. */
 /* Runs against a disposable local API and production Next build, never production data. */
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),{execFileSync,spawn}=require('child_process');
 const {chromium}=require((process.env.QA_NODE_MODULES||'/tmp/mylil-motion-tools/node_modules')+'/playwright');
 const root=path.resolve(__dirname,'../..'),origin='http://127.0.0.1:3000',python=process.env.QA_PYTHON||'/tmp/mylil-motion-qa/bin/python';
 const out=process.env.QA_OUTPUT||'/tmp/mylil-motion-evidence';fs.mkdirSync(out,{recursive:true});
-const env={...process.env,APP_ENV:'local',DATABASE_URL:process.env.DATABASE_URL||('sqlite:////tmp/mylil-multi-motion-'+Date.now()+'.db')};
+const env={...process.env,APP_ENV:'local',MINDAAM_GRAND_ARENA_ENABLED:'true',DATABASE_URL:process.env.DATABASE_URL||('sqlite:////tmp/mylil-multi-motion-'+Date.now()+'.db')};
 const baseline=process.env.QA_BASELINE==='1',wait=ms=>new Promise(r=>setTimeout(r,ms)),results={baseline,speeds:[],checks:[]};
 const fixture=data=>JSON.parse(execFileSync(python,['-m','scripts.tests.motion_fixture',JSON.stringify(data)],{cwd:root,env,encoding:'utf8'}));
 async function until(fn,label,timeout=60000){const end=Date.now()+timeout;while(Date.now()<end){if(await fn())return;await wait(100)}throw Error('Timed out: '+label)}
