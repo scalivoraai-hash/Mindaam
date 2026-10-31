@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import {batchStaticCity} from './StaticCityBatches.ts';
+import {batchStaticCity,batchStaticCityAsync} from './StaticCityBatches.ts';
 
 test('static batching reduces coloured draw calls without moving geometry or mixing tiles',()=>{
   const root=new T.Group();
@@ -41,4 +41,32 @@ test('large sibling batches detach once, preserve retained order and emit cleanu
   assert.equal(removed,2048);assert.equal(childRemoved,2048);assert.equal(disposed,0);
   assert.ok(meshes.every(mesh=>mesh.parent===null));
   result.dispose();
+});
+
+test('incremental batching yields before completion and preserves the synchronous geometry',async()=>{
+  const make=()=>{const root=new T.Group(),material=new T.MeshStandardMaterial({color:'#448866'});for(let i=0;i<512;i++){const mesh=new T.Mesh(new T.BoxGeometry(),material);mesh.position.set(i%30,i%3,Math.floor(i/30));root.add(mesh)}return root};
+  const sync=make(),incremental=make(),expected=batchStaticCity(sync);let turns=0,complete=false;
+  const pending=batchStaticCityAsync(incremental,async()=>{assert.equal(complete,false);turns++;await new Promise(resolve=>setTimeout(resolve,0))});
+  assert.equal(turns,1);const actual=await pending;complete=true;
+  assert.ok(turns>=5,'large batches return control between bounded groups');
+  assert.equal(actual.chunks.length,expected.chunks.length);
+  for(let i=0;i<actual.chunks.length;i++){
+    assert.deepEqual(actual.chunks[i].position.toArray(),expected.chunks[i].position.toArray());
+    for(const key of ['position','normal','uv','color'])assert.deepEqual(actual.chunks[i].children[0].geometry.getAttribute(key).array,expected.chunks[i].children[0].geometry.getAttribute(key).array);
+  }
+  actual.dispose();expected.dispose();
+});
+
+test('default browser task yielding completes and closes its message ports',async()=>{
+  const root=new T.Group();root.add(new T.Mesh(new T.BoxGeometry(),new T.MeshStandardMaterial()));
+  const result=await batchStaticCityAsync(root);assert.equal(result.chunks.length,1);result.dispose();
+});
+
+test('cancelled scene setup stops at its next yield and leaves originals for scene cleanup',async()=>{
+  const root=new T.Group(),geometry=new T.BoxGeometry(),material=new T.MeshStandardMaterial();let cancelled=false,turns=0,disposed=0;
+  geometry.addEventListener('dispose',()=>disposed++);
+  for(let i=0;i<512;i++)root.add(new T.Mesh(geometry,material));
+  const result=await batchStaticCityAsync(root,async()=>{cancelled=true;turns++},()=>cancelled);
+  assert.ok(turns<=2);assert.equal(result.chunks.length,0);assert.equal(root.children.length,512);assert.equal(disposed,0);
+  result.dispose();geometry.dispose();material.dispose();
 });
