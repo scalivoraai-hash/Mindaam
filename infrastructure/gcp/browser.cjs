@@ -31,6 +31,24 @@ async function user(city,index){
    window.__gcpPeers.push(pc);return pc;
   }});
  },{relay:process.env.QA_FORCE_TURN==='1'});
+ // Observe the existing timeout without changing requests, signals or deadlines.
+ await context.addInitScript(()=>{
+  window.__qaRequests=[];window.__qaLoopDelays=[];
+  const record=v=>{window.__qaRequests.push(v);if(window.__qaRequests.length>100)window.__qaRequests.shift()};
+  const route=value=>{try{return new URL(typeof value==='string'?value:value.url,location.href).pathname.replace(/[a-f0-9]{8}-[a-f0-9-]{27,}/gi,'[id]')}catch{return '[unknown]'}};
+  const original=window.fetch.bind(window);
+  window.fetch=async(...args)=>{
+   const start=performance.now(),path=route(args[0]),method=args[1]?.method||'GET';
+   try{
+    const response=await original(...args),headersAt=performance.now();
+    const json=response.json.bind(response);
+    response.json=async()=>{try{return await json()}catch(error){record({path,method,phase:'body',name:error.name,status:response.status,elapsed:performance.now()-start,headers_ms:headersAt-start});throw error}};
+    if(headersAt-start>1000)record({path,method,phase:'headers',status:response.status,elapsed:headersAt-start});
+    return response;
+   }catch(error){record({path,method,phase:'fetch',name:error.name,elapsed:performance.now()-start});throw error}
+  };
+  let tick=performance.now();setInterval(()=>{const now=performance.now(),delay=now-tick-250;tick=now;if(delay>1000){window.__qaLoopDelays.push({at:Date.now(),delay});if(window.__qaLoopDelays.length>30)window.__qaLoopDelays.shift()}},250);
+ });
  const page=await context.newPage(),states=[],logs=[],inputs=[],failures=[],grants=[];
  const u={context,page,states,logs,inputs,failures,grants,touch,index,authExpected:false};activeUsers.push(u);
  page.setDefaultTimeout(60000);page.setDefaultNavigationTimeout(90000);
@@ -73,7 +91,7 @@ async function relay(u){return until(()=>u.page.evaluate(async()=>{
 async function diagnostics(error){
  for(const u of activeUsers){const prefix=path.join(out,mode+'-failure-'+u.index);
   const data={stage,error:safeText(error.message,sensitive),url:safeUrl(u.page.url()),control:u.failedControl|| (u.lastControl?{label:u.lastControl.label,...await inspectControl(u.lastControl.locator).catch(()=>({inspection_failed:true}))}:null),console:u.logs,network:u.failures,errors};
-  try{await u.page.bringToFront();data.auth_controls=await inspectControl(u.page.locator('.auth-card button, .auth-card a'));data.title=safeText(await u.page.title(),sensitive);data.body=safeText(await u.page.locator('body').innerText({timeout:4000}),sensitive);
+  try{await u.page.bringToFront();data.auth_controls=await inspectControl(u.page.locator('.auth-card button, .auth-card a'));data.requests=await u.page.evaluate(()=>({requests:window.__qaRequests,loop_delays:window.__qaLoopDelays}));data.title=safeText(await u.page.title(),sensitive);data.body=safeText(await u.page.locator('body').innerText({timeout:4000}),sensitive);
    data.state=await u.page.evaluate(()=>({world:!!document.querySelector('.world-playing'),ready:document.querySelector('.world-canvas')?.getAttribute('data-ready'),welcome:!!document.querySelector('.welcome-home'),onboarding:!!document.querySelector('.onboarding'),media:window.__gcpPeers.map(p=>({connection:p.connectionState,ice:p.iceConnectionState,senders:p.getSenders().filter(s=>s.track?.readyState==='live').length}))}));
    const response=await u.context.request.get(origin+'/api/me');const me=response.ok()?await response.json():null;data.auth={status:response.status(),expected_anonymous:response.status()===401&&u.authExpected===false};if(me)data.user={id:me.id,onboarded:me.onboarded,city:me.city};
   }catch{data.collection_incomplete=true}
@@ -210,7 +228,7 @@ async function main(){
   }
   for(const key of acceptanceRequired)assert.equal(checks[key],true,'Missing acceptance '+key);
   assert.equal(errors.length,0,'No uncaught browser errors');
-  result.request_observations=activeUsers.map(u=>({index:u.index,failures:u.failures,console:u.logs}));
+  result.request_observations=await Promise.all(activeUsers.map(async u=>({index:u.index,failures:u.failures,console:u.logs,...await u.page.evaluate(()=>({requests:window.__qaRequests,loop_delays:window.__qaLoopDelays,visible_error:document.querySelector('.toast.error')?.textContent||null}))})));
   fs.writeFileSync(path.join(out,result.forced_turn?'relay.json':'direct.json'),JSON.stringify(result,null,2));
   if(result.forced_turn){const direct=JSON.parse(fs.readFileSync(path.join(out,'direct.json')));assert.equal(direct.sha,result.sha);assert.equal(direct.origin,origin);fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify({...result,checks:{...direct.checks,...result.checks}},null,2));}
  }catch(e){await diagnostics(e);throw e}finally{
