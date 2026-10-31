@@ -13,7 +13,7 @@ def actions_enabled():
 
 def require_payment_actions():
     if not actions_enabled():
-        raise HTTPException(503, MESSAGE)
+        raise HTTPException(409, MESSAGE)
 
 ARENA_MESSAGE = 'Mindaam Grand Arena — Coming Soon'
 def grand_arena_enabled():

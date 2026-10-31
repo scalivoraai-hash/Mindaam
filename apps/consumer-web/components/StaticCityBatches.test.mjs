@@ -19,3 +19,26 @@ test('textured and differently structured geometry remains present after batchin
   const a=new T.Mesh(new T.BoxGeometry(),material),b=new T.Mesh(new T.BoxGeometry(),material);b.geometry.deleteAttribute('uv');root.add(a,b);
   const result=batchStaticCity(root);assert.equal(result.chunks.length,2);assert.ok(result.chunks.every(g=>g.children[0].material===material));
 });
+
+test('large sibling batches detach once, preserve retained order and emit cleanup events',()=>{
+  const root=new T.Group(),before=new T.Object3D(),after=new T.Object3D();
+  const geometry=new T.BoxGeometry();geometry.userData.shared=true;
+  const material=new T.MeshStandardMaterial(),meshes=[];let removed=0,childRemoved=0,disposed=0;
+  geometry.addEventListener('dispose',()=>disposed++);
+  root.add(before);
+  for(let i=0;i<2048;i++){
+    const mesh=new T.Mesh(geometry,material);mesh.position.x=i%20;
+    mesh.addEventListener('removed',()=>{assert.equal(mesh.parent,null);removed++});
+    root.add(mesh);meshes.push(mesh);
+  }
+  root.add(after);root.addEventListener('childremoved',event=>{assert.ok(meshes.includes(event.child));childRemoved++});
+  // Guard the actual quadratic operations, without a machine-dependent deadline.
+  root.children.indexOf=()=>{throw Error('Repeated sibling search')};
+  root.children.splice=()=>{throw Error('Repeated sibling splice')};
+  const result=batchStaticCity(root);
+  assert.equal(root.children[0],before);assert.equal(root.children[1],after);
+  assert.equal(root.children.length,2+result.chunks.length);
+  assert.equal(removed,2048);assert.equal(childRemoved,2048);assert.equal(disposed,0);
+  assert.ok(meshes.every(mesh=>mesh.parent===null));
+  result.dispose();
+});

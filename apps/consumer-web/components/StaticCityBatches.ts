@@ -28,6 +28,7 @@ export function batchStaticCity(district:T.Group){
     let batch=batches.get(batchKey);if(!batch){batch={material,geometries:[],originals:[],x,z};batches.set(batchKey,batch)}
     batch.geometries.push(geometry);batch.originals.push(o);
   });
+  const removals=new Map<T.Object3D,Set<T.Mesh>>();
   for(const batch of batches.values()){
     const geometry=mergeGeometries(batch.geometries,false);
     for(const g of batch.geometries)g.dispose();
@@ -35,7 +36,22 @@ export function batchStaticCity(district:T.Group){
     geometry.computeBoundingSphere();
     const chunk=new T.Group();chunk.position.set(batch.x,0,batch.z);
     const m=new T.Mesh(geometry,batch.material);m.castShadow=true;m.receiveShadow=true;chunk.add(m);district.add(chunk);chunks.push(chunk);
-    for(const original of batch.originals){original.removeFromParent();if(!original.geometry.userData.shared)original.geometry.dispose()}
+    for(const original of batch.originals){
+      if(original.parent){let group=removals.get(original.parent);if(!group){group=new Set();removals.set(original.parent,group)}group.add(original)}
+      if(!original.geometry.userData.shared)original.geometry.dispose();
+    }
+  }
+  // Object3D.remove scans and splices the same large child array for every mesh.
+  // Compact each parent once so world entry leaves time for network/UI work.
+  for(const [parent,removed] of removals){
+    let kept=0;
+    for(const child of parent.children)if(!removed.has(child as T.Mesh))parent.children[kept++]=child;
+    parent.children.length=kept;
+    for(const child of removed){
+      child.parent=null;
+      child.dispatchEvent({type:'removed'});
+      parent.dispatchEvent({type:'childremoved',child});
+    }
   }
   return {chunks,dispose:()=>shared.forEach(m=>m.dispose())};
 }

@@ -5,7 +5,7 @@ from sqlalchemy import select, func
 from backend.tests.test_core import system, register, onboard
 from backend.api.models import Ledger
 from backend.api.commerce import Payment
-from backend.api.payment_policy import actions_enabled
+from backend.api.payment_policy import actions_enabled, MESSAGE
 from backend.api.payment_settlement import configured
 
 @pytest.mark.parametrize('flag',[None,'false','','TRUE','1'])
@@ -35,9 +35,9 @@ def test_beta_blocks_all_new_payment_paths_preserves_free_and_wallet(system,monk
    for suffix in ('enter','exit','enter'):assert c.post(url+'/venue/'+suffix,headers=g).status_code==200
   assert c.post(url+'/state/cancel',headers=h).status_code==200
   for route,data in [(url+'/venue/booking',{'request_id':str(uuid.uuid4()),'hours':1,'expected_cost':100}), (url+'/tickets',{'request_id':str(uuid.uuid4()),'expected_cost':25})]:
-   r=c.post(route,headers=h,json=data);assert r.status_code==503,r.text
+   r=c.post(route,headers=h,json=data);assert r.status_code==409,r.text;assert r.json()["detail"]==MESSAGE
  for route,data in [('/api/payments/checkout',{'sku':'credits_starter','request_id':str(uuid.uuid4()),'expected_amount':199}),('/api/subscriptions/checkout',{'plan_id':'test','request_id':str(uuid.uuid4())}),('/api/subscriptions/test/portal',{})]:
-  r=c.post(route,headers=h,json=data);assert r.status_code==503,r.text
+  r=c.post(route,headers=h,json=data);assert r.status_code==409,r.text;assert r.json()["detail"]==MESSAGE
  assert c.get('/api/wallet',headers=h).json()==before
  packs=c.get('/api/payments/credits',headers=h).json();assert packs['packs'] and packs['ready'] is False
  assert c.get('/api/config').json()['flags']['payment_actions_enabled'] is False

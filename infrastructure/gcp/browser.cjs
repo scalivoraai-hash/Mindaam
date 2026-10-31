@@ -174,8 +174,8 @@ async function main(){
   if(beta){
    const config=await a.api('/config');assert.equal(config.flags.payment_actions_enabled,false);assert.equal(config.flags.payments_enabled,false);
    const packs=await a.api('/payments/credits');assert.equal(packs.ready,false);assert.ok(packs.packs.length>0);
-   const blocked=await a.context.request.post(origin+'/api/payments/checkout',{headers:{Origin:origin,'X-Pulse-Client':'web'},data:{sku:packs.packs[0].id,expected_amount:packs.packs[0].amount_pence,request_id:crypto.randomUUID()}});assert.equal(blocked.status(),503);
-   const booking=await a.context.request.post(origin+'/api/events/'+event.id+'/venue/booking',{headers:{Origin:origin,'X-Pulse-Client':'web'},data:{request_id:crypto.randomUUID(),hours:1,starts_at:Date.now()/1000,expected_cost:100}});assert.equal(booking.status(),503);
+   const blocked=await a.context.request.post(origin+'/api/payments/checkout',{headers:{Origin:origin,'X-Pulse-Client':'web'},data:{sku:packs.packs[0].id,expected_amount:packs.packs[0].amount_pence,request_id:crypto.randomUUID()}});assert.equal(blocked.status(),409);
+   const booking=await a.context.request.post(origin+'/api/events/'+event.id+'/venue/booking',{headers:{Origin:origin,'X-Pulse-Client':'web'},data:{request_id:crypto.randomUUID(),hours:1,starts_at:Date.now()/1000,expected_cost:100}});assert.equal(booking.status(),409);
    assert.deepEqual(await a.api('/wallet'),wallet);checks.payment_gate=true;
   }
   await a.api('/events/'+event.id+'/state/start',{});await b.api('/events/'+event.id+'/join',{});await b.api('/events/'+event.id+'/venue/enter',{});
@@ -230,6 +230,10 @@ async function main(){
   assert.equal(errors.length,0,'No uncaught browser errors');
   result.request_observations=await Promise.all(activeUsers.map(async u=>({index:u.index,failures:u.failures,console:u.logs,...await u.page.evaluate(()=>({requests:window.__qaRequests,loop_delays:window.__qaLoopDelays,visible_error:document.querySelector('.toast.error')?.textContent||null}))})));
   fs.writeFileSync(path.join(out,result.forced_turn?'relay.json':'direct.json'),JSON.stringify(result,null,2));
+  for(const observation of result.request_observations){
+   assert.equal(observation.visible_error,null,'No unresolved user-facing timeout after acceptance');
+   assert.equal(observation.requests.filter(r=>r.phase==='body'&&r.status===200).length,0,'Successful responses remain readable during rendering');
+  }
   if(result.forced_turn){const direct=JSON.parse(fs.readFileSync(path.join(out,'direct.json')));assert.equal(direct.sha,result.sha);assert.equal(direct.origin,origin);fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify({...result,checks:{...direct.checks,...result.checks}},null,2));}
  }catch(e){await diagnostics(e);throw e}finally{
   if(event&&users[0])await users[0].api('/events/'+event.id+'/state/cancel',{}).catch(()=>{});
