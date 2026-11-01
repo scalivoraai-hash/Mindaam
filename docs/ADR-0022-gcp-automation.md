@@ -144,3 +144,6 @@ owner may run the same command with `--approve`. It verifies Google's authentica
 identity and requires typing the exact immutable digest. It publishes the final
 private review through the existing release gate. CI never grants owner approval.
 Costs retain the standing $48.76/$91.98 policy; configuration or estimate drift blocks.
+
+### Owner verification diagnostics (2026-11-01)
+Owner access verification now reports locally defined stage/category labels only. HTTP bodies, exception messages, credentials and cookie values are never diagnostic output. Staging and production login, identity, cookie, dashboard, session and logout checks remain mandatory. A cleanup error cannot replace the initial failure. Successful status-only endpoints need not return JSON; login still requires the documented user object. Use `RELEASE_PROFILE=limited-public-beta-v1` for the accepted beta candidate; omitting it selects full-release evidence. Retry privately as the existing owner, without `--approve`, and share only the sanitized failure line. Seven focused diagnostic tests and the 115-test automation suite pass; real owner login remains owner-operated and is not inferred from mocked tests.
