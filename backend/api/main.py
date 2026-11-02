@@ -438,3 +438,6 @@ app.include_router(feedback_router)
 
 from .movement_policy import router as movement_policy_router
 app.include_router(movement_policy_router)
+
+from .visual_profile import router as visual_profile_router
+app.include_router(visual_profile_router)

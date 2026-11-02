@@ -4,7 +4,7 @@ import {buildingStyle} from '../lib/buildingStyle.ts';
 import {box, material, mesh, oval} from './WorldAssets.ts';
 
 type Feature={id:string;tags:Record<string,string>;points:number[][];holes?:number[][][]};
-type Geography={features:Feature[];spawn:number[]};
+type Geography={features:Feature[];spawn:number[];visual_profile?:string};
 const palettes=[
   {wall:'#e9dcc7',trim:'#f8eddc',roof:'#4c5965',accent:'#234e51'},
   {wall:'#bd8d74',trim:'#e9d4bb',roof:'#574e53',accent:'#344d6b'},
@@ -125,6 +125,8 @@ function* buildEnvironment(parent:T.Group,geo:Geography,city='',cancelled=()=>fa
        const roof=mesh(geometry,palette.roof,group);roof.material=material(palette.roof);(roof.material as T.Material).side=T.DoubleSide;
       }
     }
+    // Cinematic details own entrances/trim; retain the base footprint and far facade.
+    if(city==='milton-keynes'&&geo.visual_profile==='cinematic-world-v1')continue;
     const near=Math.hypot(c[0]-geo.spawn[0],c[1]-geo.spawn[1])<450;
     if(!near||details++>700)continue;
     for(let i=1;i<f.points.length;i++){
