@@ -1,0 +1,24 @@
+{
+  "licence": "CC0-1.0",
+  "source": "https://github.com/makehumancommunity/makehuman",
+  "system_assets": "https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+  "files": {
+    "selected/clothes/male_casualsuit01/male_casualsuit01.mhclo": "78503ed7f56c149843d85e06e1164bc6871ce7319b2ef689237046352cc90de4",
+    "selected/clothes/male_casualsuit01/male_casualsuit01.mhmat": "043b25cefd398261b893d3dae58c81fc3e9633a25a01eafe66963591f5ad6eb6",
+    "selected/clothes/male_casualsuit01/male_casualsuit01.obj": "001921d237e408c35103720d046aa37f9c5512db1a179a5ede6a065cd504ba89",
+    "selected/clothes/shoes02/shoes02.mhclo": "0d447fd6b7415d6b2603e91697336ee51ac2f00ef85878d6667e9acfb45a20fe",
+    "selected/clothes/shoes02/shoes02.mhmat": "7f2cb19506784fbe22ba3f766f94bb13d1eee1712dd29ed10b926c5905bab924",
+    "selected/clothes/shoes02/shoes02.obj": "5726aabac42ff489998d0a769545dea013961bbb71b9c6024d75170181a98818",
+    "selected/eyes/low-poly/low-poly.mhclo": "68582e28e9176cba7cfcf35208f671b6201b8d1bc95c32decff61a3160ec34d8",
+    "selected/eyes/low-poly/low-poly.obj": "783fe1e6331162c876520b4c2bed7a8ca06354ca15497e8ebd68bb1b59f4d3de",
+    "selected/hair/short02/short02.mhclo": "625736cdb73e6d094df6e5a2df18f371781f1d2cd37b0ae15795c5d7051c3ec2",
+    "selected/hair/short02/short02.mhmat": "2ed04c8aad9c1a35d858ca72091525d32b1da3b61b5a031634dd528fd8530f6d",
+    "selected/hair/short02/short02.obj": "48f979114adfa712165a69cc55c45a70831af1fb3cba8e2a89120f0c87407b64",
+    "selected/skins/young_caucasian_male2/young_caucasian_male2.mhmat": "60022513803f7b68f30c4f91235b827ace9d36757dc07bdac157d58b7cbc226d",
+    "brown_eye.png": "4659691c7295ad6206c78b003e5fd0e5f91dcd53032fa914a229bb48cabe424b",
+    "selected/clothes/male_casualsuit01/male_casualsuit01_diffuse.png": "3fd0bba5dcbdea0ac427f644a6c7c298938f7369b8f96626621ce1e88989394e",
+    "selected/clothes/shoes02/shoes02_diffuse.png": "efef94ea34b0e0c2283095cb47a9e0389b55449c61a4f4972d0ad4d2bf06b4f0",
+    "selected/hair/short02/short02_diffuse.png": "47fe33831a3929567c733356dd66243116e05df2ace1f884ddca0080b728229f",
+    "selected/skins/young_caucasian_male2/young_lightskinned_male_diffuse2.png": "03efe1f6b0ae52429649dcefc9dcaef6058032f874a251169cc3e2ed473c3874"
+  }
+}
