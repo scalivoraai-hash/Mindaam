@@ -1,0 +1,108 @@
+{
+  "scope": "local full application with intercepted staging-profile response; software-rendered, not staging acceptance",
+  "entryMs": 20231,
+  "assetResponses": [
+    {
+      "url": "/assets/whitehouse/character-5f945139.glb",
+      "status": 200
+    }
+  ],
+  "metrics": [
+    {
+      "width": 1280,
+      "height": 900,
+      "sampleMs": 2506.399999997764,
+      "drawnFrames": 0,
+      "submittedFps": 0,
+      "frameMedianMs": null,
+      "frameP95Ms": null,
+      "jsHeapBytes": 491000000
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "sampleMs": 2501.099999998507,
+      "drawnFrames": 1,
+      "submittedFps": 0.39982407740618003,
+      "frameMedianMs": 1184.5999999985106,
+      "frameP95Ms": 1184.5999999985106,
+      "jsHeapBytes": 491000000
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "sampleMs": 2513.800000000003,
+      "drawnFrames": 3,
+      "submittedFps": 1.193412363752087,
+      "frameMedianMs": 699.9000000000015,
+      "frameP95Ms": 699.9000000000015,
+      "jsHeapBytes": 491000000
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "sampleMs": 2505.099999997765,
+      "drawnFrames": 3,
+      "submittedFps": 1.1975569837542122,
+      "frameMedianMs": 766.7000000000044,
+      "frameP95Ms": 766.7000000000044,
+      "jsHeapBytes": 491000000
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "sampleMs": 2501.39999999851,
+      "drawnFrames": 2,
+      "submittedFps": 0.7995522507400621,
+      "frameMedianMs": 134.79999999851134,
+      "frameP95Ms": 134.79999999851134,
+      "jsHeapBytes": 491000000
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "sampleMs": 2513.2999999970198,
+      "drawnFrames": 1,
+      "submittedFps": 0.39788326105167937,
+      "frameMedianMs": 1663.2999999970198,
+      "frameP95Ms": 1663.2999999970198,
+      "jsHeapBytes": 491000000
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "sampleMs": 2504.199999997021,
+      "drawnFrames": 2,
+      "submittedFps": 0.7986582541340065,
+      "frameMedianMs": 154.29999999701977,
+      "frameP95Ms": 154.29999999701977,
+      "jsHeapBytes": 491000000
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "sampleMs": 2510.7999999992535,
+      "drawnFrames": 2,
+      "submittedFps": 0.7965588657004121,
+      "frameMedianMs": 310.7999999992535,
+      "frameP95Ms": 310.7999999992535,
+      "jsHeapBytes": 491000000
+    },
+    {
+      "width": 1180,
+      "height": 820,
+      "sampleMs": 2501.2999999970198,
+      "drawnFrames": 1,
+      "submittedFps": 0.39979210810426236,
+      "frameMedianMs": 918.0999999970227,
+      "frameP95Ms": 918.0999999970227,
+      "jsHeapBytes": 491000000
+    }
+  ],
+  "downloads": {
+    "responses": 74,
+    "transferBytes": 3658348,
+    "encodedBodyBytes": 3636448
+  },
+  "errors": []
+}

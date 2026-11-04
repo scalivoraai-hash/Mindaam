@@ -147,7 +147,7 @@ export function cinematicDistrict(parent:T.Object3D,geo:Geography){
    roofMaterial.roughness=.85-Math.max(0,Math.min(1,rain))*.25;
    try{
     const x=Math.floor(point.x/TILE),z=Math.floor(point.z/TILE),key=`${x},${z}:${quality}`;
-    if(key!==lastKey){lastKey=key;const radius=quality==='high'?2:1;const selected:string[]=[];
+    if(key!==lastKey){lastKey=key;const radius=quality==='reduced'?0:quality==='high'?2:1;const selected:string[]=[];
      for(let dx=-radius;dx<=radius;dx++)for(let dz=-radius;dz<=radius;dz++){const id=`${x+dx},${z+dz}`;if(tiles.has(id))selected.push(id)}
      selected.sort((a,b)=>{const distance=(id:string)=>{const [ix,iz]=id.split(',').map(Number);return (ix-x)**2+(iz-z)**2};return distance(a)-distance(b)});
      const keep=new Set(selected);for(const id of active.keys())if(!keep.has(id))remove(id);pending=selected.filter(id=>!active.has(id));

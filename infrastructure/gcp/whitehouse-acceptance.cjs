@@ -30,10 +30,14 @@ async function verifyWhitehouse(a,b,screenshot){
     const history=section.querySelector('.floating-messages');
     const footer=section.querySelector('footer'),composer=section.querySelector('form');
     const rect=element=>element.getBoundingClientRect();
-    return {history:rect(history).height,toolbar:rect(footer).height,scrollable:history.scrollHeight>history.clientHeight,
+    const clear=element=>{
+     const bounds=rect(element);
+     return section.contains(document.elementFromPoint(bounds.x+bounds.width/2,bounds.y+bounds.height/2));
+    };
+    return {unobstructed:[composer.querySelector('input'),...footer.querySelectorAll('button,summary')].filter(e=>e.offsetWidth>0).every(clear),history:rect(history).height,toolbar:rect(footer).height,scrollable:history.scrollHeight>history.clientHeight,
      stacked:rect(history).bottom<=rect(composer).top+1&&rect(composer).bottom<=rect(footer).top+1};
    });
-   assert.ok(layout.stacked&&layout.scrollable&&layout.history>layout.toolbar,JSON.stringify(layout));
+   assert.ok(layout.unobstructed&&layout.stacked&&layout.scrollable&&layout.history>layout.toolbar,JSON.stringify(layout));
    await panel(a).getByRole('button',{name:'Voice chat'}).waitFor();
    await panel(a).getByRole('button',{name:'LiveFace',exact:true}).waitFor();
    await screenshot(a,'whitehouse-chat-'+width);

@@ -1,0 +1,108 @@
+{
+  "scope": "local full application with intercepted staging-profile response; software-rendered, not staging acceptance",
+  "entryMs": 33368,
+  "assetResponses": [
+    {
+      "url": "/assets/whitehouse/character-5f945139.glb",
+      "status": 200
+    }
+  ],
+  "metrics": [
+    {
+      "width": 1280,
+      "height": 900,
+      "sampleMs": 2500.0999999992564,
+      "drawnFrames": 1,
+      "submittedFps": 0.3999840006400934,
+      "frameMedianMs": 2000.0999999992564,
+      "frameP95Ms": 2000.0999999992564,
+      "jsHeapBytes": 521000000
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "sampleMs": 2502.399999999252,
+      "drawnFrames": 5,
+      "submittedFps": 1.9980818414328223,
+      "frameMedianMs": 366.70000000000437,
+      "frameP95Ms": 535.7999999992535,
+      "jsHeapBytes": 521000000
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "sampleMs": 2508.799999997762,
+      "drawnFrames": 10,
+      "submittedFps": 3.985969387758658,
+      "frameMedianMs": 249.90000000000146,
+      "frameP95Ms": 266.70000000000437,
+      "jsHeapBytes": 521000000
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "sampleMs": 2506.0999999999985,
+      "drawnFrames": 7,
+      "submittedFps": 2.7931846295040117,
+      "frameMedianMs": 316.6000000000058,
+      "frameP95Ms": 333.3000000000029,
+      "jsHeapBytes": 521000000
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "sampleMs": 2501.2999999992535,
+      "drawnFrames": 6,
+      "submittedFps": 2.3987526486234323,
+      "frameMedianMs": 366.6000000000058,
+      "frameP95Ms": 450,
+      "jsHeapBytes": 521000000
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "sampleMs": 2509.4999999985084,
+      "drawnFrames": 5,
+      "submittedFps": 1.9924287706726327,
+      "frameMedianMs": 533.2999999999956,
+      "frameP95Ms": 550,
+      "jsHeapBytes": 521000000
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "sampleMs": 2506.3999999977677,
+      "drawnFrames": 4,
+      "submittedFps": 1.5959144589864198,
+      "frameMedianMs": 600.0999999999985,
+      "frameP95Ms": 633.2999999999956,
+      "jsHeapBytes": 521000000
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "sampleMs": 2505.600000000006,
+      "drawnFrames": 4,
+      "submittedFps": 1.59642401021711,
+      "frameMedianMs": 583.3000000000029,
+      "frameP95Ms": 600,
+      "jsHeapBytes": 521000000
+    },
+    {
+      "width": 1180,
+      "height": 820,
+      "sampleMs": 2509.300000000003,
+      "drawnFrames": 2,
+      "submittedFps": 0.797035029689554,
+      "frameMedianMs": 959.3000000000029,
+      "frameP95Ms": 959.3000000000029,
+      "jsHeapBytes": 521000000
+    }
+  ],
+  "downloads": {
+    "responses": 76,
+    "transferBytes": 3662023,
+    "encodedBodyBytes": 3639523
+  },
+  "errors": []
+}
