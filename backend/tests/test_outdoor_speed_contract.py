@@ -11,7 +11,8 @@ from backend.api.movement_policy import DEFAULTS, read, save
 
 @pytest.mark.parametrize('mode,strength', [('walk', .6), ('run', 1)])
 @pytest.mark.parametrize('gaps', [(.12,) * 8, (.12, .35, .12, .8, .12, .12)])
-def test_outdoor_speed_contract(system, monkeypatch, mode, strength, gaps):
+@pytest.mark.parametrize('zone', ['world', 'building:test-room'])
+def test_outdoor_speed_contract(system, monkeypatch, mode, strength, gaps, zone):
     client, sessions = system
     headers, user = register(client)
     onboard(client, headers)
@@ -29,7 +30,7 @@ def test_outdoor_speed_contract(system, monkeypatch, mode, strength, gaps):
             account = db.get(User, user['id'])
             account.role = 'super_admin'
             save(db,account,{**DEFAULTS,'walk':DEFAULTS['walk']*multiplier/3,'run':DEFAULTS['run']*multiplier/3},read(db)['version'],'Controlled server-clock regression')
-            player.zone_id = 'world'
+            player.zone_id = zone
             player.motion_speed = 0
             player.last_move = clock[0]
             for gap in gaps:

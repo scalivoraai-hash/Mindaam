@@ -1,0 +1,68 @@
+{
+  "scope": "local full application with intercepted staging-profile response; software-rendered, not staging acceptance",
+  "entryMs": 12397,
+  "assetResponses": [
+    {
+      "url": "/assets/whitehouse/character-5f945139.glb",
+      "status": 200
+    }
+  ],
+  "metrics": [
+    {
+      "width": 1280,
+      "height": 900,
+      "rafMedianMs": 16.69999999999891,
+      "rafP95Ms": 16.700000000000728
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "rafMedianMs": 16.69999999999891,
+      "rafP95Ms": 16.799999999999272
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "rafMedianMs": 16.700000000000728,
+      "rafP95Ms": 16.700000000000728
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "rafMedianMs": 16.700000000000728,
+      "rafP95Ms": 16.700000000000728
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "rafMedianMs": 16.69999999999709,
+      "rafP95Ms": 16.799999999999272
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "rafMedianMs": 16.700000000000728,
+      "rafP95Ms": 16.799999999999272
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "rafMedianMs": 16.69999999999709,
+      "rafP95Ms": 16.799999999999272
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "rafMedianMs": 16.700000000000728,
+      "rafP95Ms": 16.700000000000728
+    },
+    {
+      "width": 1180,
+      "height": 820,
+      "rafMedianMs": 16.700000000000728,
+      "rafP95Ms": 16.700000000000728
+    }
+  ],
+  "errors": [],
+  "metric_limit": "requestAnimationFrame cadence is not GPU frame time or sustained gameplay FPS. Physical devices and staging have not been tested."
+}

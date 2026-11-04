@@ -90,7 +90,7 @@ def test_other_activity_admin_limits_are_preserved(system):
             response=c.put('/api/super-admin/vehicles/types/'+kind,headers=h,json={**DEFAULTS[kind],**override})
             assert response.status_code==422
 
-def test_indoor_speed_unchanged_outdoor_uses_controlled_pace(system,monkeypatch):
+def test_indoor_and_outdoor_use_approved_pedestrian_pace(system,monkeypatch):
     from backend.api import world
     c,sessions=system
     h,user,_=rental_setup(c,sessions,'bike')
@@ -98,11 +98,12 @@ def test_indoor_speed_unchanged_outdoor_uses_controlled_pace(system,monkeypatch)
     monkeypatch.setattr(world.time,'time',lambda:clock[0])
     with sessions.begin() as db:
         p=db.get(Presence,user['id']);u=db.get(User,user['id'])
-        for mode,base in [('walk',world.WALK_SPEED),('run',world.RUN_SPEED)]:
+        for mode,base in [('walk',world.OUTDOOR_WALK_SPEED),('run',world.OUTDOOR_RUN_SPEED)]:
             distances={}
             for zone in ['world','building:test-indoor']:
-                p.x=p.z=0;p.zone_id=zone;p.motion_speed=base*(3 if zone=='world' else 1);p.last_move=clock[0]
+                p.x=p.z=0;p.zone_id=zone;p.motion_speed=base;p.last_move=clock[0]
                 clock[0]+=.12
                 world.move(world.Movement(dx=1,dz=0,mode=mode),u,db)
                 distances[zone]=p.x
-            assert distances['world']==pytest.approx(distances['building:test-indoor']*(.16 if mode=='walk' else .2))
+            assert distances['world']==pytest.approx(base*.12)
+            assert distances['building:test-indoor']==pytest.approx(base*.12)

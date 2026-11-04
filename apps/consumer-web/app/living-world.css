@@ -4,7 +4,13 @@
 .world-atmosphere section p{font-size:12px;color:#bfcce4}.world-atmosphere label{display:block;margin:12px 0}.world-atmosphere select{width:100%;min-height:44px}.world-atmosphere input{margin-right:8px}
 .floating-chat:not(.event-chat){width:min(352px,calc(100vw - 24px));max-height:min(460px,70dvh);border:1px solid #8d72dc66;border-radius:18px;box-shadow:0 12px 45px #060b2580}
 .floating-chat:not(.event-chat).expanded{width:min(540px,calc(100vw - 24px));max-height:78dvh}
-.floating-chat:not(.event-chat) footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px;padding:6px 10px}
+.floating-chat .private-chat-toolbar{position:relative;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:space-around;gap:4px;padding:2px 8px}
+.chat-initial{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#32486b;color:white}
+.chat-more{position:relative}
+.chat-more summary{display:grid;place-items:center;min-width:44px;min-height:44px;cursor:pointer;list-style:none}
+.chat-more-actions{position:absolute;bottom:100%;right:0;display:grid;padding:4px;border-radius:8px;background:#172942;color:white;z-index:5;box-shadow:0 3px 12px #0006}
+.chat-more-actions button{white-space:nowrap;gap:6px}
+.private-chat-toolbar .live-reaction-strip{position:absolute;right:8px;bottom:100%;pointer-events:none}
 .floating-chat .chat-session-actions,.floating-chat .chat-communication{display:flex;gap:3px;flex-wrap:wrap}
 .floating-chat footer button{position:relative;display:inline-flex;justify-content:center;align-items:center;min-width:44px;min-height:44px;padding:8px;border-radius:12px}
 .floating-chat footer button[aria-label]:is(:hover,:focus-visible)::after{content:attr(aria-label);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);white-space:nowrap;background:#131e39;color:#fff;padding:6px 9px;border:1px solid #7489b8;border-radius:6px;pointer-events:none;font-size:12px;z-index:4}
