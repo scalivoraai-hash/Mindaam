@@ -3,7 +3,7 @@ import {human,car,bicycle,motorbike,box} from './WorldAssets';
 import {RemoteMotion} from '../lib/remoteMotion';
 
 /** A single transform owns both the remote driver and their existing vehicle mesh. */
-export function remoteExplorer(appearance:Record<string,string>,makeHuman:typeof human=human){
+export function remoteExplorer(appearance:Record<string,string>,makeHuman:typeof human=human, detailVehicle?:(model:T.Object3D,kind:string)=>void){
  const root=new T.Group(),motion=new RemoteMotion();let avatar=makeHuman(appearance,true);root.add(avatar);
  const appearanceKey=(a:Record<string,string>)=>JSON.stringify(['color','skin','hair','style','pants'].map(k=>a?.[k]||''));let key=appearanceKey(appearance),lod=0;
  let vehicle:T.Group|null=null,kind='';
@@ -20,6 +20,7 @@ export function remoteExplorer(appearance:Record<string,string>,makeHuman:typeof
     else if(kind==='scooter')motorbike(vehicle);
     else if(kind==='bike'||kind==='ebike')bicycle(vehicle);
     else if(kind==='boat'){box(vehicle,'#6a9ea6',0,.4,0,2,.6,4);box(vehicle,'#e4ded0',0,.8,0,1.5,.2,2.8)}
+    if(vehicle.children[0]&&['car','bike','ebike','scooter'].includes(kind))detailVehicle?.(vehicle.children[0],kind);
    }
   }
   const pose=motion.update(player,time,dt);
@@ -40,6 +41,7 @@ export function remoteExplorer(appearance:Record<string,string>,makeHuman:typeof
    }
    if(player.seated)avatar.userData.sit();
   }
+  vehicle?.children[0]?.userData.rollWheels?.((player.vehicle?.speed||0)*dt);
   root.userData.person=player;root.userData.movementState=player.movement_state;
  };
  root.userData.setLOD=(distance:number)=>{lod=distance;avatar.userData.setLOD(distance)};
