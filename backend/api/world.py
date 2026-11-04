@@ -266,7 +266,7 @@ def move(data: Movement, u=Depends(current_user), db=Depends(get_db)):
     if p.zone_id.startswith('bus:'):raise HTTPException(409,'Choose a seat or wait for the bus to stop')
     from .movement_policy import public as movement_config
     policy=movement_config(db)
-    speeds = policy["speeds"] if p.zone_id == "world" else {"walk":WALK_SPEED,"run":RUN_SPEED}
+    speeds = policy["speeds"]
     if data.mode not in speeds:
         raise HTTPException(422, "Unsupported movement mode")
     if data.mode not in {"walk", "run"}:

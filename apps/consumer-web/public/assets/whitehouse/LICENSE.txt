@@ -1,0 +1,6 @@
+Whitehouse character derived from MakeHuman Community CC0 system assets.
+License: CC0-1.0. https://creativecommons.org/publicdomain/zero/1.0/
+Sources: https://github.com/makehumancommunity/makehuman
+https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip
+Source hashes and reproducible conversion: scripts/assets/whitehouse-character-sources.json and WHITEHOUSE-CHARACTER.md.
+No MakeHuman application code is included.

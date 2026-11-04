@@ -127,6 +127,11 @@ async function main(){
   assert.equal(await a.page.evaluate(()=>window.__gcpPeers.length),0,'Ordinary world must not create media connections');
   await a.api('/social/'+b.id+'/friend',{});await b.api('/social/'+a.id+'/accept',{});
   for(const u of [a,b]){assert.equal(await u.page.evaluate(()=>window.__gcpPeers.length),0);assert.ok((await u.api('/friends')).some(p=>p.friend&&p.id===(u===a?b.id:a.id)))}
+  if(!result.forced_turn){
+   stage='whitehouse-world-and-chat';
+   await require('./whitehouse-acceptance.cjs').verifyWhitehouse(a,b,screenshot);
+   checks.whitehouse_world_and_chat=true;
+  }
   await act(a,a.page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'PEOPLE',exact:true}),'Acceptance control');
   await a.page.getByRole('heading',{name:'Your people',exact:true}).waitFor();await act(a,a.page.getByRole('tab',{name:'Friends',exact:true}),'Acceptance control');
   stage='settings-feedback';

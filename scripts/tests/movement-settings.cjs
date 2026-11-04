@@ -4,7 +4,7 @@ const {chromium}=require((process.env.QA_NODE_MODULES||process.env.CODEX_PRIMARY
 const root=path.resolve(__dirname,'../..'),origin='http://127.0.0.1:3000',python=process.env.QA_PYTHON||'python3',out=process.env.QA_OUTPUT||'/tmp/mindaam-movement-settings';fs.mkdirSync(out,{recursive:true});
 const env={...process.env,APP_ENV:'local',PUBLIC_ORIGIN:origin,DATABASE_URL:'sqlite:////tmp/mylil-multi-speeds-'+Date.now()+'.db'};for(const k of ['STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','LIVEKIT_API_KEY','LIVEKIT_API_SECRET','SUPER_ADMIN_EMAIL','SUPER_ADMIN_USERNAME','SUPER_ADMIN_INITIAL_PASSWORD'])delete env[k];
 const fixture=d=>JSON.parse(execFileSync(python,['-m','scripts.tests.motion_fixture',JSON.stringify(d)],{cwd:root,env,encoding:'utf8'}));
-const wait=ms=>new Promise(r=>setTimeout(r,ms)),checks=[],measurements=[],children=[];let browser;
+const wait=ms=>new Promise(r=>setTimeout(r,ms)),checks=[],measurements=[],children=[],timing=[];let browser,playerPage;
 const pass=name=>{checks.push(name);console.log('PASS',name)};
 async function until(fn,label){const end=Date.now()+60000;while(Date.now()<end){if(await fn())return;await wait(100)}throw Error('Timed out: '+label)}
 async function main(){
@@ -13,8 +13,8 @@ async function main(){
  await until(async()=>{try{return (await fetch(origin+'/api/health')).ok}catch{return false}},'startup');
  browser=await chromium.launch({executablePath:process.env.QA_CHROMIUM,args:['--no-sandbox','--disable-dev-shm-usage','--disable-webgl']});
  const player=await browser.newContext({viewport:{width:1440,height:900},hasTouch:true}),admin=await browser.newContext({viewport:{width:1280,height:900}}),p=await player.newPage(),a=await admin.newPage(),frames=[],errors=[];
- for(const page of [p,a])page.on('pageerror',e=>errors.push(e.message));
- p.on('websocket',ws=>ws.on('framereceived',f=>{try{const d=JSON.parse(f.payload.toString());if(d.type==='motion'||d.type==='state')frames.push(d)}catch{}}));
+ playerPage=p;await p.addInitScript(()=>{window.__movementTiming=[];const record=(type,extra={})=>{window.__movementTiming.push({type,time:Date.now(),...extra});if(window.__movementTiming.length>500)window.__movementTiming.shift()};for(const type of ['blur','focus','visibilitychange'])window.addEventListener(type,()=>record(type,{hidden:document.hidden}));if(PerformanceObserver.supportedEntryTypes.includes('longtask'))new PerformanceObserver(list=>{for(const entry of list.getEntries())record('longtask',{start:performance.timeOrigin+entry.startTime,duration:entry.duration})}).observe({type:'longtask',buffered:true})});for(const page of [p,a])page.on('pageerror',e=>errors.push(e.message));
+ p.on('websocket',ws=>{ws.on('framesent',f=>{try{const d=JSON.parse(f.payload.toString());if(d.type==='input')timing.push({type:'sent',time:Date.now(),seq:d.seq,action:d.action,x:d.x,z:d.z})}catch{}});ws.on('framereceived',f=>{try{const d=JSON.parse(f.payload.toString());if(d.type==='motion'||d.type==='state')frames.push(d);if(d.type==='motion')timing.push({type:'ack',time:Date.now(),seq:d.seq,position:d.position,speed:d.rental?.speed,heading:d.rental?.heading,configuration:d.movement_config?.version})}catch{}})});
  const api=async(ctx,url,data,method=data?'POST':'GET')=>{const r=await ctx.request.fetch(origin+'/api'+url,{method,data,headers:{Origin:origin,'X-Pulse-Client':'web'}});assert(r.ok(),url+' '+await r.text());return r.json()};
  async function register(ctx,prefix){const username=prefix+Date.now().toString(36);return api(ctx,'/auth/register',{username,email:username+'@example.test',password:'LocalBrowserSpeedQA2026!pass',confirm_password:'LocalBrowserSpeedQA2026!pass',adult:true,accepted_terms:true,accepted_privacy:true})}
  const user=await register(player,'speedplayer'),owner=await register(admin,'speedadmin');
@@ -44,4 +44,4 @@ async function main(){
  const current=await api(admin,'/super-admin/movement');assert(current.history.length>=3);assert.deepEqual(current.speeds,defaults.defaults);assert.deepEqual(errors,[]);pass('Audit retained and no browser errors');
  fs.writeFileSync(out+'/results.json',JSON.stringify({scope:'disposable local two-session browser acceptance',checks,measurements},null,2));
 }
-main().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{if(browser)await browser.close();for(const child of children)child.kill('SIGTERM')});
+main().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{try{const browserEvents=await playerPage?.evaluate(()=>window.__movementTiming||[]);fs.writeFileSync(out+'/movement-timing.json',JSON.stringify({scope:'disposable local acceptance; no credentials',browser:browser?.version(),platform:process.platform,node:process.version,cpus:require('os').cpus().length,load:require('os').loadavg(),timing,browserEvents},null,2))}catch{}if(browser)await browser.close();for(const child of children)child.kill('SIGTERM')});

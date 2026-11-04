@@ -1,0 +1,100 @@
+{
+  "scope": "isolated development asset; not full-world acceptance",
+  "assetBytes": 1922556,
+  "bones": 22,
+  "results": [
+    {
+      "pose": "idle",
+      "calls": 6,
+      "triangles": 38426,
+      "bounds": [
+        -0.329802319497471,
+        -0.03343011603605984,
+        -0.15108729971487606,
+        0.3267106041978942,
+        2.3162263684502484,
+        0.4675157409365354
+      ]
+    },
+    {
+      "pose": "walk",
+      "calls": 6,
+      "triangles": 38426,
+      "bounds": [
+        -0.3657067132611238,
+        0.026563200815912878,
+        -0.617499902537783,
+        0.3177158748269501,
+        2.3459512660411286,
+        0.6377324390905965
+      ]
+    },
+    {
+      "pose": "run",
+      "calls": 6,
+      "triangles": 38426,
+      "bounds": [
+        -0.6230578968852445,
+        0.18344967085618658,
+        -0.8447398785604119,
+        0.5223278599246772,
+        2.383669062082645,
+        0.9404180164863083
+      ]
+    },
+    {
+      "pose": "sit",
+      "calls": 6,
+      "triangles": 38426,
+      "bounds": [
+        -0.329802319497471,
+        0.07131319536217628,
+        -0.13621909820256292,
+        0.329217230443643,
+        1.969451403582915,
+        0.8258805605275821
+      ]
+    },
+    {
+      "pose": "cycle",
+      "calls": 6,
+      "triangles": 38426,
+      "bounds": [
+        -0.329802319497471,
+        -0.1878630831960264,
+        -0.3454189660150952,
+        0.32671060419789444,
+        2.0994514035736085,
+        0.5896660510398566
+      ]
+    },
+    {
+      "pose": "swim",
+      "calls": 6,
+      "triangles": 38426,
+      "bounds": [
+        -0.3298023194974708,
+        -0.6076576700574211,
+        -2.4781276104297394,
+        0.3267106041978942,
+        0.44798627005742186,
+        0.04140780579034147
+      ]
+    }
+  ],
+  "errors": [],
+  "status": "OFFLINE DEVELOPMENT ONLY \u2014 not integrated or staging accepted",
+  "sha256": "5f945139ffd86cbd4f8877784412adb97c388eb10b65eda931983eb716ea375e",
+  "limitations": [
+    "One outfit and short-hair prototype; wardrobe/style preservation incomplete",
+    "No full-world performance or physical-device results",
+    "Animation screenshots are local software-rendered fixtures",
+    "LOD and runtime loading/cleanup integration pending"
+  ],
+  "checks": {
+    "asset_admission_unit_tests": 4,
+    "pose_unit_tests": 3,
+    "typecheck": "PASS",
+    "renderer_poses": 6
+  }
+}

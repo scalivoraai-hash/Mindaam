@@ -11,7 +11,8 @@ from backend.api.movement_policy import DEFAULTS, read, save
 
 @pytest.mark.parametrize('mode,strength', [('walk', .6), ('run', 1)])
 @pytest.mark.parametrize('gaps', [(.12,) * 8, (.12, .35, .12, .8, .12, .12)])
-def test_outdoor_speed_contract(system, monkeypatch, mode, strength, gaps):
+@pytest.mark.parametrize('zone', ['world', 'building:test-room'])
+def test_outdoor_speed_contract(system, monkeypatch, mode, strength, gaps, zone):
     client, sessions = system
     headers, user = register(client)
     onboard(client, headers)
@@ -29,7 +30,7 @@ def test_outdoor_speed_contract(system, monkeypatch, mode, strength, gaps):
             account = db.get(User, user['id'])
             account.role = 'super_admin'
             save(db,account,{**DEFAULTS,'walk':DEFAULTS['walk']*multiplier/3,'run':DEFAULTS['run']*multiplier/3},read(db)['version'],'Controlled server-clock regression')
-            player.zone_id = 'world'
+            player.zone_id = zone
             player.motion_speed = 0
             player.last_move = clock[0]
             for gap in gaps:
@@ -69,3 +70,30 @@ def test_requested_forty_percent_walk_reduction(system,monkeypatch,mode,expected
     before=measured(1.);after=measured(.6)
     assert before>0
     assert after/before==pytest.approx(expected)
+
+
+def test_live_auditorium_speed_update_preserves_audience_boundary(system, monkeypatch):
+    from backend.tests.test_event_presentation import live_event
+    client, sessions, host, guest, _, event_id, _ = live_event(system, monkeypatch)
+    clock = [1000.]
+    monkeypatch.setattr(world, 'time', SimpleNamespace(time=lambda: clock[0]))
+    with sessions.begin() as db:
+        owner = db.get(User, host[1]['id'])
+        owner.role = 'super_admin'
+        audience = db.get(User, guest[1]['id'])
+        player = db.get(Presence, audience.id)
+        player.zone_id = 'event:' + event_id
+        player.x, player.z = 0, -5
+        player.last_move = clock[0]
+        for version, pace in enumerate((2.0, 1.5), start=1):
+            save(db, owner, {**DEFAULTS, 'walk': pace}, read(db)['version'], 'Auditorium speed test')
+            player.motion_speed = pace
+            start = player.x
+            clock[0] += .12
+            ack = world.move(world.Movement(dx=1, dz=0, mode='walk'), audience, db)
+            assert ack['x'] - start == pytest.approx(pace * .12)
+            assert ack['movement_config']['version'] == version
+            clock[0] += .12
+            blocked = world.move(world.Movement(dx=0, dz=-1, mode='run'), audience, db)
+            assert blocked['z'] == -5
+            assert blocked['zone_id'] == 'event:' + event_id
