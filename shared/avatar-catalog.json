@@ -1,0 +1,17 @@
+{
+  "presets": ["boy", "girl", "tourist", "student", "farmer", "office", "elder", "sporty"],
+  "figure": ["classic", "soft"],
+  "style": ["short", "plait", "bun", "mullappoo", "curly", "ponytail", "long", "spiky", "buzz-cut", "bob", "two-plaits", "afro"],
+  "face": ["oval", "round", "angular"],
+  "eyes": ["almond", "round", "narrow"],
+  "brows": ["natural", "arched", "straight"],
+  "nose": ["classic", "soft", "wide"],
+  "mouth": ["natural", "smile", "full"],
+  "facialHair": ["none", "moustache", "beard", "goatee", "stubble"],
+  "glasses": ["none", "glasses", "sunglasses", "big-frames", "aviators", "round-shades"],
+  "earrings": ["none", "studs", "hoops", "jhumka"],
+  "bottom": ["shorts", "mundu", "churidar", "half-saree", "lungi", "trousers", "jeans", "track-pants", "saree", "kurti-pants", "abaya", "frock", "dungarees"],
+  "top": ["plain-shirt", "t-shirt", "collared-shirt", "beach-shirt", "sports-tee", "striped-tee", "kurta", "hoodie", "jacket", "waistcoat"],
+  "headwear": ["nothing", "cap", "thoppi", "sun-hat", "cap-backwards", "beanie", "bucket-hat", "hijab", "turban", "kufi", "fedora"],
+  "carry": ["nothing", "tote-bag", "sling-bag", "camera", "backpack"]
+}

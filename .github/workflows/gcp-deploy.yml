@@ -90,6 +90,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python infrastructure/gcp/staging_trigger.py
+      - name: Record production revision and traffic before staging
+        if: env.OPERATION == 'staging'
+        run: python infrastructure/gcp/staging_isolation.py before
       - name: Resume selected operation
         run: python infrastructure/gcp/workflow.py
       - name: Inspect existing staging owner without changing accounts
@@ -128,6 +131,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python infrastructure/gcp/resource_resume.py
+      - name: Verify production revision and traffic remained unchanged
+        if: always() && env.OPERATION == 'staging'
+        run: python infrastructure/gcp/staging_isolation.py after
       - name: Persist non-secret evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

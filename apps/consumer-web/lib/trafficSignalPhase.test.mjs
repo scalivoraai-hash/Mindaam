@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {trafficSignalPhase} from './trafficSignalPhase.ts';
+test('opposing visual axes never share green, with clearance and all three states',()=>{const states=new Set();let allRed=0;for(let t=-50;t<100;t+=.1){const a=trafficSignalPhase(t,0),b=trafficSignalPhase(t,1);assert(!(a==='green'&&b==='green'));states.add(a);states.add(b);if(a==='red'&&b==='red')allRed++}assert.deepEqual([...states].sort(),['amber','green','red']);assert(allRed>100)});

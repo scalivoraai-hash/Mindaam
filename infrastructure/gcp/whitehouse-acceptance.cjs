@@ -4,15 +4,74 @@ const {randomUUID}=require('node:crypto');
 // Runs inside the existing staging-only browser workflow, on two disposable accounts.
 async function verifyWhitehouse(a,b,screenshot){
  const profile=await a.api('/visual-profile/milton-keynes');
- assert.equal(profile.profile,'cinematic-world-v1');
- assert.equal((await a.api('/visual-profile/london')).profile,'standard');
+ assert.equal(profile.profile,'cinematic-world-v2');
+ for(const city of Object.keys(require('../../shared/city-visual-styles.json')))assert.equal((await a.api('/visual-profile/'+city)).profile,'cinematic-world-v2',city);
  for(const user of [a,b]){
-  await user.page.locator('.world-canvas[data-ready="true"] canvas').waitFor();
+  await user.page.bringToFront();
+  await user.page.locator('.world-canvas[data-ready="true"][data-visual-profile="cinematic-world-v2"] canvas').waitFor();
   assert.ok(await user.page.evaluate(()=>performance.getEntriesByType('resource').some(
    entry=>new URL(entry.name).pathname==='/assets/whitehouse/character-5f945139.glb'&&entry.decodedBodySize>0
   )),'Cinematic character downloaded in the actual game');
  }
- await screenshot(a,'whitehouse-world-desktop');
+ await a.page.bringToFront();await screenshot(a,'whitehouse-world-desktop');
+ await a.page.getByRole('button',{name:'Explore Mindaam Cities',exact:true}).click();
+ await a.page.getByRole('heading',{name:'Explore Mindaam Cities',exact:true}).waitFor();
+ await a.page.locator('.world-search input').fill('London');
+ await a.page.locator('.cities-dialog .destination-card').first().waitFor();
+ const compact=await a.page.locator('.cities-dialog .destination-card').evaluateAll(es=>es.every(e=>e.offsetHeight<320));assert(compact);
+ await screenshot(a,'v2-city-modal');await a.page.getByRole('button',{name:'Close panel',exact:true}).click();
+
+ // Exercise only this disposable QA account through the existing studio and entitlement UI.
+ await a.page.getByRole('button',{name:'Account settings',exact:true}).click();
+ await a.page.getByRole('button',{name:/Edit Profile/}).click();
+ const studio=a.page.getByRole('region',{name:'Mindaam Avatar Studio'});
+ await studio.getByRole('button',{name:'Hair',exact:true}).click();
+ await studio.getByRole('button',{name:'Mullappoo',exact:true}).click();
+ await studio.getByRole('button',{name:'Clothes',exact:true}).click();
+ await studio.getByRole('button',{name:'Saree',exact:true}).click();
+ await a.page.getByRole('button',{name:'Save Profile',exact:true}).click();
+ await a.page.getByText('Profile saved.',{exact:true}).waitFor();
+ const appearance=(await a.api('/me')).avatar;
+ assert.equal(appearance.style,'mullappoo');assert.equal(appearance.bottom,'saree');
+ for(const [width,height] of [[1100,760],[390,844],[844,390],[768,1024]]){
+  await a.page.setViewportSize({width,height});await studio.scrollIntoViewIfNeeded();
+  await studio.locator('canvas').waitFor();
+  assert(await a.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  await screenshot(a,'v2-avatar-studio-'+width);
+ }
+ await a.page.setViewportSize({width:1100,height:760});
+ await a.page.getByRole('button',{name:'Close panel',exact:true}).click();
+ await a.page.reload();await a.page.locator('.welcome-home').waitFor();
+ await a.page.locator('.destination-card.is-owned').filter({hasText:'Whitehouse'}).first().click();
+ await a.page.locator('.world-access-modal').getByRole('button',{name:/^Enter /}).click();
+ await a.page.locator('.world-canvas[data-ready="true"][data-visual-profile="cinematic-world-v2"] canvas').waitFor();
+ assert.deepEqual((await a.api('/me')).avatar,appearance);
+ for(const name of ['London','Whitehouse']){
+  await a.page.getByRole('button',{name:'Explore Mindaam Cities',exact:true}).click();
+  await a.page.locator('.world-search input').fill(name);
+  await a.page.locator('.cities-dialog .destination-card').filter({hasText:name}).first().click();
+  const access=a.page.locator('.world-access-modal');
+  if(await access.getByRole('button',{name:/^Unlock /}).count())await access.getByRole('button',{name:/^Unlock /}).click();
+  await access.getByRole('button',{name:/^Enter /}).click();
+  await a.page.waitForFunction(city=>document.querySelector('.world-minimap span')?.textContent?.startsWith(city),name==='London'?'london':'milton keynes');
+  await a.page.locator('.world-canvas[data-ready="true"][data-visual-profile="cinematic-world-v2"] canvas').waitFor();
+  assert.equal((await a.api('/world/'+(name==='London'?'london':'milton-keynes'))).city,name==='London'?'london':'milton-keynes');
+  assert.deepEqual((await a.api('/me')).avatar,appearance);
+  await screenshot(a,'v2-city-entry-'+name.toLowerCase());
+ }
+ // Prove outdoor controls change the server's position on the public staging service.
+ for(const mode of ['walk','run']){
+  await a.page.getByRole('button',{name:mode,exact:true}).click();let moved=false;
+  for(const key of ['d','w']){
+   const before=(await a.api('/world/milton-keynes')).position;
+   await a.page.evaluate(()=>document.activeElement?.blur());
+   await a.page.keyboard.down(key);await a.page.waitForTimeout(900);await a.page.keyboard.up(key);
+   await a.page.waitForTimeout(200);const after=(await a.api('/world/milton-keynes')).position;
+   if(Math.hypot(after.x-before.x,after.z-before.z)>.3){moved=true;break}
+  }
+  assert(moved,'Staging keyboard '+mode+' changes authoritative outdoor position');
+ }
+ a.verifiedAppearance=appearance;
  const request=await a.api('/talk/request',{target_id:b.id,kind:'text'});
  try{
   await b.page.getByRole('button',{name:'Connect',exact:true}).click();
@@ -39,7 +98,7 @@ async function verifyWhitehouse(a,b,screenshot){
    });
    assert.ok(layout.unobstructed&&layout.stacked&&layout.scrollable&&layout.history>layout.toolbar,JSON.stringify(layout));
    await panel(a).getByRole('button',{name:'Voice chat'}).waitFor();
-   await panel(a).getByRole('button',{name:'LiveFace',exact:true}).waitFor();
+   for(const name of ['LiveFace','Gifts & reactions','Report','Block','End chat'])await panel(a).locator('footer').getByRole('button',{name,exact:true}).waitFor();
    await screenshot(a,'whitehouse-chat-'+width);
   }
  }finally{

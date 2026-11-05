@@ -1,0 +1,72 @@
+{
+  "cardiff": {
+    "path": "/assets/cities/street-furniture/cardiff-a424dbc23471.json",
+    "sha256": "a424dbc23471557c97a75c0b0d41de89140b5b29f39d0b7b51fc665e3a393e39",
+    "nodes": 909
+  },
+  "edinburgh": {
+    "path": "/assets/cities/street-furniture/edinburgh-15ec9aeafb5c.json",
+    "sha256": "15ec9aeafb5c54e53b7902ecc91acf33a663d70e520dc0f2ddf432bc4c183c2f",
+    "nodes": 918
+  },
+  "dublin": {
+    "path": "/assets/cities/street-furniture/dublin-89014467ffd7.json",
+    "sha256": "89014467ffd7b29b7b7cbffa35078f80ebf595352ffed14cb3fdcc39ff97e41c",
+    "nodes": 1395
+  },
+  "leeds": {
+    "path": "/assets/cities/street-furniture/leeds-c033d4e94374.json",
+    "sha256": "c033d4e94374207f98a2f2460c645bac7d0d5f869acae54aca70f6796e522d3c",
+    "nodes": 586
+  },
+  "york": {
+    "path": "/assets/cities/street-furniture/york-e003947d4840.json",
+    "sha256": "e003947d4840688546f650993bc8ecfd0d2a7eb47ad54b0368f69ccc77dad8ab",
+    "nodes": 355
+  },
+  "nottingham": {
+    "path": "/assets/cities/street-furniture/nottingham-52eb0a5292dc.json",
+    "sha256": "52eb0a5292dc4e05494efb48f420515a820565521da8b53026c48fb0be66067d",
+    "nodes": 238
+  },
+  "milton-keynes": {
+    "path": "/assets/cities/street-furniture/milton-keynes-1ccdbcf642cc.json",
+    "sha256": "1ccdbcf642cc1d1c042ab2dcea6fa7abfb2cd51c5e93e9df3194c72af2a224ab",
+    "nodes": 128
+  },
+  "liverpool": {
+    "path": "/assets/cities/street-furniture/liverpool-e067f81588a2.json",
+    "sha256": "e067f81588a20ed04cbe62167a53d02a4049274b6fb7d6bae7bdf97f9938c986",
+    "nodes": 490
+  },
+  "toronto": {
+    "path": "/assets/cities/street-furniture/toronto-98a55a64540d.json",
+    "sha256": "98a55a64540df854a64d36edbea4239a0ae431bfdde8fa82eb48c796f122f7b8",
+    "nodes": 497
+  },
+  "manchester": {
+    "path": "/assets/cities/street-furniture/manchester-84cea577e395.json",
+    "sha256": "84cea577e3952f4702a2d3b28aa038d5824df04afa7a0d219486725086f96dad",
+    "nodes": 551
+  },
+  "oxford": {
+    "path": "/assets/cities/street-furniture/oxford-851eedc0672b.json",
+    "sha256": "851eedc0672b5a9a8d58f634851b44b46fbfee953ca7d28d1bf1878c60c4beeb",
+    "nodes": 333
+  },
+  "cambridge": {
+    "path": "/assets/cities/street-furniture/cambridge-42ca1bfe23e4.json",
+    "sha256": "42ca1bfe23e49c72fd656353f9fb2587355d6436884f2fbfa9eb7c17755a0a9a",
+    "nodes": 289
+  },
+  "newcastle": {
+    "path": "/assets/cities/street-furniture/newcastle-ed1ea72bea98.json",
+    "sha256": "ed1ea72bea980befef6df449b5de00bcb4d0b25fbd27cea0c9ae057f88d5aa0d",
+    "nodes": 372
+  },
+  "bristol": {
+    "path": "/assets/cities/street-furniture/bristol-a5882777025a.json",
+    "sha256": "a5882777025a8fd6a04a9f6f0eaba6a3f75a41fb2e4e525cd7933bae5c3f0c4a",
+    "nodes": 546
+  }
+}

@@ -61,7 +61,7 @@ class DeploymentSafety(unittest.TestCase):
             spec=manifest['spec']['template']['spec']; self.assertEqual(spec['serviceAccountName'],c.sa(env))
             values={v['name']:v for v in spec['containers'][0]['env']}
             if env == 'staging':
-                self.assertEqual(values['MINDAAM_VISUAL_PROFILE']['value'], 'cinematic-world-v1')
+                self.assertEqual(values['MINDAAM_VISUAL_PROFILE']['value'], 'cinematic-world-v2')
             else:
                 self.assertNotIn('MINDAAM_VISUAL_PROFILE', values)
             self.assertEqual(values['PUBLIC_ORIGIN']['value'],'https://exact.run.app')

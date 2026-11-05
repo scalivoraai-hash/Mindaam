@@ -5,7 +5,7 @@ import {RemoteMotion} from '../lib/remoteMotion';
 /** A single transform owns both the remote driver and their existing vehicle mesh. */
 export function remoteExplorer(appearance:Record<string,string>,makeHuman:typeof human=human, detailVehicle?:(model:T.Object3D,kind:string)=>void){
  const root=new T.Group(),motion=new RemoteMotion();let avatar=makeHuman(appearance,true);root.add(avatar);
- const appearanceKey=(a:Record<string,string>)=>JSON.stringify(['color','skin','hair','style','pants'].map(k=>a?.[k]||''));let key=appearanceKey(appearance),lod=0;
+ const appearanceKey=(a:Record<string,string>)=>JSON.stringify(Object.keys(a||{}).sort().map(k=>[k,a[k]]));let key=appearanceKey(appearance),lod=0;
  let vehicle:T.Group|null=null,kind='';
  root.userData.avatar=avatar;
  root.userData.update=(player:any,time:number,dt:number,bus?:T.Group)=>{

@@ -1,0 +1,722 @@
+{
+  "milton-keynes": {
+    "family": "brick",
+    "description": "contemporary residential",
+    "surface": "brick",
+    "palette": [
+      "#a27b64",
+      "#d1bda7",
+      "#735c53"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "manchester": {
+    "family": "brick",
+    "description": "industrial brick",
+    "surface": "brick",
+    "palette": [
+      "#d1bda7",
+      "#735c53",
+      "#a27b64"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.2,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "liverpool": {
+    "family": "brick",
+    "description": "dockside brick",
+    "surface": "brick",
+    "palette": [
+      "#735c53",
+      "#a27b64",
+      "#d1bda7"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.35,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "leeds": {
+    "family": "brick",
+    "description": "Victorian commercial",
+    "surface": "brick",
+    "palette": [
+      "#a27b64",
+      "#d1bda7",
+      "#735c53"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "nottingham": {
+    "family": "brick",
+    "description": "sandstone and brick",
+    "surface": "brick",
+    "palette": [
+      "#d1bda7",
+      "#735c53",
+      "#a27b64"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.2,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "cardiff": {
+    "family": "brick",
+    "description": "Victorian civic",
+    "surface": "brick",
+    "palette": [
+      "#735c53",
+      "#a27b64",
+      "#d1bda7"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.35,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "dublin": {
+    "family": "brick",
+    "description": "Georgian brick",
+    "surface": "brick",
+    "palette": [
+      "#a27b64",
+      "#d1bda7",
+      "#735c53"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "toronto": {
+    "family": "brick",
+    "description": "brick and contemporary",
+    "surface": "brick",
+    "palette": [
+      "#d1bda7",
+      "#735c53",
+      "#a27b64"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.2,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "oxford": {
+    "family": "civic",
+    "description": "college stone",
+    "surface": "stone",
+    "palette": [
+      "#c3bba6",
+      "#dfd9c8",
+      "#898c87"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "cambridge": {
+    "family": "civic",
+    "description": "college brick and stone",
+    "surface": "stone",
+    "palette": [
+      "#dfd9c8",
+      "#898c87",
+      "#c3bba6"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.2,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "york": {
+    "family": "civic",
+    "description": "historic timber and stone",
+    "surface": "stone",
+    "palette": [
+      "#898c87",
+      "#c3bba6",
+      "#dfd9c8"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.35,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "newcastle": {
+    "family": "civic",
+    "description": "Georgian stone",
+    "surface": "stone",
+    "palette": [
+      "#c3bba6",
+      "#dfd9c8",
+      "#898c87"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "edinburgh": {
+    "family": "civic",
+    "description": "Scottish sandstone",
+    "surface": "stone",
+    "palette": [
+      "#dfd9c8",
+      "#898c87",
+      "#c3bba6"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.2,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "bristol": {
+    "family": "coastal",
+    "description": "colourful Georgian",
+    "surface": "stucco",
+    "palette": [
+      "#e3d1b5",
+      "#b9d0c6",
+      "#cda68d"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "brighton": {
+    "family": "coastal",
+    "description": "Regency coastal",
+    "surface": "stucco",
+    "palette": [
+      "#b9d0c6",
+      "#cda68d",
+      "#e3d1b5"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.2,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "sydney": {
+    "family": "coastal",
+    "description": "sandstone coastal",
+    "surface": "stucco",
+    "palette": [
+      "#cda68d",
+      "#e3d1b5",
+      "#b9d0c6"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.35,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "melbourne": {
+    "family": "coastal",
+    "description": "Victorian laneway",
+    "surface": "stucco",
+    "palette": [
+      "#e3d1b5",
+      "#b9d0c6",
+      "#cda68d"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "los-angeles": {
+    "family": "coastal",
+    "description": "stucco low rise",
+    "surface": "stucco",
+    "palette": [
+      "#b9d0c6",
+      "#cda68d",
+      "#e3d1b5"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.2,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "miami": {
+    "family": "coastal",
+    "description": "Art Deco pastel",
+    "surface": "stucco",
+    "palette": [
+      "#cda68d",
+      "#e3d1b5",
+      "#b9d0c6"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.35,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "milton-keynes-centre": {
+    "family": "modern",
+    "description": "modern commercial",
+    "surface": "glass",
+    "palette": [
+      "#9eafb8",
+      "#d3d6d5",
+      "#789ba7"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "birmingham": {
+    "family": "modern",
+    "description": "mixed retail",
+    "surface": "glass",
+    "palette": [
+      "#d3d6d5",
+      "#789ba7",
+      "#9eafb8"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.2,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "vancouver": {
+    "family": "modern",
+    "description": "glass residential",
+    "surface": "glass",
+    "palette": [
+      "#789ba7",
+      "#9eafb8",
+      "#d3d6d5"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.35,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "milan": {
+    "family": "modern",
+    "description": "historic and modern",
+    "surface": "glass",
+    "palette": [
+      "#9eafb8",
+      "#d3d6d5",
+      "#789ba7"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "milton-keynes-willen": {
+    "family": "lakeside",
+    "description": "lakeside recreation",
+    "surface": "brick",
+    "palette": [
+      "#af856c",
+      "#d2c6ac",
+      "#778c70"
+    ],
+    "roof": "gabled",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "london": {
+    "family": "london",
+    "description": "Georgian and Victorian",
+    "surface": "brick",
+    "palette": [
+      "#947665",
+      "#cfc8b5",
+      "#6c7375"
+    ],
+    "roof": "mansard",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "paris": {
+    "family": "paris",
+    "description": "Haussmann limestone",
+    "surface": "stone",
+    "palette": [
+      "#dfd2b8",
+      "#bfb6a5",
+      "#d4cbb9"
+    ],
+    "roof": "mansard",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": true,
+    "signBackground": "#243b58",
+    "signText": "#fff7e7"
+  },
+  "amsterdam": {
+    "family": "canal",
+    "description": "narrow canal gables",
+    "surface": "brick",
+    "palette": [
+      "#9a6857",
+      "#be916c",
+      "#7d6258"
+    ],
+    "roof": "stepped",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#243b58",
+    "signText": "#fff7e7"
+  },
+  "berlin": {
+    "family": "europe",
+    "description": "courtyard blocks",
+    "surface": "stucco",
+    "palette": [
+      "#d8c5a7",
+      "#c7ad92",
+      "#ded1b3"
+    ],
+    "roof": "terracotta",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "madrid": {
+    "family": "europe",
+    "description": "balcony apartments",
+    "surface": "stucco",
+    "palette": [
+      "#c7ad92",
+      "#ded1b3",
+      "#d8c5a7"
+    ],
+    "roof": "terracotta",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.2,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "barcelona": {
+    "family": "europe",
+    "description": "Catalan urban blocks",
+    "surface": "stucco",
+    "palette": [
+      "#ded1b3",
+      "#d8c5a7",
+      "#c7ad92"
+    ],
+    "roof": "terracotta",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.35,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "rome": {
+    "family": "europe",
+    "description": "historic stucco",
+    "surface": "stucco",
+    "palette": [
+      "#d8c5a7",
+      "#c7ad92",
+      "#ded1b3"
+    ],
+    "roof": "terracotta",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "new-york": {
+    "family": "american",
+    "description": "brownstone and commercial",
+    "surface": "brick",
+    "palette": [
+      "#9c705e",
+      "#c4b1a0",
+      "#897c71"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": true,
+    "signBackground": "#244737",
+    "signText": "#fff7e7"
+  },
+  "dubai": {
+    "family": "gulf",
+    "description": "modern Gulf towers",
+    "surface": "stone",
+    "palette": [
+      "#deceb2",
+      "#c8baa5",
+      "#9bafb9"
+    ],
+    "roof": "flat",
+    "vegetation": "palm",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "abu-dhabi": {
+    "family": "gulf",
+    "description": "landscaped Gulf urban",
+    "surface": "stone",
+    "palette": [
+      "#c8baa5",
+      "#9bafb9",
+      "#deceb2"
+    ],
+    "roof": "flat",
+    "vegetation": "palm",
+    "windowWidth": 1.2,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "riyadh": {
+    "family": "gulf",
+    "description": "Saudi stone and stucco",
+    "surface": "stone",
+    "palette": [
+      "#9bafb9",
+      "#deceb2",
+      "#c8baa5"
+    ],
+    "roof": "flat",
+    "vegetation": "palm",
+    "windowWidth": 1.35,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "jeddah": {
+    "family": "gulf",
+    "description": "Hijazi coastal",
+    "surface": "stone",
+    "palette": [
+      "#deceb2",
+      "#c8baa5",
+      "#9bafb9"
+    ],
+    "roof": "flat",
+    "vegetation": "palm",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "doha": {
+    "family": "gulf",
+    "description": "contemporary Gulf",
+    "surface": "stone",
+    "palette": [
+      "#c8baa5",
+      "#9bafb9",
+      "#deceb2"
+    ],
+    "roof": "flat",
+    "vegetation": "palm",
+    "windowWidth": 1.2,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "kochi": {
+    "family": "kerala",
+    "description": "Kerala tiled roofs",
+    "surface": "stucco",
+    "palette": [
+      "#e2d4bc",
+      "#dbbaa0",
+      "#b7cbb3"
+    ],
+    "roof": "terracotta",
+    "vegetation": "palm",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "mumbai": {
+    "family": "tropical",
+    "description": "dense mixed urban",
+    "surface": "stucco",
+    "palette": [
+      "#c4c9bd",
+      "#e0cebc",
+      "#a7b5b2"
+    ],
+    "roof": "flat",
+    "vegetation": "palm",
+    "windowWidth": 1.05,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "bengaluru": {
+    "family": "tropical",
+    "description": "mixed technology and residential",
+    "surface": "stucco",
+    "palette": [
+      "#e0cebc",
+      "#a7b5b2",
+      "#c4c9bd"
+    ],
+    "roof": "flat",
+    "vegetation": "palm",
+    "windowWidth": 1.2,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "singapore": {
+    "family": "tropical",
+    "description": "tropical modern",
+    "surface": "stucco",
+    "palette": [
+      "#a7b5b2",
+      "#c4c9bd",
+      "#e0cebc"
+    ],
+    "roof": "flat",
+    "vegetation": "palm",
+    "windowWidth": 1.35,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "bangkok": {
+    "family": "tropical",
+    "description": "compact tropical urban",
+    "surface": "stucco",
+    "palette": [
+      "#c4c9bd",
+      "#e0cebc",
+      "#a7b5b2"
+    ],
+    "roof": "flat",
+    "vegetation": "palm",
+    "windowWidth": 1.05,
+    "balconies": true,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "shanghai": {
+    "family": "east-asian",
+    "description": "high rise and historic",
+    "surface": "tile",
+    "palette": [
+      "#b6c1c2",
+      "#dedbd0",
+      "#8c9da5"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.05,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "tokyo": {
+    "family": "east-asian",
+    "description": "compact mixed use",
+    "surface": "tile",
+    "palette": [
+      "#dedbd0",
+      "#8c9da5",
+      "#b6c1c2"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.2,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  },
+  "seoul": {
+    "family": "east-asian",
+    "description": "dense contemporary",
+    "surface": "tile",
+    "palette": [
+      "#8c9da5",
+      "#b6c1c2",
+      "#dedbd0"
+    ],
+    "roof": "flat",
+    "vegetation": "broadleaf",
+    "windowWidth": 1.35,
+    "balconies": false,
+    "signBackground": "#26343c",
+    "signText": "#fff7e7"
+  }
+}

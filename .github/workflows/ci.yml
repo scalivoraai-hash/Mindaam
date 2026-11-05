@@ -227,3 +227,37 @@ jobs:
       - run: docker compose --env-file .env.example -f infrastructure/compose.yaml config --quiet
       - run: docker build -f infrastructure/Dockerfile.api -t pulseworld-api:ci .
       - run: docker build -f infrastructure/Dockerfile.web -t pulseworld-web:ci .
+
+  cinematic-v2:
+    name: Cinematic V2 rendering and controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r backend/requirements.txt
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - name: Install browser
+        run: |
+          npm install --prefix /tmp/mylil-qa --no-save playwright@1.62.1
+          /tmp/mylil-qa/node_modules/.bin/playwright install --with-deps chromium
+          node -e 'console.log("QA_CHROMIUM="+require("/tmp/mylil-qa/node_modules/playwright").chromium.executablePath())' >> "$GITHUB_ENV"
+      - name: Render every installed destination and verify actual two-user UI
+        env:
+          QA_NODE_MODULES: /tmp/mylil-qa/node_modules
+          QA_PYTHON: python
+        run: |
+          QA_OUTPUT=/tmp/mindaam-v2-evidence/cities node scripts/tests/cinematic-v2-renderer.cjs
+          QA_OUTPUT=/tmp/mindaam-v2-evidence/app node scripts/tests/cinematic-v2-app.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cinematic-v2
+          path: /tmp/mindaam-v2-evidence/

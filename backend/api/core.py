@@ -7,7 +7,7 @@ import hashlib
 from typing import Literal
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Header, Request, Response
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from sqlalchemy import select, delete, func, or_
 from .db import get_db, APP_ENV
 from .models import *
@@ -54,6 +54,12 @@ class Onboarding(Strict):
     city: str
     interests: list[str] = Field(default_factory=list, max_length=12)
     avatar: dict = Field(default_factory=dict)
+    @field_validator("avatar")
+    @classmethod
+    def valid_avatar(cls, value):
+        from .avatar_schema import validate_avatar
+        return validate_avatar(value)
+
     privacy: str = "City Mode"
     location_consent: bool = False
     analytics_consent: bool = False

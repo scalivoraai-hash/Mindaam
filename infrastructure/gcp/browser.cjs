@@ -11,11 +11,14 @@ const out='gcp-evidence';fs.mkdirSync(out,{recursive:true});
 const {act,inspectControl,expectedAnonymous}=require('./browser-ui.cjs');
 const {authenticateAndEnter}=require('./browser-flow.cjs');
 const activeUsers=[],sensitive=[],mode=process.env.QA_FORCE_TURN==='1'?'relay':'direct';let stage='initialization';
-const mixedRenderer=false,errors=[],wait=ms=>new Promise(r=>setTimeout(r,ms));let browser;
+const mixedRenderer=false,errors=[],wait=ms=>new Promise(r=>setTimeout(r,ms));let browser;const userBrowsers=[];
 async function until(fn,label,timeout=25000){const end=Date.now()+timeout;let error;while(Date.now()<end){try{const value=await fn();if(value)return value}catch(e){error=e}await wait(200)}throw Error(label+' timed out'+(error?' · '+error.message:''))}
 async function ready(url){return until(async()=>{try{return(await fetch(url,{signal:AbortSignal.timeout(3000)})).ok}catch{return false}},'Ready '+url,90000)}
+// Independent simulated devices must not serialize all WebGL work through one software GPU.
+async function launchBrowser(){return chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--auto-select-desktop-capture-source=Entire screen','--use-file-for-fake-audio-capture=/tmp/mindaam-tone.wav','--disable-background-timer-throttling']});}
 async function user(city,index){
- const touch=index===2;const context=await browser.newContext({viewport:touch?{width:390,height:844}:{width:1100,height:760},isMobile:touch,hasTouch:touch,permissions:['camera','microphone']});
+ const deviceBrowser=await launchBrowser();userBrowsers.push(deviceBrowser);
+ const touch=index===2;const context=await deviceBrowser.newContext({viewport:touch?{width:390,height:844}:{width:1100,height:760},isMobile:touch,hasTouch:touch,permissions:['camera','microphone']});
  if(mixedRenderer)await context.addInitScript(({observer})=>{const get=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){if((kind==='webgl'||kind==='webgl2')&&(!observer||!document.querySelector('.world-playing')))return null;return get.call(this,kind,...args)}},{observer:index===1});
  await context.addInitScript(()=>{
   const Native=window.WebSocket;window.WebSocket=new Proxy(Native,{construct(Target,args){const socket=Reflect.construct(Target,args);socket.addEventListener('message',event=>{try{const d=JSON.parse(event.data);if(['state','motion'].includes(d.type)&&d.position&&(d.position.last_move||0)>=(window.__qaMotion?.last_move||0)){window.__qaMotion=d.position;window.dispatchEvent(new CustomEvent('qa-motion',{detail:d.position}))}}catch{}});return socket}});
@@ -104,7 +107,7 @@ async function diagnostics(error){
 async function main(){
  // 20 seconds of a sine wave, consumed by Chromium's fake microphone.
  const samples=48000*20,wav=Buffer.alloc(44+samples*2);wav.write('RIFF');wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(48000,24);wav.writeUInt32LE(96000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(samples*2,40);for(let i=0;i<samples;i++)wav.writeInt16LE(Math.round(8000*Math.sin(2*Math.PI*440*i/48000)),44+i*2);fs.writeFileSync('/tmp/mindaam-tone.wav',wav);
- browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--auto-select-desktop-capture-source=Entire screen','--use-file-for-fake-audio-capture=/tmp/mindaam-tone.wav','--disable-background-timer-throttling']});
+ browser=await launchBrowser();
  const readinessContext=await browser.newContext();
  let readinessLast='not ready';
  const health=await until(async()=>{
@@ -185,7 +188,7 @@ async function main(){
   }
   await a.api('/events/'+event.id+'/state/start',{});await b.api('/events/'+event.id+'/join',{});await b.api('/events/'+event.id+'/venue/enter',{});
   await until(()=>peer(a,b.id)&&peer(b,a.id),'Mutual realtime presence',60000);
-  await until(()=>[a,b].every(u=>u.states.at(-1)?.scene?.id===event.id),'Both users entered auditorium',60000);checks.events=true;stage='movement';
+  await until(()=>[a,b].every(u=>u.states.at(-1)?.scene?.id===event.id),'Both users entered auditorium',60000);checks.events=true;if(a.verifiedAppearance)assert.deepEqual((await a.api('/me')).avatar,a.verifiedAppearance);stage='movement';
   const start=position(a);await move(a,.4,0);await until(()=>Math.hypot(position(a).x-start.x,position(a).z-start.z)>.05,'Movement');await move(a,0,0);
   await until(()=>Math.abs(peer(b,a.id).x-position(a).x)<.5,'Remote movement');checks.multiplayer=true;checks.movement=true;stage='liveface';
   await controls(a,/Reconnect|Join LiveFace/);await until(()=>a.page.locator('.live-dock.is-connected').count(),'Host connection');
@@ -243,7 +246,7 @@ async function main(){
  }catch(e){await diagnostics(e);throw e}finally{
   if(event&&users[0])await users[0].api('/events/'+event.id+'/state/cancel',{}).catch(()=>{});
   for(const u of activeUsers){if(u.api&&!u.reusable)await u.api('/me',undefined,'DELETE').catch(()=>{});if(u.api&&u.reusable)await u.api('/auth/logout',{}).catch(()=>{});await u.context.close();}
-  await browser.close();
+  await Promise.all(userBrowsers.map(b=>b.close()));await browser.close();
  }
 }
-main().catch(e=>{console.error('Acceptance failed at '+stage+': '+safeText(e.message,sensitive));process.exitCode=1;browser?.close().catch(()=>{})});
+main().catch(e=>{console.error('Acceptance failed at '+stage+': '+safeText(e.message,sensitive));process.exitCode=1;Promise.all([...userBrowsers,browser].filter(Boolean).map(b=>b.close().catch(()=>{})))});

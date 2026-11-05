@@ -1,25 +1,31 @@
 import * as T from 'three';
+import {cityVisualStyle} from '../lib/cityVisualStyle.ts';
 import {mergeGeometries} from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import {whitehouseArchitecture,frontageEdge} from '../lib/whitehouseArchitecture.ts';
 
 type Feature={id:string;tags:Record<string,string>;points:number[][];holes?:number[][][]};
-type Geography={features:Feature[]};
+type Geography={features:Feature[];city?:string};
 type Building={feature:Feature;x:number;z:number};
 const TILE=80;
 const BRICKS=['#a6745a','#b18e73','#d5c7ac','#846658'];
 
 /** Original deterministic brick/roof artwork. No downloaded or proprietary assets. */
-function masonryTexture(roof=false){
+function masonryTexture(roof=false,surface="brick"){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
  const ctx=canvas.getContext('2d');if(!ctx)throw Error('Cinematic material canvas unavailable');
  ctx.fillStyle=roof?'#686a69':'#c6b9a5';ctx.fillRect(0,0,512,512);
  let seed=7139;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
- const h=roof?64:32,w=roof?64:96;
+ const h=roof?64:surface==='stone'?80:surface==='tile'?64:32,w=roof?64:surface==='stone'?160:surface==='tile'?64:96;
  for(let row=0;row<512/h;row++)for(let col=-1;col<512/w+1;col++){
   const x=col*w+(row%2)*w/2,y=row*h,n=Math.floor(145+random()*38);
   ctx.fillStyle=`rgb(${n},${n-5},${n-12})`;ctx.fillRect(x+2,y+2,w-4,h-4);
   ctx.fillStyle='rgba(20,16,12,.18)';ctx.fillRect(x+2,y+h-5,w-4,2);
   for(let i=0;i<45;i++){const q=random();ctx.fillStyle=q>.5?'rgba(255,255,240,.12)':'rgba(40,30,22,.10)';ctx.fillRect(x+random()*w,y+random()*h,1+random()*3,1)}
+ }
+ if(!roof&&['stucco','glass'].includes(surface)){
+  ctx.fillStyle=surface==='glass'?'#a5c2cb':'#e8e4db';ctx.fillRect(0,0,512,512);
+  for(let i=0;i<2500;i++){ctx.fillStyle=i%2?'#ffffff18':'#51483c0c';ctx.fillRect(random()*512,random()*512,1.5,1.5)}
+  if(surface==='glass'){ctx.strokeStyle='#7e929a';ctx.lineWidth=3;for(let i=0;i<=512;i+=64){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,512);ctx.moveTo(0,i);ctx.lineTo(512,i);ctx.stroke()}}
  }
  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
  texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.anisotropy=4;return texture;
@@ -30,10 +36,11 @@ function masonryTexture(roof=false){
  * evicted; the existing complete district remains underneath as a safe far LOD.
  */
 export function cinematicDistrict(parent:T.Object3D,geo:Geography){
- const root=new T.Group();root.name='Whitehouse cinematic details';parent.add(root);
- const brick=masonryTexture(),roofTexture=masonryTexture(true);
- const walls=BRICKS.map(color=>new T.MeshStandardMaterial({color,map:brick,roughness:.91}));
- const roofMaterial=new T.MeshStandardMaterial({color:'#55565b',map:roofTexture,roughness:.85,side:T.DoubleSide});
+ const region=cityVisualStyle(geo.city||'milton-keynes');
+ const root=new T.Group();root.name=(geo.city||'Whitehouse')+' cinematic details';parent.add(root);
+ const brick=masonryTexture(false,region?.surface),roofTexture=masonryTexture(true);
+ const walls=(region?.palette||BRICKS).map(color=>new T.MeshStandardMaterial({color,map:brick,roughness:region?.surface==='glass'?.35:.91,metalness:region?.surface==='glass'?.15:0}));
+ const roofMaterial=new T.MeshStandardMaterial({color:region?.roof==='terracotta'?'#a0634e':'#55565b',map:roofTexture,roughness:.85,side:T.DoubleSide});
  const trim=new T.MeshStandardMaterial({color:'#dbd9cd',roughness:.65});
  const metal=new T.MeshStandardMaterial({color:'#393e42',roughness:.5,metalness:.35});
  const glass=new T.MeshStandardMaterial({color:'#294552',roughness:.24,metalness:.28,emissive:'#e7bb79',emissiveIntensity:0});
@@ -108,14 +115,14 @@ export function cinematicDistrict(parent:T.Object3D,geo:Geography){
      if(style.family==='utility'){if(i===front&&length>4){put(metal,0,1.55,.12,Math.min(4,length-1),3,.10);for(let y=.35;y<3;y+=.3)put(trim,0,y,.18,Math.min(4,length-1),.025,.025)}continue;}
      const floors=Math.min(7,Math.max(1,Math.floor(height/3.1))),bays=Math.min(12,Math.max(1,Math.floor(length/(commercial?3:2.7))));
      for(let floor=0;floor<floors;floor++)for(let bay=0;bay<bays;bay++){
-      const u=(bay+.5)*length/bays-length/2,w=Math.min(commercial&&floor===0?2.15:1.15,length/bays-.65),y=1.65+floor*3.1,h=commercial&&floor===0?2.35:1.35;
+      const u=(bay+.5)*length/bays-length/2,w=Math.min(commercial&&floor===0?2.15:(region?.windowWidth||1.15),length/bays-.65),y=1.65+floor*3.1,h=commercial&&floor===0?2.35:1.35;
       if(w<.45||y+h/2>height-.3)continue;
       const entrance=floor===0&&bay===Math.floor(bays/2)&&i===front;
       if(entrance){put(trim,u,1.16,.11,1.1,2.3,.18);put(door,u,1.13,.215,.91,2.18,.045);put(glass,u,1.65,.245,.57,.65,.025);put(metal,u+.3,1.05,.27,.035,.18,.04);continue}
       put(metal,u,y,.09,w+.16,h+.16,.09);put(glass,u,y,.145,w,h,.025);
       for(const side of [-1,1]){put(trim,u+side*w/2,y,.185,.065,h+.14,.10);put(trim,u,y+side*h/2,.185,w+.12,.065,.10)}
       put(trim,u,y,.19,.045,h,.08);put(trim,u,y-h/2-.07,.21,w+.23,.09,.30);
-      if(style.family==='apartments'&&floor>0&&i===front&&bay%2===0){
+      if((style.family==='apartments'||region?.balconies)&&floor>0&&i===front&&bay%2===0){
        put(trim,u,y-.83,.48,w+.4,.10,.85);
        put(metal,u,y-.36,.89,w+.38,.045,.045);
        for(let bar=-2;bar<=2;bar++)put(metal,u+bar*(w+.3)/4,y-.58,.89,.025,.47,.025);
@@ -123,13 +130,20 @@ export function cinematicDistrict(parent:T.Object3D,geo:Geography){
      }
     }
     // Regional roof approximation only for rectangular residential-context buildings.
-    if(residentialContext&&f.tags['roof:shape']!=='flat'&&points.length===4&&!f.holes?.length&&height<13){
+    if((residentialContext||['mansard','stepped'].includes(region?.roof||''))&&region?.roof!=='flat'&&f.tags['roof:shape']!=='flat'&&points.length===4&&!f.holes?.length&&height<13){
      const [a,b,d]=[points[0],points[1],points[3]],ux=b[0]-a[0],uz=b[1]-a[1],vx=d[0]-a[0],vz=d[1]-a[1],w=Math.hypot(ux,uz),depth=Math.hypot(vx,vz);
      if(w>1&&depth>1&&Math.abs(ux*vx+uz*vz)/(w*depth)<.06){
       const corners=points.map(p=>[p[0]-ox,height+.25,p[1]-oz]),first=w<depth?[0,1]:[0,3],second=w<depth?[3,2]:[1,2];
       const mid=(ids:number[])=>[(corners[ids[0]][0]+corners[ids[1]][0])/2,height+Math.min(2.8,Math.min(w,depth)*.32),(corners[ids[0]][2]+corners[ids[1]][2])/2];
       const r=mid(first),q=mid(second),[p0,p1]=first.map(i=>corners[i]),[p3,p2]=second.map(i=>corners[i]);
-      const verts=[p0,p1,r,p3,q,p2,p0,r,q,p0,q,p3,p1,p2,q,p1,q,r];
+      let verts=[p0,p1,r,p3,q,p2,p0,r,q,p0,q,p3,p1,p2,q,p1,q,r];
+      if(region?.roof==='mansard'){
+       const centre=corners.reduce((s,p)=>[s[0]+p[0]/4,s[1],s[2]+p[2]/4],[0,height+.25,0]);
+       const top=corners.map(p=>[centre[0]+(p[0]-centre[0])*.74,height+1.9,centre[2]+(p[2]-centre[2])*.74]);
+       verts=[];for(let i=0;i<4;i++){const j=(i+1)%4;verts.push(corners[i],corners[j],top[j],corners[i],top[j],top[i])}verts.push(top[0],top[1],top[2],top[0],top[2],top[3]);
+      }
+      if(region?.roof==='stepped')for(const [a,b] of [[p0,p1],[p3,p2]]){const length=Math.hypot(b[0]-a[0],b[2]-a[2]);for(let step=0;step<5;step++){const hh=.36+step*.4,ww=length*(1-step*.16);block(wallMaterial,(a[0]+b[0])/2+ox,height+hh,(a[2]+b[2])/2+oz,ww,.4,.25,Math.atan2(-(b[2]-a[2]),b[0]-a[0]));}}
+
       surface(roofMaterial,verts.flat(),verts.flatMap(p=>[p[0]/2,p[2]/2+p[1]/3]));
      }
     }
@@ -153,7 +167,7 @@ export function cinematicDistrict(parent:T.Object3D,geo:Geography){
      const keep=new Set(selected);for(const id of active.keys())if(!keep.has(id))remove(id);pending=selected.filter(id=>!active.has(id));
     }
     const next=pending.shift();if(next)tile(next);
-   }catch{failed=true;for(const id of active.keys())remove(id);pending=[];console.warn('Cinematic details unavailable; standard district retained')}
+   }catch(error){failed=true;for(const id of active.keys())remove(id);pending=[];console.warn('Cinematic details unavailable; standard district retained',error)}
   },
   metrics:()=>({indexedBuildings:[...tiles.values()].reduce((n,b)=>n+b.length,0),activeTiles:active.size,pendingTiles:pending.length,builtTiles:builds,failed}),
   dispose(){if(disposed)return;disposed=true;for(const id of active.keys())remove(id);parent.remove(root);cube.dispose();brick.dispose();roofTexture.dispose();materials.forEach(m=>m.dispose());pending=[]},

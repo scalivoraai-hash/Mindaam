@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from backend.api.locations import CITIES
 DATA=ROOT/'backend/data'
-TAGS={'building','building:levels','height','name','highway','natural','leisure','amenity','shop','entrance','surface','access','foot','barrier','landuse','waterway','area'}
+TAGS={'building','building:levels','height','name','highway','natural','leisure','amenity','shop','entrance','surface','access','foot','barrier','landuse','waterway','area','roof:shape','roof:material','building:material','building:colour','building:use','office','railway','crossing','crossing:signals','footway','name:en','lanes','width','traffic_signals:direction'}
 def inside(p,ring):
  x,y=p;result=False
  for a,b in zip(ring,ring[1:]+ring[:1]):
@@ -48,7 +48,7 @@ def convert(raw,origin):
   if len(ids)>=2:features.append({'id':id,'tags':t,'points':[point(i) for i in ids]})
  for id,n in nodes.items():
   t=tags(n)
-  if t.get('name') and any(k in t for k in ['shop','amenity']):features.append({'id':str(2000000000000+int(id)),'osm_type':'node','osm_id':id,'tags':t,'points':[point(id)]})
+  if (t.get('name') and any(k in t for k in ['shop','amenity','office','leisure'])) or t.get('highway') in {'traffic_signals','street_lamp','bus_stop','crossing'} or t.get('amenity') in {'bench','waste_basket'} or t.get('barrier')=='bollard' or t.get('railway')=='tram_stop':features.append({'id':str(2000000000000+int(id)),'osm_type':'node','osm_id':id,'tags':t,'points':[point(id)]})
  return features
 
 def save(city,raw,old=None):

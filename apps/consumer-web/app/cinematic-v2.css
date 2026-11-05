@@ -1,0 +1,50 @@
+/* Scoped presentation overrides; existing account and access behaviour is retained. */
+body .drawer.cities-dialog,body .drawer.profile-studio-dialog{width:min(1100px,calc(100vw - 32px));max-width:none;left:50%;right:auto;transform:translateX(-50%);top:max(18px,env(safe-area-inset-top));bottom:max(18px,env(safe-area-inset-bottom));border-radius:24px}
+body .city-switch-trigger{display:flex;align-items:center;gap:9px;max-width:270px;padding:0;background:transparent;border:0;box-shadow:none;text-align:left;font-size:16px;font-weight:700;color:inherit}
+.city-switch-trigger>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body .world-discovery .destination-grid{grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:14px}
+body .world-discovery .destination-card{padding:0 14px 14px;gap:8px;min-height:0;border-radius:17px;display:flex;align-items:stretch;text-align:left;overflow:hidden}
+body .world-discovery .destination-art{height:76px;min-height:76px;margin:0 -14px 4px;width:calc(100% + 28px)}
+body .world-discovery .destination-card>svg,body .world-discovery .destination-card>img{height:76px;object-fit:cover;margin:0 -14px 4px;width:calc(100% + 28px)}
+body .world-discovery .destination-name{font-size:17px;line-height:1.25;min-height:0;margin:0}
+body .world-discovery .destination-online{min-height:0;padding:0;margin:0;font-size:12px;gap:5px}
+body .world-discovery .destination-online b{font-size:18px}
+body .world-discovery .quiet-world{font-size:12px}
+body .world-discovery .destination-eyebrow{font-size:10px;margin:0;padding:0}
+body .world-discovery .destination-action{margin-top:auto;padding:10px 7px;font-size:12px;min-height:40px;border-radius:10px}
+.destination-district{font-size:11px;opacity:.78;line-height:1.4}
+body .world-discovery .is-current{outline:2px solid #399bc1;outline-offset:2px}
+body .world-discovery .starter-progress{padding:14px;margin:12px 0}
+body .world-discovery .starter-progress p{margin:6px 0;font-size:12px}
+body .floating-chat .private-chat-toolbar{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:4px 0;align-items:center;flex:none}
+body .floating-chat .private-chat-toolbar>button{width:100%;min-width:0;min-height:44px;padding:8px;display:flex;align-items:center;justify-content:center}
+body .floating-chat>header .profile-button{font-size:11px;max-width:52px}
+body .avatar-studio{border:1px solid var(--border,#b8c9dc);border-radius:20px;overflow:hidden;margin:20px 0;padding:18px;min-width:0}
+.avatar-studio h3,.avatar-studio h4,.avatar-studio p{margin:0 0 8px}
+.avatar-studio-body{display:grid;grid-template-columns:minmax(240px,1fr) minmax(250px,1.1fr);gap:18px;align-items:start}
+body .avatar-studio .avatar-preview{position:sticky;top:0;margin:0;min-width:0;background:radial-gradient(ellipse at 50% 50%,#637185,#142238);border-radius:18px;overflow:hidden}
+body .avatar-studio .avatar-preview-canvas{height:360px;min-height:0;width:100%;touch-action:none}
+.avatar-view-controls{display:flex;justify-content:center;gap:4px;padding:8px;flex-wrap:wrap}
+body .avatar-view-controls button{padding:8px 10px;min-height:40px;font-size:12px}
+body .avatar-zoom{display:flex;align-items:center;gap:12px;color:#f4f7fa;padding:0 14px 12px;font-size:11px}
+.avatar-studio-controls{min-width:0;display:flex;flex-direction:column}
+.avatar-tabs{display:flex;gap:5px;overflow-x:auto;padding:0 0 10px;scrollbar-width:thin}
+body .avatar-tabs button{flex:none;padding:8px 11px;min-height:40px;white-space:nowrap;font-size:12px;border-radius:12px}
+.avatar-category{height:310px;overflow:auto;padding:4px 4px 12px;scrollbar-width:thin}
+.avatar-category h5{margin:8px 0;font-size:12px}
+.avatar-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:14px}
+body .avatar-options button{font-size:12px;padding:10px 7px;min-height:44px;border-radius:12px;white-space:normal;line-height:1.3}
+body .avatar-studio button[aria-pressed=true]{background:#174675;color:#fff;outline:2px solid #5bc5d7;outline-offset:-2px}
+.avatar-studio-actions{border-top:1px solid var(--border,#b8c9dc);padding:10px 0 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.avatar-studio-actions button{font-size:12px;min-height:40px}
+.skin-swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+body .skin-swatches button{min-height:44px;border:2px solid transparent}
+body .avatar-studio input[type=color]{width:100%;height:38px;padding:3px}
+body .avatar-studio .avatar-locked{opacity:.55;margin:4px 0 12px;font-size:12px}
+body .profile-studio-dialog .profile-editor>button.primary{position:sticky;bottom:0;z-index:3;min-height:44px;box-shadow:0 0 0 8px var(--surface,#fff)}
+@media(max-width:650px){body .drawer.cities-dialog,body .drawer.profile-studio-dialog{width:calc(100vw - 16px);top:8px;bottom:8px;padding:16px;border-radius:18px}.avatar-studio-body{grid-template-columns:1fr;gap:12px}body .avatar-studio{padding:12px}body .avatar-studio .avatar-preview{position:relative}body .avatar-studio .avatar-preview-canvas{height:240px}.avatar-category{height:230px}.avatar-options{grid-template-columns:repeat(3,minmax(0,1fr))}body .world-discovery .destination-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}body .world-discovery .destination-card{padding:0 10px 10px}body .world-discovery .destination-name{font-size:14px}body .world-discovery .destination-action{font-size:11px}body .world-discovery .destination-online{font-size:11px}}
+@media(max-width:359px){body .world-discovery .destination-grid{grid-template-columns:1fr}.avatar-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-height:460px) and (orientation:landscape){.avatar-studio-body{grid-template-columns:minmax(170px,.8fr) minmax(230px,1.2fr)}body .avatar-studio .avatar-preview-canvas{height:200px}.avatar-category{height:200px}}
+
+body .avatar-studio button[aria-pressed=true],body .avatar-studio button[aria-pressed=true] *{color:#fff!important}
+body .profile-details{border-top:1px solid var(--border,#b8c9dc);padding-top:14px;margin:14px 0}body .profile-details summary{font-weight:700;cursor:pointer;margin-bottom:16px}
