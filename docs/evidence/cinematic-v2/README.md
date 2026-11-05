@@ -32,3 +32,13 @@ Outstanding items must not be described as done:
 - Actual final-source GitHub CI, immutable staging deployment, and live two-user/browser acceptance; recorded only after completion.
 
 There is no production release approval in this evidence packet.
+
+## Follow-up verification, 5 November
+
+PR head e2a6f9d had passing backend/frontend/infrastructure and multiplayer jobs. Both CI runs exposed an isolated renderer import-map defect for BufferGeometryUtils; the missing module mapping is corrected without changing assertions. The PR-triggered V2 app check passed, but the push-triggered check timed out at world entry. This intermittent result is not accepted as a clean release.
+
+Local repeat testing found generated Next.js route-cache HTML from a previous build. That cache was removed, and the app harness now asserts served HTML contains the current BUILD_ID and the actual world advertises cinematic-world-v2. Older local gameplay screenshots are not final-source evidence. Browser cases explicitly foreground the page being exercised and supply a local font stylesheet fixture; application APIs, permissions, assets and WebGL remain real. Keyboard movement must change authoritative position for walk and run.
+
+Staging acceptance now requires the rendered V2 profile, Avatar Studio changes saved across reload and London/Whitehouse switches through ordinary entitlement controls, plus appearance persistence in the existing auditorium scenario. Final deployment results remain pending until those checks actually run.
+
+Fresh-build local application acceptance subsequently passed with zero page/console errors: two actual V2 worlds, authoritative keyboard walk/run displacement, full appearance persistence, compact selector at three widths, six unobstructed chat actions at four viewports, and appearance retained entering the auditorium. CI additionally exercises London/Whitehouse switching. The staging workflow now records production revision/image/traffic before and after using read-only gcloud describes and fails if they differ.

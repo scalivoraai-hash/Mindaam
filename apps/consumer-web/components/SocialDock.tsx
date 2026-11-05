@@ -22,7 +22,7 @@ return <>{world?.scene?.template!=='auditorium'&&<ConversationDiscovery world={w
   <button onClick={()=>session.members?.length>2?run(()=>api(`/talk/conversation/${session.root_id}/media/voice`,'POST',{})):invite('voice',session.peer)} aria-label="Voice chat" title="Voice chat"><Phone size={19}/></button>
   <button onClick={()=>session.members?.length>2?run(()=>api(`/talk/conversation/${session.root_id}/media/liveface`,'POST',{})):invite('liveface',session.peer)} aria-label="LiveFace" title="LiveFace"><Video size={19}/></button>
   <GiftControls contextId={session.id} compact/>
-  
+
       <button onClick={()=>{const details=prompt('Describe the issue for moderation.');if(details)run(()=>api('/reports','POST',{target_id:session.peer.id,category:'safety',details}).then(()=>setNotice('Report submitted')))}} aria-label="Report" title="Report"><Flag size={19}/></button>
       <button onClick={()=>run(()=>api(`/social/${session.peer.id}/block`,'POST',{}))} aria-label="Block" title="Block"><Ban size={19}/></button>
       <button onClick={()=>respond(session.id,'end')} aria-label="End chat" title="End chat"><X size={19}/></button>
