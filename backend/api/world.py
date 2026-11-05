@@ -94,7 +94,11 @@ def snapshot(db, u, city):
     own = db.get(Presence, u.id)
     if not own or own.city != city:
         raise HTTPException(409, "Enter this city first")
-    own.updated_at = time.time()
+    # Movement already refreshes presence. Rewriting it on every snapshot
+    # holds a database writer while the rest of the world is assembled.
+    now = time.time()
+    if now - own.updated_at >= 1:
+        own.updated_at = now
     from . import transit,civic,operations
     ride=transit.journey(db,u)
     if ride and own.zone_id.startswith('bus:'):

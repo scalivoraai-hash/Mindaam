@@ -13,7 +13,21 @@ async function verifyPublicWorld(browser,origin,out){
     for(const e of entries.getEntries())if(!e.hadRecentInput)window.layoutShift+=e.value;
    }).observe({type:'layout-shift',buffered:true});
   });
-  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  // A cold visitor can see server-rendered controls before React attaches handlers.
+  let resumeScripts;
+  const scriptsReady = new Promise(resolve => { resumeScripts = resolve; });
+  const holdScript = async route => { await scriptsReady; await route.continue(); };
+  await page.route('**/_next/**/*.js',holdScript);
+  try {
+   await page.goto(origin,{waitUntil:'commit'});
+   const form=page.locator('.auth-card');
+   const register=form.getByRole('button',{name:'New here? Create an account'});
+   await register.waitFor();
+   assert.ok(await register.isDisabled(),'Registration waits for interactive handlers');
+   assert.ok(await form.getByRole('button',{name:'Enter Mindaam'}).isDisabled(),'Sign-in waits for interactive handlers');
+  } finally {
+   resumeScripts();
+  }
   const heading=page.getByRole('heading',{name:'A Living World. Together.'});
   await heading.waitFor();
   const measurements=[];

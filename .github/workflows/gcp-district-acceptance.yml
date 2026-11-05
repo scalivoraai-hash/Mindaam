@@ -69,7 +69,7 @@ jobs:
       - name: Test staging public landing and entry actions in WebKit
         run: |
           npm install --prefix /tmp/district-qa --no-save playwright@1.62.1
-          /tmp/district-qa/node_modules/.bin/playwright install --with-deps webkit
+          bash scripts/ci/install-browser.sh /tmp/district-qa/node_modules/.bin/playwright webkit
           mkdir -p webkit-evidence
           node - <<'JS'
           const {webkit}=require('/tmp/district-qa/node_modules/playwright');
@@ -106,7 +106,7 @@ jobs:
       - name: Install acceptance browser
         run: |
           npm install --prefix /tmp/district-qa --no-save playwright@1.62.1
-          /tmp/district-qa/node_modules/.bin/playwright install --with-deps chromium
+          bash scripts/ci/install-browser.sh /tmp/district-qa/node_modules/.bin/playwright chromium
       - name: Explore and return with keyboard and touch
         env:
           CITY: ${{ matrix.city }}
