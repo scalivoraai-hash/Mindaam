@@ -11,7 +11,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Requ
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text, select, delete, or_
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from .db import engine, SessionLocal, APP_ENV
 from . import (
     core,
@@ -325,7 +325,11 @@ def realtime_motion(token, data):
     """Use the same authenticated movement/lease handlers, never client positions."""
     with SessionLocal.begin() as db:
         u=user_for_token(db,token)
-        db.scalar(select(User.id).where(User.id==u.id).with_for_update())
+        # Impulses expire while a world snapshot or a zone transition owns this
+        # lock. Let the socket sample the next fresh input instead of blocking
+        # a database worker for three seconds and disconnecting the player.
+        if db.scalar(select(User.id).where(User.id==u.id).with_for_update(skip_locked=True)) is None:
+            return None
         p=(db.scalar(select(Presence).where(Presence.user_id==u.id).with_for_update())
            if data.action=='move' else db.get(Presence,u.id))
         if not p or (p.city,p.zone_id)!=(data.city,data.zone):
@@ -363,7 +367,13 @@ async def realtime(socket: WebSocket):
         async def states():
             while True:
                 await asyncio.sleep(.5)
-                result=await run_in_threadpool(read_state)
+                try:
+                    result=await run_in_threadpool(read_state)
+                except OperationalError as error:
+                    if getattr(error.orig,'sqlstate',None)!='55P03':raise
+                    # SessionLocal rolled back. Never send a cached state for a
+                    # failed authorization or location read; resample next tick.
+                    continue
                 result['movement_transport']='input-v1'
                 await send(result)
         async def receive_inputs():
@@ -392,7 +402,17 @@ async def realtime(socket: WebSocket):
                 neutral_stop=data.action=='move' and data.x==0 and data.z==0
                 if time.monotonic()-received>.35 and not neutral_stop:continue
                 started=time.monotonic()
-                try:await send(await run_in_threadpool(realtime_motion,token,data))
+                try:
+                    result=await run_in_threadpool(realtime_motion,token,data)
+                    if result is not None:
+                        await send(result)
+                    elif neutral_stop and pending.empty():
+                        # Newer input supersedes an uncommitted release. Moves
+                        # are never replayed and a stop cannot add distance.
+                        pending.put_nowait((received,data))
+                except OperationalError as error:
+                    if getattr(error.orig,'sqlstate',None)!='55P03':raise
+                    if neutral_stop and pending.empty():pending.put_nowait((received,data))
                 except HTTPException as error:
                     if error.status_code in [401,403]:raise
                     await send({'type':'motion_error','seq':data.seq,'message':error.detail})
