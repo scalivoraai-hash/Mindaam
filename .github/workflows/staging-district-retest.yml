@@ -1,0 +1,77 @@
+name: Staging district retest
+on:
+  push:
+    branches: [qa/staging-district-retest]
+    paths:
+      - 'scripts/tests/staging-district-retest.json'
+      - 'infrastructure/gcp/district-browser.cjs'
+      - '.github/workflows/staging-district-retest.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  target:
+    runs-on: ubuntu-latest
+    outputs:
+      cities: ${{ steps.check.outputs.cities }}
+      sha: ${{ steps.check.outputs.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          request=scripts/tests/staging-district-retest.json
+          run=$(jq -er '.deployment_run | numbers' "$request")
+          matrix=$(jq -er '.original_matrix | numbers' "$request")
+          sha=$(git rev-parse origin/main)
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run" | jq -e --arg sha "$sha" '.head_sha==$sha and .head_branch=="main" and .conclusion=="success" and .name=="Mindaam GCP deployment"' >/dev/null
+          gh run download "$run" --name "gcp-staging-$run" --dir /tmp/tested-staging
+          jq -e --arg sha "$sha" '.environment=="staging" and .origin=="https://mindaam-staging-qfrofqn4pq-nw.a.run.app" and .sha==$sha' /tmp/tested-staging/deployment-result.json
+          git merge-base --is-ancestor "$sha" HEAD
+          if git diff --name-only "$sha" HEAD | grep -Ev '^(scripts/tests/staging-district-retest.json|infrastructure/gcp/district-browser.cjs|.github/workflows/staging-district-retest.yml)$'; then exit 1; fi
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$matrix" | jq -e --arg sha "$sha" '.head_sha==$sha and .name=="Staging district exploration"' >/dev/null
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$matrix/jobs?per_page=100" > /tmp/original-jobs.json
+          python - <<'PY'
+          import json,os
+          request=json.load(open('scripts/tests/staging-district-retest.json'))
+          installed={r['city'] for r in json.load(open('scripts/tests/district-browser-routes.json'))}
+          failed={j['name'] for j in json.load(open('/tmp/original-jobs.json'))['jobs'] if j['conclusion'] in ('failure','timed_out','cancelled')}
+          cities=request['cities']
+          assert cities and len(cities)==len(set(cities)) and all(c in installed and f'exploration ({c})' in failed for c in cities)
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:print('cities='+json.dumps(cities),file=f)
+          PY
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+  exploration:
+    needs: target
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        city: ${{ fromJSON(needs.target.outputs.cities) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Install pinned acceptance browser
+        run: |
+          npm install --prefix /tmp/district-qa --no-save playwright@1.62.1
+          bash scripts/ci/install-browser.sh /tmp/district-qa/node_modules/.bin/playwright chromium
+      - name: Retest actual staging using both physical input interfaces
+        env:
+          CITY: ${{ matrix.city }}
+          RELEASE_SHA: ${{ needs.target.outputs.sha }}
+          QA_NODE_MODULES: /tmp/district-qa/node_modules
+        run: node infrastructure/gcp/district-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: district-${{ matrix.city }}
+          path: district-evidence/
+          retention-days: 14
