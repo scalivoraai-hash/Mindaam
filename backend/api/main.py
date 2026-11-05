@@ -387,12 +387,13 @@ async def realtime(socket: WebSocket):
             while True:
                 received,data=await pending.get()
                 if time.monotonic()-received>.35:continue
+                started=time.monotonic()
                 try:await send(await run_in_threadpool(realtime_motion,token,data))
                 except HTTPException as error:
                     if error.status_code in [401,403]:raise
                     await send({'type':'motion_error','seq':data.seq,'message':error.detail})
                 # Limit processing even when a client sends faster than the UI.
-                await asyncio.sleep(1/15)
+                await asyncio.sleep(max(0,1/15-(time.monotonic()-started)))
         tasks=[asyncio.create_task(fn()) for fn in (states,receive_inputs,moves)]
         done,_=await asyncio.wait(tasks,return_when=asyncio.FIRST_COMPLETED)
         for task in done:task.result()

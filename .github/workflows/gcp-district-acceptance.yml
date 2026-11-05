@@ -1,0 +1,121 @@
+name: Staging district exploration
+on:
+  workflow_run:
+    workflows: [Mindaam GCP deployment]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      deployment_run:
+        description: Successful staging deployment run ID
+        required: true
+      city:
+        description: Optional installed district to retest
+        required: false
+permissions:
+  contents: read
+  actions: read
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    outputs:
+      cities: ${{ steps.plan.outputs.cities }}
+      sha: ${{ steps.plan.outputs.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.deployment_run || github.event.workflow_run.id }}
+          CITY: ${{ inputs.city }}
+        run: |
+          set -eu
+          [[ "$RUN_ID" =~ ^[0-9]+$ ]]
+          details=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID")
+          jq -e '.name=="Mindaam GCP deployment" and .conclusion=="success" and .head_branch=="main"' <<< "$details"
+          name="gcp-staging-$RUN_ID"
+          if ! gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/artifacts" --jq '.artifacts[].name' | grep -Fxq "$name"; then
+            [[ "$GITHUB_EVENT_NAME" == workflow_run ]] && exit 0
+            exit 1
+          fi
+          gh run download "$RUN_ID" --name "$name" --dir /tmp/district-release
+          python - <<'PY'
+          import json, os, pathlib
+          release=json.loads(pathlib.Path('/tmp/district-release/deployment-result.json').read_text())
+          assert release['environment']=='staging' and release['origin']=='https://mindaam-staging-qfrofqn4pq-nw.a.run.app'
+          assert release['sha']==os.environ['GITHUB_SHA'], 'Current main differs from this release'
+          cities=[r['city'] for r in json.loads(pathlib.Path('scripts/tests/district-routes.json').read_text())]
+          selected=os.environ.get('CITY')
+          if selected:
+              assert selected in cities
+              cities=[selected]
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:
+              print('sha='+release['sha'],file=f)
+              print('cities='+json.dumps(cities,separators=(',',':')),file=f)
+          PY
+  webkit-landing:
+    needs: release
+    if: needs.release.outputs.cities != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.release.outputs.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Test staging public landing and entry actions in WebKit
+        run: |
+          npm install --prefix /tmp/district-qa --no-save playwright@1.62.1
+          /tmp/district-qa/node_modules/.bin/playwright install --with-deps webkit
+          mkdir -p webkit-evidence
+          node - <<'JS'
+          const {webkit}=require('/tmp/district-qa/node_modules/playwright');
+          const {verifyPublicWorld}=require('./infrastructure/gcp/public-world-acceptance.cjs');
+          (async()=>{
+            const browser=await webkit.launch();
+            try{await verifyPublicWorld(browser,'https://mindaam-staging-qfrofqn4pq-nw.a.run.app','webkit-evidence');}
+            finally{await browser.close();}
+          })().catch(error=>{console.error(error);process.exitCode=1;});
+          JS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: webkit-public-landing
+          path: webkit-evidence/
+          retention-days: 14
+  exploration:
+    needs: release
+    if: needs.release.outputs.cities != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        city: ${{ fromJSON(needs.release.outputs.cities) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.release.outputs.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Install acceptance browser
+        run: |
+          npm install --prefix /tmp/district-qa --no-save playwright@1.62.1
+          /tmp/district-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Explore and return with keyboard and touch
+        env:
+          CITY: ${{ matrix.city }}
+          RELEASE_SHA: ${{ needs.release.outputs.sha }}
+          QA_NODE_MODULES: /tmp/district-qa/node_modules
+        run: node infrastructure/gcp/district-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: district-${{ matrix.city }}
+          path: district-evidence/
+          retention-days: 14

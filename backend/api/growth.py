@@ -55,14 +55,16 @@ def count(db,u):return min(STARTER_LIMIT,db.scalar(select(func.count()).select_f
 def progress(db,u,d):return min(SHARE_GOAL,db.scalar(select(func.count()).select_from(ShareAction).where(ShareAction.user_id==u.id,ShareAction.destination_id==d)) or 0)
 def access(db,u,d):return db.get(WorldAccess,(u.id,d))
 def require_open(db,d):
- from .discovery import catalog
- if not any(c['id']==d and c.get('enabled') and c.get('public',True) and c.get('joinable',True) for c in catalog(db)):raise HTTPException(403,'This world is not currently open')
+ from .expansion import Destination,destination_view
+ row=db.get(Destination,d)
+ view=destination_view(db,row) if row else None
+ if not view or not (view['enabled'] and view['public'] and view['joinable']):
+  raise HTTPException(403,'This world is not currently open')
 def locked(db,u,d):
  used=count(db,u)
  return {'code':'STARTER_CONFIRMATION_REQUIRED' if used<STARTER_LIMIT else 'WORLD_LOCKED','destination_id':d,'starter_selected':used,'starter_remaining':STARTER_LIMIT-used,'shares':progress(db,u,d),'share_goal':SHARE_GOAL,'message':'Choose this as a free Starter World.' if used<STARTER_LIMIT else 'Share Mindaam 4 times to unlock this world.'}
 def require_access(db,u,d):
- from .discovery import catalog
- if not any(c['id']==d and c.get('enabled') and c.get('public',True) and c.get('joinable',True) for c in catalog(db)):raise HTTPException(403,'This world is not currently open')
+ require_open(db,d)
  if not access(db,u,d):raise HTTPException(403,locked(db,u,d))
 def select_starter(db,u,d,confirmed=False):
  check_city(d);lock(db,u)

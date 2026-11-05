@@ -197,157 +197,436 @@
   },
   {
     "city": "brighton",
-    "status": "unresolved",
-    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+    "status": "source reconciled",
+    "admitted_nodes": 586,
+    "added_nodes": 586,
+    "signals": 52,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-0.14317239,50.81872709,-0.13122761,50.82627291",
+      "retrieved": "2026-11-05T12:36:09.761851+00:00",
+      "sha256": "3b069f9333549d53e4f420e278a4f8111acccf98af742428f67d68f445d1f00d",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "sydney",
-    "status": "unresolved",
-    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+    "status": "source reconciled",
+    "admitted_nodes": 889,
+    "added_nodes": 889,
+    "signals": 169,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=151.20345599,-33.87377291,151.21254401,-33.86622709",
+      "retrieved": "2026-11-05T12:36:21.305761+00:00",
+      "sha256": "6552c03e6739725f909567c71d2cfa371ed8f0b9ff206a208f4cd57c73a32d4f",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "melbourne",
-    "status": "unresolved",
-    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+    "status": "source reconciled",
+    "admitted_nodes": 790,
+    "added_nodes": 790,
+    "signals": 133,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=144.9582242,-37.81777291,144.9677758,-37.81022709",
+      "retrieved": "2026-11-05T12:36:22.292771+00:00",
+      "sha256": "e026c9518737aeb7a0aacd5e4a64c819e084d81359300147d98345e5d618ec56",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "los-angeles",
-    "status": "unresolved",
-    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+    "status": "source reconciled",
+    "admitted_nodes": 532,
+    "added_nodes": 532,
+    "signals": 78,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-118.24755385,34.05022709,-118.23844615,34.05777291",
+      "retrieved": "2026-11-05T12:36:31.330651+00:00",
+      "sha256": "37e784f2a8d6ba2b13383d7196480fc951209e3523fe2d0d59a1263f60baf0fc",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "miami",
-    "status": "unresolved",
-    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+    "status": "source reconciled",
+    "admitted_nodes": 491,
+    "added_nodes": 491,
+    "signals": 93,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-80.19818975,25.77122709,-80.18981025,25.77877291",
+      "retrieved": "2026-11-05T12:36:31.360033+00:00",
+      "sha256": "caf0295fdd5cb5ec747cfae827564cfef725149d0cb4f966791363b253893909",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "milton-keynes-centre",
-    "status": "unresolved",
-    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+    "status": "source reconciled",
+    "admitted_nodes": 326,
+    "added_nodes": 326,
+    "signals": 30,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-0.76413393,52.03792709,-0.75186607,52.04547291",
+      "retrieved": "2026-11-05T12:36:39.678163+00:00",
+      "sha256": "fa0d349bbf79dd00f9bc9846e9621e544d9da38ccc45800749078fb1a6a94ec7",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "birmingham",
-    "status": "unresolved",
-    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+    "status": "source reconciled",
+    "admitted_nodes": 540,
+    "added_nodes": 540,
+    "signals": 82,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-1.90019449,52.47362709,-1.88780551,52.48117291",
+      "retrieved": "2026-11-05T12:36:41.028102+00:00",
+      "sha256": "7ff09e0baac17ef25b360fa6825c00dd2628274f1c10933052d46b6b4ffa045e",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "vancouver",
-    "status": "unresolved",
-    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+    "status": "source reconciled",
+    "admitted_nodes": 411,
+    "added_nodes": 411,
+    "signals": 61,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-123.11978122,49.25722709,-123.10821878,49.26477291",
+      "retrieved": "2026-11-05T12:36:45.474906+00:00",
+      "sha256": "a56b9275a3b67ce416c548c39995c6e05b617a25801db79a096940a321a8cb89",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "milan",
-    "status": "unresolved",
-    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+    "status": "source reconciled",
+    "admitted_nodes": 580,
+    "added_nodes": 580,
+    "signals": 33,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=9.18462037,45.46222709,9.19537963,45.46977291",
+      "retrieved": "2026-11-05T12:36:46.389267+00:00",
+      "sha256": "1463f9fe3941b525b020519f3c0b168c56c6549f948230c0ea0c68753e79473f",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "milton-keynes-willen",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 171,
+    "added_nodes": 171,
+    "signals": 9,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-0.73709209,52.04348976,-0.70290791,52.06451024",
+      "retrieved": "2026-11-05T12:36:52.338184+00:00",
+      "sha256": "a010851d0372816285e6bc0464e5ad8aa26049773e7441f893c24a5d9133d5e1",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "london",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 770,
+    "added_nodes": 770,
+    "signals": 82,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-0.13966255,51.50972709,-0.12753745,51.51727291",
+      "retrieved": "2026-11-05T12:36:52.950584+00:00",
+      "sha256": "496ef07c043a043a2d632982972552fd31af60de829a9466aff4da9690c81642",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "paris",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 1840,
+    "added_nodes": 1840,
+    "signals": 77,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=2.34266598,48.84972709,2.35413402,48.85727291",
+      "retrieved": "2026-11-05T12:37:00.231631+00:00",
+      "sha256": "e887bb3e21fbb446fdc5e1895252d561ea72aaf062caa58ec4930e87211c2bd8",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "amsterdam",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 782,
+    "added_nodes": 782,
+    "signals": 19,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=4.88682016,52.36922709,4.89917984,52.37677291",
+      "retrieved": "2026-11-05T12:37:00.272263+00:00",
+      "sha256": "ad2df0874a2ee3c9852ebab098ce26dff73128524fbe2fe257ddab0e39a0e0ba",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "berlin",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 1029,
+    "added_nodes": 1029,
+    "signals": 51,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=13.38279992,52.51322709,13.39520008,52.52077291",
+      "retrieved": "2026-11-05T12:37:06.145162+00:00",
+      "sha256": "5e3a849198c62bcffc611b279d298e591b9ed3a33e4b22c43d15f105d3c441f7",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "madrid",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 625,
+    "added_nodes": 625,
+    "signals": 83,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-3.70895557,40.41322709,-3.69904443,40.42077291",
+      "retrieved": "2026-11-05T12:37:06.516589+00:00",
+      "sha256": "04b2a782bcd0d1a31ca98aa18803932f8134f4bd914182899953e04ac6244a41",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "barcelona",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 283,
+    "added_nodes": 283,
+    "signals": 66,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=2.17197152,41.37922709,2.18202848,41.38677291",
+      "retrieved": "2026-11-05T12:37:14.971697+00:00",
+      "sha256": "dd522a59b13a25ce95293347be32d35b8df4c9522f3a05e47f42ccc8e9393245",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "rome",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 328,
+    "added_nodes": 328,
+    "signals": 19,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=12.47793157,41.88922709,12.48806843,41.89677291",
+      "retrieved": "2026-11-05T12:37:15.000446+00:00",
+      "sha256": "95a99423492b3a72804a71132fd0d7002f7db6e51931fbd6ad18167e367daf65",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "new-york",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 1702,
+    "added_nodes": 1702,
+    "signals": 110,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-74.01097754,40.70922709,-74.00102246,40.71677291",
+      "retrieved": "2026-11-05T12:37:20.910473+00:00",
+      "sha256": "be0ad91b430be720c2c86cbeebe7b013110008715c8bfdeb60cee47a8c1c36f8",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "dubai",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 96,
+    "added_nodes": 96,
+    "signals": 13,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=55.29382802,25.26122709,55.30217198,25.26877291",
+      "retrieved": "2026-11-05T12:37:20.932376+00:00",
+      "sha256": "8f65ae651262ccbb765a66dd5589aa5bb60240920b9c648146783cd3b09ce568",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "abu-dhabi",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 145,
+    "added_nodes": 145,
+    "signals": 6,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=54.37285532,24.44922709,54.38114468,24.45677291",
+      "retrieved": "2026-11-05T12:37:26.994820+00:00",
+      "sha256": "2935f274fee7b6d1c8b19b94a98ff6761107068a26087bcb3756abf6fec1dc14",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "riyadh",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 26,
+    "added_nodes": 26,
+    "signals": 14,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=46.7118492,24.63422709,46.7201508,24.64177291",
+      "retrieved": "2026-11-05T12:37:27.005319+00:00",
+      "sha256": "f455b700dc4e6568c72b9e6e7939b7763516294de0bce625a7a4f8c3d9dc21d2",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "jeddah",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 2,
+    "added_nodes": 2,
+    "signals": 2,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=39.16794376,21.53822709,39.17605624,21.54577291",
+      "retrieved": "2026-11-05T12:37:30.782275+00:00",
+      "sha256": "6608332b2be41d3a1b56e4580e14613f8cf2101b03828679074478cd7ea190bc",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "doha",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 177,
+    "added_nodes": 177,
+    "signals": 20,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=51.52982729,25.28222709,51.53817271,25.28977291",
+      "retrieved": "2026-11-05T12:37:31.434889+00:00",
+      "sha256": "a9ac51a66f8ae330bcc185b3acc32e2fdc153ce7bf51508b61b4ac81b8ea09a5",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "kochi",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 35,
+    "added_nodes": 35,
+    "signals": 0,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=76.24116928,9.96322709,76.24883072,9.97077291",
+      "retrieved": "2026-11-05T12:37:40.229094+00:00",
+      "sha256": "92e8dbe617fe441e962e9cea537ea374088f9f63c10f2156df98a6700636d077",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "mumbai",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 13,
+    "added_nodes": 13,
+    "signals": 12,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=72.87400787,19.07222709,72.88199213,19.07977291",
+      "retrieved": "2026-11-05T12:37:40.241964+00:00",
+      "sha256": "5ad2149e7fcdbd7a2094561ef670563de8114d4dd5cbb55e932c48dc5e25617e",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "bengaluru",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 226,
+    "added_nodes": 226,
+    "signals": 6,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=77.58712821,12.97322709,77.59487179,12.98077291",
+      "retrieved": "2026-11-05T12:37:44.748980+00:00",
+      "sha256": "a3c4de0f0fa5ab759277537bf78795c6efd4f59ff069c57093dc264793908dd6",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "singapore",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 205,
+    "added_nodes": 205,
+    "signals": 37,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=103.84822614,1.28622709,103.85577386,1.29377291",
+      "retrieved": "2026-11-05T12:37:45.122786+00:00",
+      "sha256": "917dad1c61a5a9a5d8ad4c3676b2c3a41d63a97fa971cc90cbe3079790c830ff",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "bangkok",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 205,
+    "added_nodes": 205,
+    "signals": 2,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=100.49011573,13.74922709,100.49788427,13.75677291",
+      "retrieved": "2026-11-05T12:37:50.650855+00:00",
+      "sha256": "393bc43ef0dc05969694e09b1515f26639dfa1038f017bbfeae226c1f8b7fa51",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "shanghai",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 156,
+    "added_nodes": 156,
+    "signals": 70,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.46458763,31.22822709,121.47341237,31.23577291",
+      "retrieved": "2026-11-05T12:37:50.669467+00:00",
+      "sha256": "fa7f0fd05c04e5f886d2622791b7ac692aa3297394e7451a8560b3c84eff5037",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "tokyo",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 227,
+    "added_nodes": 227,
+    "signals": 49,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=139.75435509,35.67822709,139.76364491,35.68577291",
+      "retrieved": "2026-11-05T12:37:56.695695+00:00",
+      "sha256": "4ae8600993143edaec08b9f845914630cfe335918087b477fe536af1ed43b237",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   },
   {
     "city": "seoul",
-    "status": "unresolved",
-    "error": "External source request blocked; see import log"
+    "status": "source reconciled",
+    "admitted_nodes": 165,
+    "added_nodes": 165,
+    "signals": 14,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=126.97324014,37.56222709,126.98275986,37.56977291",
+      "retrieved": "2026-11-05T12:37:56.700696+00:00",
+      "sha256": "8d0c16790868ba899087cd2fa549ea5f9f8b28c73e983062790bb8a453b1b0a7",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
   }
 ]

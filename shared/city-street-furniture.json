@@ -68,5 +68,160 @@
     "path": "/assets/cities/street-furniture/bristol-a5882777025a.json",
     "sha256": "a5882777025a8fd6a04a9f6f0eaba6a3f75a41fb2e4e525cd7933bae5c3f0c4a",
     "nodes": 546
+  },
+  "brighton": {
+    "path": "/assets/cities/street-furniture/brighton-f06f16d14e4b.json",
+    "sha256": "f06f16d14e4b792ba474610b7d703bd2e8c9b76e5983596227ea52418e6b7fa3",
+    "nodes": 586
+  },
+  "sydney": {
+    "path": "/assets/cities/street-furniture/sydney-c5f9d41ee882.json",
+    "sha256": "c5f9d41ee8820e04c02fbb6057f24069cab30876e7a4c805a95ea9fe311615fd",
+    "nodes": 889
+  },
+  "melbourne": {
+    "path": "/assets/cities/street-furniture/melbourne-b8ebcb4a5fe7.json",
+    "sha256": "b8ebcb4a5fe7c2dcb10131c2e670a54ad4503b39e45e25939a041efaaa0af583",
+    "nodes": 790
+  },
+  "los-angeles": {
+    "path": "/assets/cities/street-furniture/los-angeles-7e4c941a6fb1.json",
+    "sha256": "7e4c941a6fb16cb4d46c01004197c6c9ceb3de2216a21c18f6cdda800223fc5b",
+    "nodes": 532
+  },
+  "miami": {
+    "path": "/assets/cities/street-furniture/miami-b6307e40d8c8.json",
+    "sha256": "b6307e40d8c86a7c7058fe4d0c6882e739141f0d04dca2d16e056bf008827f73",
+    "nodes": 491
+  },
+  "milton-keynes-centre": {
+    "path": "/assets/cities/street-furniture/milton-keynes-centre-6d561fb5abf5.json",
+    "sha256": "6d561fb5abf5f7b5d47b6cc4bd9bcb6552d49946824e454dac90a560c71aa959",
+    "nodes": 326
+  },
+  "birmingham": {
+    "path": "/assets/cities/street-furniture/birmingham-843beee3eb33.json",
+    "sha256": "843beee3eb33e82aa62210b0732c4818351667610f8f54f0b3b5e601c285f941",
+    "nodes": 540
+  },
+  "vancouver": {
+    "path": "/assets/cities/street-furniture/vancouver-0431cf086494.json",
+    "sha256": "0431cf0864946653db050a47f2cb91c957c0bb33f10a610ccaaf1c95e96804ee",
+    "nodes": 411
+  },
+  "milan": {
+    "path": "/assets/cities/street-furniture/milan-8903ee9e2109.json",
+    "sha256": "8903ee9e210961b4b14b2731c7a144648000f80e21432bb2cca4d4ba46a2eccb",
+    "nodes": 580
+  },
+  "milton-keynes-willen": {
+    "path": "/assets/cities/street-furniture/milton-keynes-willen-b8d409abb511.json",
+    "sha256": "b8d409abb51166c288d73081e7f1ef8846959037fdbad8279cb66499e5b0d19d",
+    "nodes": 171
+  },
+  "london": {
+    "path": "/assets/cities/street-furniture/london-6478f66ab8d6.json",
+    "sha256": "6478f66ab8d624651c89cab9f28e2762f8ddff53233112b34f68c573c5f16a7d",
+    "nodes": 770
+  },
+  "paris": {
+    "path": "/assets/cities/street-furniture/paris-a116a13c42d7.json",
+    "sha256": "a116a13c42d777f4757a6b7aa1e74bdf0580b050e2bb5e7a08472b842c102408",
+    "nodes": 1840
+  },
+  "amsterdam": {
+    "path": "/assets/cities/street-furniture/amsterdam-af2f78229cc3.json",
+    "sha256": "af2f78229cc3f1d6017c9ab8dc14d6305891bd902688c3557ea963509eb506bf",
+    "nodes": 782
+  },
+  "berlin": {
+    "path": "/assets/cities/street-furniture/berlin-93f65987831f.json",
+    "sha256": "93f65987831f19b6a4ec39d2714e42908bd67510892967414a5fb57ae5a97689",
+    "nodes": 1029
+  },
+  "madrid": {
+    "path": "/assets/cities/street-furniture/madrid-f6baeb4e5416.json",
+    "sha256": "f6baeb4e54163c97a5f5235cf089f5a41b69e7a4b15642fcc93611d956fc61cf",
+    "nodes": 625
+  },
+  "barcelona": {
+    "path": "/assets/cities/street-furniture/barcelona-2f966d07b1ec.json",
+    "sha256": "2f966d07b1ec5ca72a4cbc306238ee61434afb3116aa8e4bdf0325f05aa24300",
+    "nodes": 283
+  },
+  "rome": {
+    "path": "/assets/cities/street-furniture/rome-a5b864956c19.json",
+    "sha256": "a5b864956c19b91b3d765673e4fb3824105f159f9d1a336738f2cd3b818cb1fc",
+    "nodes": 328
+  },
+  "new-york": {
+    "path": "/assets/cities/street-furniture/new-york-b503fe9bd3a1.json",
+    "sha256": "b503fe9bd3a10c4cd9e24f74bb04bc4a345adaff4f2728ada35b95e105162052",
+    "nodes": 1702
+  },
+  "dubai": {
+    "path": "/assets/cities/street-furniture/dubai-73b14a31f180.json",
+    "sha256": "73b14a31f180237bd2fd044998af54691a10661394e1b10ceca007893aad92f8",
+    "nodes": 96
+  },
+  "abu-dhabi": {
+    "path": "/assets/cities/street-furniture/abu-dhabi-80d68eb31252.json",
+    "sha256": "80d68eb31252e81e22cf059b79e2780297c9a89cec31fa3b4433f12a7f9fa009",
+    "nodes": 145
+  },
+  "riyadh": {
+    "path": "/assets/cities/street-furniture/riyadh-d2d1ed361443.json",
+    "sha256": "d2d1ed36144334ff2beefbb12fe07e63373faa73b856065dac93ec3bb94928b9",
+    "nodes": 26
+  },
+  "jeddah": {
+    "path": "/assets/cities/street-furniture/jeddah-ed3780cbc8ad.json",
+    "sha256": "ed3780cbc8ad8796b4b54ff4b62a5a1f72932b83c1b011807830a559f05772e2",
+    "nodes": 2
+  },
+  "doha": {
+    "path": "/assets/cities/street-furniture/doha-b46881a4c85e.json",
+    "sha256": "b46881a4c85e6887b49a756d658e5306d163bc3adb76e7302d9059425a3b4fe1",
+    "nodes": 177
+  },
+  "kochi": {
+    "path": "/assets/cities/street-furniture/kochi-399034cf368a.json",
+    "sha256": "399034cf368ac5ab934a946f9c9ce11f7fb4b5bfdc8770b804cd113a671b13ba",
+    "nodes": 35
+  },
+  "mumbai": {
+    "path": "/assets/cities/street-furniture/mumbai-8c1de11587c6.json",
+    "sha256": "8c1de11587c629c2ee5baba8a64e69932267551aa1dac5913d773d053fadcea4",
+    "nodes": 13
+  },
+  "bengaluru": {
+    "path": "/assets/cities/street-furniture/bengaluru-bcc5a7e4e259.json",
+    "sha256": "bcc5a7e4e2595114a0acfd7c7b5da7c07e4199cd6c5b22450c23032466e2a335",
+    "nodes": 226
+  },
+  "singapore": {
+    "path": "/assets/cities/street-furniture/singapore-02d2cee4cbe0.json",
+    "sha256": "02d2cee4cbe00205912cbffa91d2e07537979802445b76ed12892a2ae7888c82",
+    "nodes": 205
+  },
+  "bangkok": {
+    "path": "/assets/cities/street-furniture/bangkok-7ad87f1824aa.json",
+    "sha256": "7ad87f1824aaaf3ba4fb5807763492483b9a4316fa22efc70074cec3610d69fa",
+    "nodes": 205
+  },
+  "shanghai": {
+    "path": "/assets/cities/street-furniture/shanghai-eb72769a0f1c.json",
+    "sha256": "eb72769a0f1c9e17cb1e96a76400fbaed04588a90173630b7f4fb5328abf4094",
+    "nodes": 156
+  },
+  "tokyo": {
+    "path": "/assets/cities/street-furniture/tokyo-501bdb261871.json",
+    "sha256": "501bdb261871ef1f3a2d7bec4f535aee14ce2cd317dfe71fe81a7b61bfa88fa9",
+    "nodes": 227
+  },
+  "seoul": {
+    "path": "/assets/cities/street-furniture/seoul-18359f89ee73.json",
+    "sha256": "18359f89ee73970f5472432ba4891d1da747ebc50e9a0fe0846272e57add408e",
+    "nodes": 165
   }
 }

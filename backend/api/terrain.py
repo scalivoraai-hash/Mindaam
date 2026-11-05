@@ -67,6 +67,8 @@ def permits(city, x, z, open_ground=True, buildings=True):
         if not bounds[0]<=x<=bounds[1] or not bounds[2]<=z<=bounds[3]:
             continue
         p, kind = f['points'], f['kind']
+        if allowed and kind in {'road', 'public'}:
+            continue
         if kind == 'building' and not buildings or kind == 'public' and not open_ground:
             continue
         if kind == 'road':
@@ -78,3 +80,25 @@ def permits(city, x, z, open_ground=True, buildings=True):
         elif inside or kind != 'building' and any(segment_distance(x,z,a,b)<=.35 for a,b in zip(p,p[1:])):
             return False
     return allowed
+
+
+def edge_slide(city, x, z, dx, dz):
+    """Project a blocked pedestrian step along the nearest mapped solid edge."""
+    from .geography import segment_distance
+    target_x, target_z = x + dx, z + dz
+    best_distance = .35 + math.hypot(dx, dz)
+    projected = (0., 0.)
+    for feature, _ in grid(city).get((math.floor(target_x / 32), math.floor(target_z / 32)), []):
+        if feature['kind'] not in {'building', 'barrier', 'blocked'}:
+            continue
+        for ring in [feature['points'], *feature['holes']]:
+            for a, b in zip(ring, ring[1:]):
+                distance = segment_distance(target_x, target_z, a, b)
+                ex, ez = b[0] - a[0], b[1] - a[1]
+                squared_length = ex * ex + ez * ez
+                if distance >= best_distance or not squared_length:
+                    continue
+                best_distance = distance
+                fraction = (dx * ex + dz * ez) / squared_length
+                projected = (ex * fraction, ez * fraction)
+    return projected

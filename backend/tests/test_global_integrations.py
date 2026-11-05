@@ -116,6 +116,22 @@ def test_gift_context_recipient_wallet_and_history(system):
  assert c.post('/api/social/'+ub['id']+'/block',headers=a).status_code==200
  assert c.post('/api/gifts/send',headers=a,json={**body,'id':str(uuid.uuid4()),'expected_cost':8}).status_code in [403,409]
 
+def test_late_activity_poll_after_chat_closes(system):
+ c,_=system
+ a,ua=login(c,'late_sender');b,ub=login(c,'late_recipient');outsider,_=login(c,'late_outsider')
+ sid=c.post('/api/talk/request',headers=a,json={'target_id':ub['id'],'kind':'text'}).json()['id']
+ assert c.post('/api/talk/'+sid+'/accept',headers=b).status_code==200
+ assert c.post('/api/talk/'+sid+'/end',headers=a).status_code==200
+ path='/api/social-activity/conversation/'+sid
+ for viewer in (a,b):
+  assert c.get(path,headers=viewer).status_code==403
+  reply=c.get(path+'?observe_end=true',headers=viewer)
+  assert reply.status_code==200
+  assert reply.json()=={'inactive':True,'catalogue':{},'recipients':[],'gifts':[],'reactions':[]}
+ assert c.get(path+'?observe_end=true',headers=outsider).status_code==403
+ reaction={'id':str(uuid.uuid4()),'context_type':'conversation','context_id':sid,'emoji':'👏'}
+ assert c.post('/api/reactions',headers=a,json=reaction).status_code==403
+
 def test_free_reactions_idempotency_rate_limit(system):
  c,dbs=system;a,ua=login(c,'react_sender');b,ub=login(c,'react_receiver');sid=c.post('/api/talk/request',headers=a,json={'target_id':ub['id'],'kind':'text'}).json()['id'];c.post('/api/talk/'+sid+'/accept',headers=b)
  body={'id':str(uuid.uuid4()),'context_type':'conversation','context_id':sid,'emoji':'👏'}

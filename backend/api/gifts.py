@@ -7,7 +7,7 @@ from pydantic import Field
 from sqlalchemy import String,Integer,Float,ForeignKey,select,func
 from sqlalchemy.orm import Mapped,mapped_column
 from .db import Base,get_db
-from .models import User,MediaSession,Event,Attendee,Config,uid
+from .models import User,MediaSession,ConversationMember,Event,Attendee,Config,uid
 from .auth import current_user
 from .core import Strict,serialize
 from .economy import config,credit,balance
@@ -93,8 +93,18 @@ def react(data:React,u=Depends(current_user),db=Depends(get_db)):
  if db.scalar(select(func.count()).select_from(Reaction).where(Reaction.user_id==u.id,Reaction.created_at>time.time()-10))>=4:raise HTTPException(429,'Give other people a moment to react')
  db.add(Reaction(id=str(data.id),user_id=u.id,context_type=kind,context_id=id,emoji=data.emoji));return {'ok':True}
 @router.get('/social-activity/{kind}/{id}')
-def activity(kind:str,id:str,u=Depends(current_user),db=Depends(get_db)):
- kind,id,people=eligible(db,u,kind,id);names={p.id:p.username for p in people}
+def activity(kind:str,id:str,u=Depends(current_user),db=Depends(get_db),observe_end:bool=False):
+ try:
+  kind,id,people=eligible(db,u,kind,id)
+ except HTTPException as error:
+  # A final poll may arrive after a previously active participant has left.
+  # Return only the caller's terminal state. Never expose old gifts or recipients.
+  membership=db.get(ConversationMember,(id,u.id)) if observe_end and kind=='conversation' and error.status_code in (403,409) else None
+  session=db.get(MediaSession,id) if membership and membership.state=='left' else None
+  if session is None or session.kind!='text' or session.event_id:
+   raise
+  return {'inactive':True,'catalogue':{},'recipients':[],'gifts':[],'reactions':[]}
+ names={p.id:p.username for p in people}
  gifts=list(db.scalars(select(GiftDelivery).where(GiftDelivery.context_type==kind,GiftDelivery.context_id==id,GiftDelivery.created_at>time.time()-15,GiftDelivery.sender_id.in_(names),GiftDelivery.recipient_id.in_(names)).order_by(GiftDelivery.created_at.desc()).limit(20)))
  return {'catalogue':{k:v for k,v in catalogue(db).items() if v['enabled']},'recipients':[{'id':p.id,'username':p.username} for p in people if p.id!=u.id],'gifts':[{**serialize(g),'sender':names[g.sender_id],'recipient':names[g.recipient_id]} for g in gifts],'reactions':[serialize(r) for r in db.scalars(select(Reaction).where(Reaction.context_type==kind,Reaction.context_id==id,Reaction.created_at>time.time()-8,Reaction.user_id.in_(names)).limit(30))]}
 @router.get('/super-admin/gifts')
