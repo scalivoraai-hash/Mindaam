@@ -59,6 +59,18 @@ async function verifyWhitehouse(a,b,screenshot){
   assert.deepEqual((await a.api('/me')).avatar,appearance);
   await screenshot(a,'v2-city-entry-'+name.toLowerCase());
  }
+ // Prove outdoor controls change the server's position on the public staging service.
+ for(const mode of ['walk','run']){
+  await a.page.getByRole('button',{name:mode,exact:true}).click();let moved=false;
+  for(const key of ['d','w']){
+   const before=(await a.api('/world/milton-keynes')).position;
+   await a.page.evaluate(()=>document.activeElement?.blur());
+   await a.page.keyboard.down(key);await a.page.waitForTimeout(900);await a.page.keyboard.up(key);
+   await a.page.waitForTimeout(200);const after=(await a.api('/world/milton-keynes')).position;
+   if(Math.hypot(after.x-before.x,after.z-before.z)>.3){moved=true;break}
+  }
+  assert(moved,'Staging keyboard '+mode+' changes authoritative outdoor position');
+ }
  a.verifiedAppearance=appearance;
  const request=await a.api('/talk/request',{target_id:b.id,kind:'text'});
  try{
