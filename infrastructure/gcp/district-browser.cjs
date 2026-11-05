@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const {chromium} = require(process.env.QA_NODE_MODULES + '/playwright');
 const {authenticateAndEnter} = require('./browser-flow.cjs');
-const routes = require('../../scripts/tests/district-routes.json');
+const routes = require('../../scripts/tests/district-browser-routes.json');
 const origin = 'https://mindaam-staging-qfrofqn4pq-nw.a.run.app';
 const route = routes.find(item => item.city === process.env.CITY);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -18,7 +18,7 @@ async function until(check, label, timeout=30000) {
  throw Error(label+' timed out');
 }
 
-async function drive(page, control, latest, target, stops, runSpeed) {
+async function drive(page, control, latest, target, stops, runSpeed, navigation) {
  const held = new Set();
  let contact = false;
  const touch = control==='joystick' ? await page.context().newCDPSession(page) : null;
@@ -31,6 +31,7 @@ async function drive(page, control, latest, target, stops, runSpeed) {
   contact=false;
  }
  // The camera is at the application's default outdoor yaw after normal world entry.
+ let segmentStart=xy(latest());
  const angle=.7, cos=Math.cos(angle), sin=Math.sin(angle);
  try {
   for(const waypoint of target) {
@@ -40,7 +41,26 @@ async function drive(page, control, latest, target, stops, runSpeed) {
     if(d<.85)break;
     if(d<best-.15){best=d;progress=Date.now();}
     if(Date.now()-progress>8000)throw Error('No progress approaching '+JSON.stringify(waypoint)+' from '+JSON.stringify(xy(p))+' blocked='+Boolean(p.blocked));
-    const x=(cos*dx-sin*dz)/d,z=(sin*dx+cos*dz)/d;
+    // Follow the surveyed line. Aiming only at a distant corner lets an
+    // eight-direction keyboard cut across a footprint beside the route.
+    const sx=waypoint[0]-segmentStart[0],sz=waypoint[1]-segmentStart[1];
+    const length=Math.hypot(sx,sz);
+    const along=((p.x-segmentStart[0])*sx+(p.z-segmentStart[1])*sz)/length;
+    const fraction=Math.min(1,Math.max(0,along+1.5)/length);
+    let ax=segmentStart[0]+fraction*sx-p.x,az=segmentStart[1]+fraction*sz-p.z;
+    const aim=Math.hypot(ax,az)||1;
+    ax/=aim;az/=aim;
+    let x=cos*ax-sin*az,z=sin*ax+cos*az;
+    if(!touch){
+     // Pick a physical key combination whose next metre is actually open.
+     let bestScore=-Infinity;
+     for(const [kx,kz] of [[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1]]){
+      const norm=Math.hypot(kx,kz),vx=(cos*kx+sin*kz)/norm,vz=(-sin*kx+cos*kz)/norm;
+      const next=navigation.step(p.x,p.z,vx,vz);
+      const score=(next.x-p.x)*ax+(next.z-p.z)*az-.8*Math.hypot(next.x-p.x-vx,next.z-p.z-vz);
+      if(score>bestScore){bestScore=score;x=kx;z=kz;}
+     }
+    }
     if(touch){
      const strength=Math.min(1,Math.max(.25,d/Math.max(runSpeed*.65,1)));
      await touch.send('Input.dispatchTouchEvent',{type:contact?'touchMove':'touchStart',touchPoints:[{x:stick.x+stick.width*(.5+.36*x*strength),y:stick.y+stick.height*(.5+.36*z*strength),id:1}]});
@@ -54,7 +74,7 @@ async function drive(page, control, latest, target, stops, runSpeed) {
     }
     await sleep(100);
    }
-   stops.push(xy(latest()));
+   stops.push(xy(latest()));segmentStart=waypoint;
   }
  } finally {await release();if(touch)await touch.detach();}
 }
@@ -96,21 +116,32 @@ async function exercise(browser,control) {
   report.start=xy(position);previous=report.start;
   assert.ok(distance(report.start,route.start)<1,'District spawn matches the installed route');
   const state=await api('/world/'+route.city);report.speeds=state.movement_config.speeds;
+  const {terrainNavigator}=await import('../../apps/consumer-web/lib/terrain.ts');
+  const geography=await api('/geography/'+route.city);
+  const navigation=terrainNavigator(geography.navigation);
   if(!mobile)await page.getByRole('button',{name:'walk',exact:true}).click();
   await page.screenshot({path:filename+'-spawn.jpg',type:'jpeg',quality:70});
   collect=true;report.stage='outward';
-  await drive(page,control,()=>position,route.turns.slice(1),report.turns,report.speeds.run);
+  await drive(page,control,()=>position,route.turns.slice(1),report.turns,report.speeds.run,navigation);
   await sleep(300);
   report.destination=xy((await api('/world/'+route.city)).position);
   report.displacement_m=distance(report.start,report.destination);
   assert.ok(distance(report.destination,route.destination)<2&&report.displacement_m>=250,'Server confirmed the outward route');
   await page.screenshot({path:filename+'-destination.jpg',type:'jpeg',quality:70});
   report.stage='return';
-  await drive(page,control,()=>position,route.turns.slice(0,-1).reverse(),report.turns,report.speeds.run);
+  await drive(page,control,()=>position,route.turns.slice(0,-1).reverse(),report.turns,report.speeds.run,navigation);
   await sleep(300);report.end=xy((await api('/world/'+route.city)).position);
   assert.ok(distance(report.start,report.end)<2&&report.acks>0,'Server confirmed the return');
   report.result='PASS';
- } catch(e){report.error=e.message.split('\n')[0];throw e;}
+ } catch(e){
+  report.error=e.message.split('\n')[0];
+  if(position)report.last_realtime_position=xy(position);
+  if(registered&&position)try{
+   report.last_http_position=xy((await api('/world/'+route.city)).position);
+   await page.screenshot({path:filename+'-failure.jpg',type:'jpeg',quality:70});
+  }catch{/* Keep the original failure and last realtime acknowledgement. */}
+  throw e;
+ }
  finally{
   try {if(registered)await api('/me',undefined,'DELETE');}
   finally{fs.writeFileSync(filename+'.json',JSON.stringify(report,null,2));await context.close();}

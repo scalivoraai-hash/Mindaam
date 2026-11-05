@@ -7,7 +7,9 @@ import pytest
 
 from backend.api.geography import district, safe_spawn, safe_step, traversable
 
-ROUTES = json.loads((Path(__file__).resolve().parents[2] / 'scripts/tests/district-routes.json').read_text())
+FIXTURES = Path(__file__).resolve().parents[2] / 'scripts/tests'
+ROUTES = [route for filename in ('district-routes.json', 'district-browser-routes.json')
+          for route in json.loads((FIXTURES / filename).read_text())]
 
 
 @pytest.mark.parametrize('route', ROUTES, ids=lambda route: route['city'])
