@@ -150,19 +150,25 @@ def journey(db,u):
 
 @router.get('/board/{city}')
 def board(city:str,u=Depends(current_user),db=Depends(get_db)):
- from .discovery import cities
- catalog={c['id']:c for c in cities(db)}
+ from .expansion import Destination,default_threshold,destination_view
+ routes=list(db.scalars(select(Route).where(Route.origin==city,Route.enabled==True)))
+ destinations={city,*(r.destination for r in routes)}
+ threshold=default_threshold(db)
+ catalog={row.id:destination_view(db,row,threshold=threshold) for row in db.scalars(
+  select(Destination).where(Destination.id.in_(destinations),Destination.public==True,Destination.status!='DISABLED'))}
  if city not in catalog or not catalog[city]['enabled']:raise HTTPException(404,'World unavailable')
  now=time.time();rows=[];vehicles=[]
- for r in db.scalars(select(Route).where(Route.origin==city,Route.enabled==True)):
+ h=hub(city)
+ stop=boarding_stop(db,u,city) if routes else None
+ for r in routes:
   if r.destination not in catalog or not all(catalog[r.destination].get(k,True) for k in ['enabled','public','joinable','transport_enabled']):continue
-  start=slot(r,now);id=f'{r.id}:{int(start)}';n=len(real_passengers(db,id));instance=db.get(Vehicle,id);fare=instance.fare if instance else r.fare;capacity=instance.capacity if instance else r.capacity;h=hub(city);stop=boarding_stop(db,u,city);arrival=start+stop['offset'];boarding_end=arrival+(15 if stop['offset'] else 30)
+  start=slot(r,now);id=f'{r.id}:{int(start)}';n=len(real_passengers(db,id));instance=db.get(Vehicle,id);fare=instance.fare if instance else r.fare;capacity=instance.capacity if instance else r.capacity;arrival=start+stop['offset'];boarding_end=arrival+(15 if stop['offset'] else 30)
   last=start if start-now<60 else start-r.frequency
   if -60<now-last<65:
    road=h['road'];fraction=bus_fraction(now,last,math.dist(road[0],road[-1]));idx=min(19,int(fraction*20));factor=fraction*20-idx;a,b=road[idx],road[idx+1]
    if fraction<1:vehicles.append({'id':f'{r.id}:{int(last)}','number':r.number,'destination_name':catalog[r.destination]['name'],'position':{'x':a[0]+(b[0]-a[0])*factor,'z':a[1]+(b[1]-a[1])*factor,'heading':h['heading']}})
   rows.append({**serialize(r),'fare':fare,'currency':'xp','capacity':capacity,'destination_name':catalog[r.destination]['name'],'vehicle_id':id,'stop_id':stop['id'],'stop_name':stop['name'],'arrival_at':arrival,'following_at':arrival+r.frequency,'boarding_until':boarding_end,'passengers':n,'full':n>=capacity,'state':'BOARDING' if arrival<=now<=boarding_end else 'APPROACHING' if 0<arrival-now<60 else 'SCHEDULED','position':h,'locked':not bool(access(db,u,r.destination))})
- return {'server_time':now,'hub':{**hub(city),'name':catalog[city]['name']+' Central'},'stops':stops(db,city),'routes':rows,'vehicles':vehicles,'journey':journey(db,u),'balance':balance(db,u.id,'xp'),'currency':'xp','network_note':'Travel via the country interchange when there is no direct route.'}
+ return {'server_time':now,'hub':{**h,'name':catalog[city]['name']+' Central'},'stops':stops(db,city),'routes':rows,'vehicles':vehicles,'journey':journey(db,u),'balance':balance(db,u.id,'xp'),'currency':'xp','network_note':'Travel via the country interchange when there is no direct route.'}
 
 class VehicleInput(Strict):
  vehicle_id:str=Field(max_length=150)
