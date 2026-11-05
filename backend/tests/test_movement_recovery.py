@@ -16,10 +16,14 @@ def test_route_sweeps_remain_safe(city):
  assert g.nearest_safe_position(city,x,z)==(x,z)
 
 def test_collision_slides_but_does_not_tunnel(monkeypatch):
- monkeypatch.setattr(g,'traversable',lambda city,x,z,mode='walk':x<1)
- x,z=g.safe_step('test',.9,0,1,1)
+ # Supply the wall to both collision queries and the edge-sliding model.
+ from backend.api import grand_arena
+ monkeypatch.setattr(grand_arena,'traversable_plaza',lambda *args:False)
+ wall={'tags':{'building':'yes'},'points':[[1,-10],[8,-10],[8,10],[1,10],[1,-10]]}
+ monkeypatch.setattr(g,'district',lambda city:{'radius':50,'features':[wall]})
+ x,z=g.safe_step('synthetic-wall',.9,0,1,1)
  assert x<1 and z>.9
- x,z=g.safe_step('test',0,0,3,0)
+ x,z=g.safe_step('synthetic-wall',0,0,3,0)
  assert x<1
 
 def test_recovery_bounded_and_valid(monkeypatch):
