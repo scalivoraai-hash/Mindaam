@@ -6,6 +6,8 @@ async function verifyPublicWorld(browser,origin,out){
  try {
   const page=await context.newPage();
   await page.addInitScript(()=>{
+   window.layoutShift=null;
+   if(!window.PerformanceObserver?.supportedEntryTypes?.includes('layout-shift'))return;
    window.layoutShift=0;
    new PerformanceObserver(entries=>{
     for(const e of entries.getEntries())if(!e.hadRecentInput)window.layoutShift+=e.value;
@@ -38,6 +40,10 @@ async function verifyPublicWorld(browser,origin,out){
    await page.getByRole('img',{name:city+' mapped street illustration'}).waitFor();
   }
   assert.equal(await page.locator('.arrival-sky').evaluate(e=>getComputedStyle(e).animationName),'none');
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.setViewportSize({width:1440,height:850});
+  await heading.scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>document.querySelector('.arrival-sky')?.getAnimations().some(animation=>animation.playState==='running'&&Number(animation.currentTime)>0));
   const metrics=await page.evaluate(()=>({
    paint:performance.getEntriesByType('paint').map(e=>({name:e.name,ms:e.startTime})),
    layoutShift:window.layoutShift,webglCanvases:document.querySelectorAll('canvas').length,

@@ -54,6 +54,38 @@ jobs:
               print('sha='+release['sha'],file=f)
               print('cities='+json.dumps(cities,separators=(',',':')),file=f)
           PY
+  webkit-landing:
+    needs: release
+    if: needs.release.outputs.cities != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.release.outputs.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Test staging public landing and entry actions in WebKit
+        run: |
+          npm install --prefix /tmp/district-qa --no-save playwright@1.62.1
+          /tmp/district-qa/node_modules/.bin/playwright install --with-deps webkit
+          mkdir -p webkit-evidence
+          node - <<'JS'
+          const {webkit}=require('/tmp/district-qa/node_modules/playwright');
+          const {verifyPublicWorld}=require('./infrastructure/gcp/public-world-acceptance.cjs');
+          (async()=>{
+            const browser=await webkit.launch();
+            try{await verifyPublicWorld(browser,'https://mindaam-staging-qfrofqn4pq-nw.a.run.app','webkit-evidence');}
+            finally{await browser.close();}
+          })().catch(error=>{console.error(error);process.exitCode=1;});
+          JS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: webkit-public-landing
+          path: webkit-evidence/
+          retention-days: 14
   exploration:
     needs: release
     if: needs.release.outputs.cities != ''
