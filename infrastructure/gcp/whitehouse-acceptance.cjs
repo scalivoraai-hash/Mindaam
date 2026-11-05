@@ -53,6 +53,7 @@ async function verifyWhitehouse(a,b,screenshot){
   const access=a.page.locator('.world-access-modal');
   if(await access.getByRole('button',{name:/^Unlock /}).count())await access.getByRole('button',{name:/^Unlock /}).click();
   await access.getByRole('button',{name:/^Enter /}).click();
+  await a.page.waitForFunction(city=>document.querySelector('.world-minimap span')?.textContent?.startsWith(city),name==='London'?'london':'milton keynes');
   await a.page.locator('.world-canvas[data-ready="true"][data-visual-profile="cinematic-world-v2"] canvas').waitFor();
   assert.equal((await a.api('/world/'+(name==='London'?'london':'milton-keynes'))).city,name==='London'?'london':'milton-keynes');
   assert.deepEqual((await a.api('/me')).avatar,appearance);
