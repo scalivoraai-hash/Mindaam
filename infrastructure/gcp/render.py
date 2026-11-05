@@ -9,7 +9,7 @@ def environment(c, env, origin):
                 "LIVEKIT_URL": "wss://" + SETTINGS["media_domain"],
                 "LIVEKIT_HOST_ALLOWLIST": SETTINGS["media_domain"]}
     if env == "staging":
-        ordinary["MINDAAM_VISUAL_PROFILE"] = "cinematic-world-v1"
+        ordinary["MINDAAM_VISUAL_PROFILE"] = "cinematic-world-v2"
     secrets = {k: f"mindaam-{env}-{suffix}" for k, suffix in {
         "DATABASE_URL": "database-url", "REDIS_URL": "redis-url", "LIVEKIT_API_KEY": "livekit-key",
         "LIVEKIT_API_SECRET": "livekit-secret", "PULSEPOINT_SECRET": "pulsepoint-secret",

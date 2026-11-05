@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {Locomotion} from '../lib/locomotion.ts';
-export type Appearance={color?:string;skin?:string;hair?:string;style?:string;pants?:string};
+import {avatarWardrobe} from './AvatarWardrobe.ts';
+export type Appearance=Record<string,string|undefined>;
 const mats=new Map<string,T.MeshStandardMaterial>();
 export function material(color:string){if(!mats.has(color))mats.set(color,new T.MeshStandardMaterial({color,roughness:['#243b77','#485589','#2b4964'].includes(color)?.3:.74,metalness:['#243b77','#485589','#2b4964'].includes(color)?.3:0}));return mats.get(color)!;}
 export function mesh(g:T.BufferGeometry,color:string,parent:T.Object3D,x=0,y=0,z=0){const m=new T.Mesh(g,material(color));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
@@ -24,21 +25,26 @@ export function human(a:Appearance={},calibrated=false){
  // Adult proportions: tapered torso, articulated limbs and a smaller shaped head.
  const torso=mesh(torsoGeometry,shirt,body,0,1.57,0);torso.scale.z=.64;oval(details,shirt,0,1.89,-.09,.22,.12,.15);box(details,'#e6dccc',0,1.7,.192,.017,.4,.013);box(details,shirt,0,1.37,.185,.30,.12,.04);oval(body,pants,0,1.18,0,.245,.16,.165);
  limb(body,skin,0,1.99,0,.082,.18,.077);const head=new T.Group();head.position.set(0,2.16,.015);body.add(head);
- const headSurface=mesh(headGeometry,skin,head);headSurface.scale.set(.163,.205,.157);oval(head,hair,0,.14,-.022,.17,.10,.16);
- if(a.style==='long'){oval(head,hair,-.14,-.025,-.05,.065,.22,.13);oval(head,hair,.14,-.025,-.05,.065,.22,.13)}
- if(a.style==='cap'){oval(head,shirt,0,.175,0,.18,.06,.17);oval(head,shirt,0,.16,.15,.16,.018,.12)}
+ const headSurface=mesh(headGeometry,skin,head);headSurface.scale.set(.163,.205,.157);if(a.version!=='2')oval(head,hair,0,.14,-.022,.17,.10,.16);
+ if(a.version!=='2'&&a.style==='long'){oval(head,hair,-.14,-.025,-.05,.065,.22,.13);oval(head,hair,.14,-.025,-.05,.065,.22,.13)}
+ if(a.version!=='2'&&a.style==='cap'){oval(head,shirt,0,.175,0,.18,.06,.17);oval(head,shirt,0,.16,.15,.16,.018,.12)}
  const face=new T.Group(),eyes:T.Group[]=[];head.add(face);for(const side of [-1,1]){const eye=new T.Group();eye.position.set(side*.06,.025,.143);face.add(eye);eyes.push(eye);oval(eye,'#e8e0d6',0,0,0,.031,.016,.013);oval(eye,'#4e6c62',0,0,.012,.013,.013,.006);oval(eye,'#162229',0,0,.017,.006,.009,.003);oval(eye,'#fff8e9',-.003,.004,.02,.003,.003,.002);const brow=oval(face,hair,side*.06,.062,.143,.037,.007,.009);brow.rotation.z=-side*.08;oval(face,skin,side*.162,0,0,.025,.047,.03);oval(face,skin,side*.166,-.005,.018,.012,.029,.014)}
  oval(face,skin,0,.003,.154,.018,.047,.023);oval(face,skin,0,-.029,.178,.026,.019,.026);for(const side of [-1,1])oval(face,skin,side*.019,-.038,.164,.012,.01,.015);
  const mouth=new T.Group();mouth.position.set(0,-.09,.145);face.add(mouth);oval(mouth,'#77463f',0,0,0,.041,.004,.008);oval(mouth,'#b77b6a',0,-.008,0,.037,.006,.009);
- const hairDetail=new T.Group();head.add(hairDetail);hairDetail.visible=a.style!=='cap';for(let i=0;i<5;i++){const lock=oval(hairDetail,hair,-.115+i*.055,.155+Math.sin(i*.6)*.025,-.015,.055,.067,.145);lock.rotation.z=-.18;}
+ const hairDetail=new T.Group();head.add(hairDetail);hairDetail.visible=a.version!=='2'&&a.style!=='cap';for(let i=0;i<5;i++){const lock=oval(hairDetail,hair,-.115+i*.055,.155+Math.sin(i*.6)*.025,-.015,.055,.067,.145);lock.rotation.z=-.18;}
 
  for(const side of [-1,1]){limb(details,'#e3decf',side*.15,1.82,.151,.035,.23,.015)}
  const legs:T.Group[]=[],knees:T.Group[]=[],arms:T.Group[]=[],elbows:T.Group[]=[];
  for(const side of [-1,1]){const leg=new T.Group();leg.position.set(side*.135,1.15,0);body.add(leg);limb(leg,pants,0,-.25,0,.11,.52,.115);const knee=new T.Group();knee.position.y=-.48;leg.add(knee);oval(knee,pants,0,0,0,.092,.095,.095);limb(knee,pants,0,-.22,0,.085,.48,.09);limb(knee,pants,0,-.49,0,.063,.16,.065);oval(knee,'#f3f1e6',0,-.59,.055,.115,.035,.205);oval(knee,'#36495b',0,-.54,.055,.108,.055,.19);legs.push(leg);knees.push(knee);
  const arm=new T.Group();arm.position.set(side*.34,1.86,0);arm.rotation.z=side*.10;body.add(arm);limb(arm,shirt,0,-.19,0,.093,.38,.09);const elbow=new T.Group();elbow.position.y=-.35;arm.add(elbow);oval(elbow,skin,0,0,0,.061,.065,.061);limb(elbow,skin,0,-.15,.008,.064,.34,.062);oval(elbow,skin,0,-.35,.018,.055,.068,.035);const handDetails=new T.Group();elbow.add(handDetails);handDetails.userData.nearOnly=true;for(let finger=0;finger<4;finger++)limb(handDetails,skin,(finger-1.5)*.023,-.414+Math.abs(finger-1.5)*.007,.02,.012,.09,.013);const thumb=limb(handDetails,skin,-side*.06,-.35,.037,.017,.075,.018);thumb.rotation.z=-side*.45;arms.push(arm);elbows.push(elbow);}
+ const wardrobe=a.version==='2'?avatarWardrobe(root,a,{head,body}):null;root.userData.dispose=()=>wardrobe?.dispose();
+ if(a.figure==='soft')torso.scale.x=1.10;
+ if(a.face==='round')headSurface.scale.x*=1.10;else if(a.face==='angular')headSurface.scale.x*=.92;
+ eyes.forEach(eye=>{if(a.eyes==='round')eye.scale.y=1.35;if(a.eyes==='narrow')eye.scale.y=.70});
+ if(a.mouth==='full')mouth.scale.set(1.12,1.45,1);else if(a.mouth==='smile')mouth.rotation.z=.08;
  // Low-detail silhouette shares cached geometries/materials.
  oval(far,shirt,0,1.55,0,.30,.43,.17);oval(far,skin,0,2.16,0,.16,.20,.15);for(const side of [-1,1])limb(far,pants,side*.135,.6,0,.10,1.15,.10);
- let detail=true;root.userData.setLOD=(distance:number)=>{detail=distance<35;face.visible=detail;hairDetail.visible=detail&&a.style!=='cap';details.visible=detail;elbows.forEach(e=>e.children.forEach(c=>{if(c.userData.nearOnly)c.visible=detail}));body.visible=distance<75;far.visible=distance>=75};
+ let detail=true;root.userData.setLOD=(distance:number)=>{detail=distance<35;face.visible=detail;hairDetail.visible=a.version!=='2'&&detail&&a.style!=='cap';details.visible=detail;elbows.forEach(e=>e.children.forEach(c=>{if(c.userData.nearOnly)c.visible=detail}));body.visible=distance<75;far.visible=distance>=75};
  const gait=new Locomotion();
  root.userData.animate=(t:number,speed:number,mode?:string)=>{
   const {phase,run,weight,dt}=gait.update(t,speed,mode,calibrated),step=Math.sin(phase)*(.5+run*.27)*weight;
@@ -67,8 +73,9 @@ export function human(a:Appearance={},calibrated=false){
 
  root.userData.sit=()=>{legs.forEach(l=>l.rotation.x=-1.3);knees.forEach(k=>k.rotation.x=1.3);arms.forEach(a=>a.rotation.x=-.3);body.position.y=-.35};root.userData.cycle=(t:number,speed:number)=>{const pedal=Math.sin(t*8)*Math.min(.25,Math.max(0,speed)*.05);legs[0].rotation.x=-.7+pedal;legs[1].rotation.x=-.7-pedal;arms.forEach(a=>a.rotation.x=-.8);knees.forEach(k=>k.rotation.x=.9);body.position.y=-.22;body.position.z=-.2};root.userData.swim=(t:number)=>{body.rotation.x=-Math.PI/2;body.position.y=-.1;arms.forEach((a,i)=>{a.rotation.x=t*3+i*Math.PI;a.rotation.z=(i?1:-1)*.3});legs.forEach((l,i)=>l.rotation.x=Math.sin(t*5+i*Math.PI)*.2)};return root;
 }
-export function tree(parent:T.Object3D,x:number,z:number,seed:number){
+export function tree(parent:T.Object3D,x:number,z:number,seed:number,kind?:string){
  const g=new T.Group();g.position.set(x,0,z);parent.add(g);
+ if(kind==='palm'){mesh(new T.CylinderGeometry(.12,.22,4.5,8),'#85725b',g,0,2.25,0);for(let i=0;i<9;i++){const angle=i*Math.PI*2/9,frond=oval(g,'#4d7856',Math.sin(angle)*1.1,4.25,Math.cos(angle)*1.1,.34,.12,1.6);frond.rotation.y=angle;frond.rotation.x=.16;}return g;}
  mesh(new T.CylinderGeometry(.12,.26,4.3,7),'#79634f',g,0,2.1,0);
  for(let i=0;i<5;i++){const angle=i*2.4+seed,branch=mesh(new T.CylinderGeometry(.045,.09,1.5,5),'#79634f',g,Math.sin(angle)*.42,3.25+i*.2,Math.cos(angle)*.42);branch.rotation.z=Math.cos(angle)*.45;branch.rotation.x=Math.sin(angle)*.45;const crown=oval(g,['#437958','#5a8b5d','#709965'][(seed+i)%3],Math.sin(angle)*.75,4.0+i*.25,Math.cos(angle)*.75,1.5,1.45,1.45);crown.rotation.y=angle;}
  return g;

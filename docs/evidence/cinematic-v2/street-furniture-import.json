@@ -1,0 +1,353 @@
+[
+  {
+    "city": "milton-keynes",
+    "status": "source reconciled",
+    "admitted_nodes": 128,
+    "added_nodes": 128,
+    "signals": 9,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-0.83512105,52.01985676,-0.80095495,52.04087724",
+      "retrieved": "2026-11-05T00:54:10.780415+00:00",
+      "sha256": "de55224d982f7bf7f34fdac838679097cc249e7271746bf52d2fe46017ec0ab4",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "manchester",
+    "status": "source reconciled",
+    "admitted_nodes": 551,
+    "added_nodes": 550,
+    "signals": 50,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-2.24894004,53.47702709,-2.23625996,53.48457291",
+      "retrieved": "2026-11-05T00:54:19.748856+00:00",
+      "sha256": "020c269418f3f551fe6d596dded4bf10855ede2672adcbcd4a12f41824247a17",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "liverpool",
+    "status": "source reconciled",
+    "admitted_nodes": 490,
+    "added_nodes": 490,
+    "signals": 47,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-2.99792924,53.40462709,-2.98527076,53.41217291",
+      "retrieved": "2026-11-05T00:54:27.901763+00:00",
+      "sha256": "f3aff9587f93eb4eef2fe5a1b8c8a95a4fb8db6addb292d8868d4d22dd4e39d0",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "leeds",
+    "status": "source reconciled",
+    "admitted_nodes": 586,
+    "added_nodes": 586,
+    "signals": 107,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-1.55548832,53.79702709,-1.54271168,53.80457291",
+      "retrieved": "2026-11-05T00:54:36.507073+00:00",
+      "sha256": "a08017d2d07c9e066334bdb4ef3983ab94f5ea5b8daaaab6e1c4088b6a27b38a",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "nottingham",
+    "status": "source reconciled",
+    "admitted_nodes": 238,
+    "added_nodes": 238,
+    "signals": 35,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-1.16436266,52.95102709,-1.15183734,52.95857291",
+      "retrieved": "2026-11-05T00:54:45.430507+00:00",
+      "sha256": "dfe80cf48e5ee6dc37632c16ae9ea7deda5bbd5e69e8b4efe45815beb5991835",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "cardiff",
+    "status": "source reconciled",
+    "admitted_nodes": 909,
+    "added_nodes": 909,
+    "signals": 57,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-3.18515831,51.47782709,-3.17304169,51.48537291",
+      "retrieved": "2026-11-05T00:54:54.267069+00:00",
+      "sha256": "9906e2f4d7295f5fbcbed11f8965e016de9901ffeca536196ef2a313859d4bc1",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "dublin",
+    "status": "source reconciled",
+    "admitted_nodes": 1395,
+    "added_nodes": 1394,
+    "signals": 94,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-6.26632042,53.34522709,-6.25367958,53.35277291",
+      "retrieved": "2026-11-05T00:55:03.817717+00:00",
+      "sha256": "fb27a416eee05f6bb165275ff8a5f0fa02933452c1476869dac71e5311d8aba7",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "toronto",
+    "status": "source reconciled",
+    "admitted_nodes": 497,
+    "added_nodes": 497,
+    "signals": 50,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-79.38921456,43.64922709,-79.37878544,43.65677291",
+      "retrieved": "2026-11-05T00:55:12.569890+00:00",
+      "sha256": "596d183f3bbc0f71ae6b798f4c88d1e9f65e71a197c012bd215a2a695f5c6c74",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "oxford",
+    "status": "source reconciled",
+    "admitted_nodes": 333,
+    "added_nodes": 333,
+    "signals": 12,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-1.26379451,51.74822709,-1.25160549,51.75577291",
+      "retrieved": "2026-11-05T00:55:21.884062+00:00",
+      "sha256": "35c200edd8ec6532e4971993c352db3e8d93682fbcb37d3b0b225ec68c2bd7bd",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "cambridge",
+    "status": "source reconciled",
+    "admitted_nodes": 289,
+    "added_nodes": 289,
+    "signals": 10,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=0.11564351,52.20152709,0.12795649,52.20907291",
+      "retrieved": "2026-11-05T00:55:30.874205+00:00",
+      "sha256": "d090cf383dee06eadc6efac82dd82bae02b7769df3765e1cbbc6d8cd13237f3a",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "york",
+    "status": "source reconciled",
+    "admitted_nodes": 355,
+    "added_nodes": 355,
+    "signals": 27,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-1.08791254,53.95522709,-1.07508746,53.96277291",
+      "retrieved": "2026-11-05T00:55:40.347257+00:00",
+      "sha256": "e0870d7893c05c912d5a4e3089198498902a1c3be6407480f3584e23854421e5",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "newcastle",
+    "status": "source reconciled",
+    "admitted_nodes": 372,
+    "added_nodes": 372,
+    "signals": 65,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-1.62437431,54.97452709,-1.61122569,54.98207291",
+      "retrieved": "2026-11-05T00:55:48.474735+00:00",
+      "sha256": "acc2da558a3d89bf2df96e3a6d69d9158b7078d3b0c125fcb7a8b29a78c517cd",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "edinburgh",
+    "status": "source reconciled",
+    "admitted_nodes": 918,
+    "added_nodes": 917,
+    "signals": 86,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-3.19503892,55.94952709,-3.18156108,55.95707291",
+      "retrieved": "2026-11-05T00:55:57.964299+00:00",
+      "sha256": "bbf5d813d79e650b2b2a8170a8daa62e47a55617628478ac893d1187644e1d35",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "bristol",
+    "status": "source reconciled",
+    "admitted_nodes": 546,
+    "added_nodes": 546,
+    "signals": 46,
+    "source": {
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-2.59395471,51.45072709,-2.58184529,51.45827291",
+      "retrieved": "2026-11-05T00:56:07.560368+00:00",
+      "sha256": "f86a5cec987be81afc0c71169483937f88f24bf0d678e586b7d947237a143f8e",
+      "license": "ODbL 1.0",
+      "scope": "Public street furniture nodes only. Existing polygons and roads retained."
+    }
+  },
+  {
+    "city": "brighton",
+    "status": "unresolved",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "city": "sydney",
+    "status": "unresolved",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "city": "melbourne",
+    "status": "unresolved",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "city": "los-angeles",
+    "status": "unresolved",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "city": "miami",
+    "status": "unresolved",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "city": "milton-keynes-centre",
+    "status": "unresolved",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "city": "birmingham",
+    "status": "unresolved",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "city": "vancouver",
+    "status": "unresolved",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "city": "milan",
+    "status": "unresolved",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "city": "milton-keynes-willen",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "london",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "paris",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "amsterdam",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "berlin",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "madrid",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "barcelona",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "rome",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "new-york",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "dubai",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "abu-dhabi",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "riyadh",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "jeddah",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "doha",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "kochi",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "mumbai",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "bengaluru",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "singapore",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "bangkok",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "shanghai",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "tokyo",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  },
+  {
+    "city": "seoul",
+    "status": "unresolved",
+    "error": "External source request blocked; see import log"
+  }
+]

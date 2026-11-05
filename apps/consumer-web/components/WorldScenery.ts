@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {cityVisualStyle} from '../lib/cityVisualStyle.ts';
 import {architectureRegion,regionalPalette} from '../lib/cityArchitecture.ts';
 import {buildingStyle} from '../lib/buildingStyle.ts';
 import {box, material, mesh, oval} from './WorldAssets.ts';
@@ -20,7 +21,7 @@ const hash=(id:string)=>Array.from(id).reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,
 
 /** Fixed-size atlases and shared materials, batched by the existing world tile renderer. */
 function* buildEnvironment(parent:T.Group,geo:Geography,city='',cancelled=()=>false){
-  const region=architectureRegion(city);
+  const region=architectureRegion(city),cinematic=geo.visual_profile==='cinematic-world-v2'?cityVisualStyle(city):null;
   const textures:T.Texture[]=[],materials:T.Material[]=[],buildings:T.Group[]=[];
   function atlas(index:number){
     const p={wall:'#ffffff',trim:'#f0f0ec'},canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
@@ -60,7 +61,7 @@ function* buildEnvironment(parent:T.Group,geo:Geography,city='',cancelled=()=>fa
   for(const f of geo.features){
     yield;
     if(cancelled())break;
-    if(f.tags.highway==='traffic_signals'&&f.points.length===1){const [x,z]=f.points[0],g=new T.Group();g.position.set(x,0,z);parent.add(g);mesh(new T.CylinderGeometry(.07,.09,3.3,8),'#334b55',g,0,1.65,0);box(g,'#20343e',0,3.02,0,.31,.91,.24);for(const [i,c] of ['#ed796f','#bfaa62','#88b6a1'].entries())oval(g,c,0,3.31-i*.28,.127,.082,.082,.02)}
+    if(geo.visual_profile!=='cinematic-world-v2'&&f.tags.highway==='traffic_signals'&&f.points.length===1){const [x,z]=f.points[0],g=new T.Group();g.position.set(x,0,z);parent.add(g);mesh(new T.CylinderGeometry(.07,.09,3.3,8),'#334b55',g,0,1.65,0);box(g,'#20343e',0,3.02,0,.31,.91,.24);for(const [i,c] of ['#ed796f','#bfaa62','#88b6a1'].entries())oval(g,c,0,3.31-i*.28,.127,.082,.082,.02)}
     if(f.points.length<2)continue;
     if(f.tags.natural==='water'||['park','playground','pitch','garden'].includes(f.tags.leisure)){
       const colour=f.tags.natural==='water'?'#559da9':f.tags.leisure==='pitch'?'#608c74':f.tags.leisure==='playground'?'#c9a77b':'#72976e';
@@ -95,7 +96,8 @@ function* buildEnvironment(parent:T.Group,geo:Geography,city='',cancelled=()=>fa
     if(!f.tags.building||f.points.length<4)continue;
     const points=f.points.slice(0,-1),c=points.reduce((v,p)=>[v[0]+p[0]/points.length,v[1]+p[1]/points.length],[0,0]);
     const style=buildingStyle(f.tags,f.id),n=style.hash,palette=regionalPalette(city,style.palette,palettes[style.palette],f.tags),height=style.height;
-    if(region==='gulf'&&!f.tags['roof:shape'])style.roof='flat';
+    if(cinematic){palette.wall=cinematic.palette[n%cinematic.palette.length];if(cinematic.roof==='terracotta')palette.roof='#a56e53'}
+    if((region==='gulf'||cinematic?.roof==='flat')&&!f.tags['roof:shape'])style.roof='flat';
     const group=new T.Group();group.position.set(c[0],0,c[1]);parent.add(group);buildings.push(group);
     const shape=shapeFor(f,c),positions:number[]=[],uvs:number[]=[];
     for(const ring of [f.points,...(f.holes||[])]){

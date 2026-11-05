@@ -1,0 +1,46 @@
+city,map_installed,architecture,source_footprints,rendered_buildings,approximated_appearance,unknown_use,new_verified_footprints,source_named_pois,missing_pois,source_street_names,mapped_signal_nodes,source,licence,browser_acceptance,hardware_performance,staging
+milton-keynes,True,contemporary residential,1247,pending browser measurement,1247,1044,0,69,pending reconciliation,275,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+manchester,True,industrial brick,556,pending browser measurement,556,156,0,973,pending reconciliation,180,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+liverpool,True,dockside brick,426,pending browser measurement,426,222,0,359,pending reconciliation,131,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+leeds,True,Victorian commercial,370,pending browser measurement,370,172,0,531,pending reconciliation,112,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+nottingham,True,sandstone and brick,982,pending browser measurement,982,226,0,326,pending reconciliation,102,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+cardiff,True,Victorian civic,563,pending browser measurement,563,411,0,600,pending reconciliation,92,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+dublin,True,Georgian brick,978,pending browser measurement,978,372,0,744,pending reconciliation,121,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+toronto,True,brick and contemporary,240,pending browser measurement,240,80,0,702,pending reconciliation,66,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+oxford,True,college stone,1080,pending browser measurement,1080,316,0,679,pending reconciliation,152,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+cambridge,True,college brick and stone,865,pending browser measurement,865,137,0,594,pending reconciliation,108,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+york,True,historic timber and stone,573,pending browser measurement,573,210,0,902,pending reconciliation,211,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+newcastle,True,Georgian stone,242,pending browser measurement,242,72,0,287,pending reconciliation,82,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+edinburgh,True,Scottish sandstone,739,pending browser measurement,739,462,0,651,pending reconciliation,156,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+bristol,True,colourful Georgian,699,pending browser measurement,699,126,0,530,pending reconciliation,136,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+brighton,True,Regency coastal,2046,pending browser measurement,2046,1370,0,884,pending reconciliation,145,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+sydney,True,sandstone coastal,441,pending browser measurement,441,233,0,655,pending reconciliation,69,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+melbourne,True,Victorian laneway,708,pending browser measurement,708,565,0,1259,pending reconciliation,177,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+los-angeles,True,stucco low rise,142,pending browser measurement,142,63,0,84,pending reconciliation,43,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+miami,True,Art Deco pastel,211,pending browser measurement,211,156,0,88,pending reconciliation,35,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+milton-keynes-centre,True,modern commercial,103,pending browser measurement,103,36,0,261,pending reconciliation,30,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+birmingham,True,mixed retail,305,pending browser measurement,305,99,0,733,pending reconciliation,120,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+vancouver,True,glass residential,656,pending browser measurement,656,407,0,226,pending reconciliation,17,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+milan,True,historic and modern,513,pending browser measurement,513,261,0,782,pending reconciliation,152,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+milton-keynes-willen,True,lakeside recreation,330,pending browser measurement,330,153,0,88,pending reconciliation,111,9,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+london,True,Georgian and Victorian,1195,pending browser measurement,1195,496,0,1078,pending reconciliation,134,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+paris,True,Haussmann limestone,856,pending browser measurement,856,108,0,737,pending reconciliation,158,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+amsterdam,True,narrow canal gables,2213,pending browser measurement,2213,890,0,1058,pending reconciliation,189,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+berlin,True,courtyard blocks,328,pending browser measurement,328,81,0,299,pending reconciliation,35,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+madrid,True,balcony apartments,1181,pending browser measurement,1181,108,0,1401,pending reconciliation,162,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+barcelona,True,Catalan urban blocks,1824,pending browser measurement,1824,40,0,1124,pending reconciliation,287,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+rome,True,historic stucco,1302,pending browser measurement,1302,992,0,124,pending reconciliation,131,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+new-york,True,brownstone and commercial,490,pending browser measurement,490,369,0,418,pending reconciliation,59,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+dubai,True,modern Gulf towers,600,pending browser measurement,600,570,0,454,pending reconciliation,57,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+abu-dhabi,True,landscaped Gulf urban,136,pending browser measurement,136,121,0,15,pending reconciliation,26,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+riyadh,True,Saudi stone and stucco,20,pending browser measurement,20,13,0,9,pending reconciliation,83,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+jeddah,True,Hijazi coastal,19,pending browser measurement,19,17,0,4,pending reconciliation,2,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+doha,True,contemporary Gulf,405,pending browser measurement,405,321,0,219,pending reconciliation,48,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+kochi,True,Kerala tiled roofs,951,pending browser measurement,951,879,0,269,pending reconciliation,36,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+mumbai,True,dense mixed urban,144,pending browser measurement,144,110,0,27,pending reconciliation,13,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+bengaluru,True,mixed technology and residential,58,pending browser measurement,58,39,0,40,pending reconciliation,6,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+singapore,True,tropical modern,280,pending browser measurement,280,231,0,444,pending reconciliation,53,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+bangkok,True,compact tropical urban,981,pending browser measurement,981,244,0,109,pending reconciliation,38,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+shanghai,True,high rise and historic,161,pending browser measurement,161,135,0,123,pending reconciliation,25,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+tokyo,True,compact mixed use,99,pending browser measurement,99,55,0,33,pending reconciliation,25,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
+seoul,True,dense contemporary,607,pending browser measurement,607,475,0,1113,pending reconciliation,43,0,OpenStreetMap contributors,ODbL 1.0,not run,not tested,not deployed
