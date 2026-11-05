@@ -101,15 +101,22 @@ async function exercise(browser,control) {
   return response.json();
  };
  const u={page,context,states,touch:mobile,api};
- const transport={stopSent:0,stopAck:0};
+ const transport={stopSent:0,stopAck:0,recent:[]};
+ const trace=(kind,d)=>{
+  transport.recent.push({kind,at_ms:Date.now(),seq:d.seq,type:d.type,x:d.x,z:d.z,
+   position:d.position&&{x:d.position.x,z:d.position.z,speed:d.position.speed,blocked:d.position.blocked,last_move:d.position.last_move}});
+  if(transport.recent.length>28)transport.recent.shift();
+ };
  page.on('websocket',ws=>{
   if(!ws.url().endsWith('/api/realtime'))return;
   ws.on('framesent',frame=>{
    let input;try{input=JSON.parse(frame.payload.toString());}catch{return;}
+   if(input.type==='input')trace('sent',input);
    if(input.type==='input'&&input.x===0&&input.z===0)transport.stopSent=input.seq;
   });
   ws.on('framereceived',frame=>{
    let d;try{d=JSON.parse(frame.payload.toString());}catch{return;}
+   if(d.type==='motion'||d.type==='motion_error')trace('received',d);
    if(d.type==='state'){states.push({city:d.city});if(states.length>2)states.shift();}
    if(!d.position||d.city!==route.city||d.position.zone_id!=='world'||(position&&d.position.last_move<position.last_move))return;
    position=d.position;
@@ -148,7 +155,7 @@ async function exercise(browser,control) {
   assert.ok(distance(report.start,report.end)<2&&report.acks>0,'Server confirmed the return');
   report.result='PASS';
  } catch(e){
-  report.error=e.message.split('\n')[0];
+  report.error=e.message.split('\n')[0];report.transport=transport;
   if(position)report.last_realtime_position=xy(position);
   if(registered&&position)try{
    report.last_http_position=xy((await api('/world/'+route.city)).position);
