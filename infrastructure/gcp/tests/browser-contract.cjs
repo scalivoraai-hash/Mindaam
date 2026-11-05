@@ -33,7 +33,7 @@ const event=read('apps/consumer-web/components/EventScreenShare.tsx');
 assert.ok(event.includes('Share screen'));assert.ok(event.includes('Stop sharing'));
 
 const auth=read('apps/consumer-web/app/page.tsx');
-assert.match(auth,/<button className="text-button wide" onClick=\{\(\)=>setAuth/);
+assert.match(auth,/<button className="text-button wide" disabled=\{!ready\} onClick=\{\(\)=>setAuth/);
 for(const label of ['New here? Create an account','Username','Email address','Confirm password','Create your account','Let’s explore','Enter Mindaam'])assert.ok(auth.includes(label));
 for(const name of ['adult','terms','privacy'])assert.ok(auth.includes('name="'+name+'"'));
 assert.ok(flow.includes("getByRole('heading',{name:'Your Worlds',exact:true})"));
