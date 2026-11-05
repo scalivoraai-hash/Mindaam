@@ -42,7 +42,7 @@ jobs:
       - name: Install test browser and pinned LiveKit release
         run: |
           npm install --prefix /tmp/mylil-qa --no-save playwright@1.62.1
-          /tmp/mylil-qa/node_modules/.bin/playwright install --with-deps chromium
+          bash scripts/ci/install-browser.sh /tmp/mylil-qa/node_modules/.bin/playwright chromium
           curl --fail --location --retry 3 https://github.com/livekit/livekit/releases/download/v1.13.7/livekit_1.13.7_linux_amd64.tar.gz --output /tmp/livekit.tar.gz
           echo '6634aeeb2fb1366b6723708ae4320b9d5408106a4c63457c5e845ae3979c90e2  /tmp/livekit.tar.gz' | sha256sum --check
           tar -xzf /tmp/livekit.tar.gz -C /tmp livekit-server
@@ -104,7 +104,7 @@ jobs:
       - name: Install test browser and pinned LiveKit release
         run: |
           npm install --prefix /tmp/mylil-qa --no-save playwright@1.62.1
-          /tmp/mylil-qa/node_modules/.bin/playwright install --with-deps chromium
+          bash scripts/ci/install-browser.sh /tmp/mylil-qa/node_modules/.bin/playwright chromium
           curl --fail --location --retry 3 https://github.com/livekit/livekit/releases/download/v1.13.7/livekit_1.13.7_linux_amd64.tar.gz --output /tmp/livekit.tar.gz
           echo '6634aeeb2fb1366b6723708ae4320b9d5408106a4c63457c5e845ae3979c90e2  /tmp/livekit.tar.gz' | sha256sum --check
           tar -xzf /tmp/livekit.tar.gz -C /tmp livekit-server
@@ -247,7 +247,7 @@ jobs:
       - name: Install browser
         run: |
           npm install --prefix /tmp/mylil-qa --no-save playwright@1.62.1
-          /tmp/mylil-qa/node_modules/.bin/playwright install --with-deps chromium
+          bash scripts/ci/install-browser.sh /tmp/mylil-qa/node_modules/.bin/playwright chromium
           node -e 'console.log("QA_CHROMIUM="+require("/tmp/mylil-qa/node_modules/playwright").chromium.executablePath())' >> "$GITHUB_ENV"
       - name: Render every installed destination and verify actual two-user UI
         env:
