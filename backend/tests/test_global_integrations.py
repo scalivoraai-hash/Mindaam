@@ -124,10 +124,11 @@ def test_late_activity_poll_after_chat_closes(system):
  assert c.post('/api/talk/'+sid+'/end',headers=a).status_code==200
  path='/api/social-activity/conversation/'+sid
  for viewer in (a,b):
-  reply=c.get(path,headers=viewer)
+  assert c.get(path,headers=viewer).status_code==403
+  reply=c.get(path+'?observe_end=true',headers=viewer)
   assert reply.status_code==200
   assert reply.json()=={'inactive':True,'catalogue':{},'recipients':[],'gifts':[],'reactions':[]}
- assert c.get(path,headers=outsider).status_code==403
+ assert c.get(path+'?observe_end=true',headers=outsider).status_code==403
  reaction={'id':str(uuid.uuid4()),'context_type':'conversation','context_id':sid,'emoji':'👏'}
  assert c.post('/api/reactions',headers=a,json=reaction).status_code==403
 

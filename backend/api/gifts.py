@@ -93,14 +93,15 @@ def react(data:React,u=Depends(current_user),db=Depends(get_db)):
  if db.scalar(select(func.count()).select_from(Reaction).where(Reaction.user_id==u.id,Reaction.created_at>time.time()-10))>=4:raise HTTPException(429,'Give other people a moment to react')
  db.add(Reaction(id=str(data.id),user_id=u.id,context_type=kind,context_id=id,emoji=data.emoji));return {'ok':True}
 @router.get('/social-activity/{kind}/{id}')
-def activity(kind:str,id:str,u=Depends(current_user),db=Depends(get_db)):
+def activity(kind:str,id:str,u=Depends(current_user),db=Depends(get_db),observe_end:bool=False):
  try:
   kind,id,people=eligible(db,u,kind,id)
  except HTTPException as error:
   # A final poll may arrive after a previously active participant has left.
   # Return only the caller's terminal state. Never expose old gifts or recipients.
-  membership=db.get(ConversationMember,(id,u.id)) if kind=='conversation' and error.status_code in (403,409) else None
-  if membership is None or membership.state!='left':
+  membership=db.get(ConversationMember,(id,u.id)) if observe_end and kind=='conversation' and error.status_code in (403,409) else None
+  session=db.get(MediaSession,id) if membership and membership.state=='left' else None
+  if session is None or session.kind!='text' or session.event_id:
    raise
   return {'inactive':True,'catalogue':{},'recipients':[],'gifts':[],'reactions':[]}
  names={p.id:p.username for p in people}
