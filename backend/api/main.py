@@ -326,12 +326,13 @@ def realtime_motion(token, data):
     with SessionLocal.begin() as db:
         u=user_for_token(db,token)
         db.scalar(select(User.id).where(User.id==u.id).with_for_update())
-        p=db.get(Presence,u.id)
+        p=(db.scalar(select(Presence).where(Presence.user_id==u.id).with_for_update())
+           if data.action=='move' else db.get(Presence,u.id))
         if not p or (p.city,p.zone_id)!=(data.city,data.zone):
             raise HTTPException(409,'Your location changed. Movement was cleared.')
         growth.require_access(db,u,p.city)
         result=(mobility.drive(mobility.Drive(steer=data.x,throttle=-data.z),u,db)
-                if data.action=='drive' else world.move(world.Movement(dx=data.x,dz=data.z,mode=data.mode),u,db))
+                if data.action=='drive' else world.move_locked(world.Movement(dx=data.x,dz=data.z,mode=data.mode),u,db,p))
         if 'position' not in result:result={'position':result,'exited':result.get('exited',False)}
         return {'type':'motion','seq':data.seq,'city':data.city,'input_zone':data.zone,**result}
 
@@ -386,7 +387,10 @@ async def realtime(socket: WebSocket):
         async def moves():
             while True:
                 received,data=await pending.get()
-                if time.monotonic()-received>.35:continue
+                # A delayed direction must never move an avatar. A pedestrian
+                # release adds no travel and must still stop and acknowledge it.
+                neutral_stop=data.action=='move' and data.x==0 and data.z==0
+                if time.monotonic()-received>.35 and not neutral_stop:continue
                 started=time.monotonic()
                 try:await send(await run_in_threadpool(realtime_motion,token,data))
                 except HTTPException as error:
