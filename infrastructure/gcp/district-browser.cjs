@@ -18,17 +18,21 @@ async function until(check, label, timeout=30000) {
  throw Error(label+' timed out');
 }
 
-async function drive(page, control, latest, target, stops, runSpeed, navigation) {
+async function drive(page, control, latest, target, stops, runSpeed, navigation, transport) {
  const held = new Set();
  let contact = false;
  const touch = control==='joystick' ? await page.context().newCDPSession(page) : null;
  const stick = touch ? await page.getByLabel('Movement joystick').boundingBox() : null;
  if(touch) assert.ok(stick,'Mobile joystick is visible');
  async function release() {
+  if(!held.size&&!contact)return;
+  const previousStop=transport.stopSent;
   for(const key of held) await page.keyboard.up(key);
   held.clear();
   if(contact) await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   contact=false;
+  await until(()=>transport.stopSent>previousStop&&transport.stopAck>=transport.stopSent,
+   'Server acknowledgement of released '+control,8000);
  }
  // The camera is at the application's default outdoor yaw after normal world entry.
  let segmentStart=xy(latest());
@@ -38,7 +42,9 @@ async function drive(page, control, latest, target, stops, runSpeed, navigation)
    let best=Infinity,progress=Date.now();
    while(true) {
     const p=latest(),dx=waypoint[0]-p.x,dz=waypoint[1]-p.z,d=Math.hypot(dx,dz);
-    if(d<.85)break;
+    const precision=d<Math.max(4,runSpeed);
+    if(precision&&(held.size||contact)){await release();continue;}
+    if(d<.70)break;
     if(d<best-.15){best=d;progress=Date.now();}
     if(Date.now()-progress>8000)throw Error('No progress approaching '+JSON.stringify(waypoint)+' from '+JSON.stringify(xy(p))+' blocked='+Boolean(p.blocked));
     // Follow the surveyed line. Aiming only at a distant corner lets an
@@ -72,7 +78,13 @@ async function drive(page, control, latest, target, stops, runSpeed, navigation)
      for(const k of [...held])if(!desired.has(k)){await page.keyboard.up(k);held.delete(k);}
      for(const k of desired)if(!held.has(k)){await page.keyboard.down(k);held.add(k);}
     }
-    await sleep(100);
+    // Measure the stopping position after the release acknowledgement.
+    // With a held key, the last running frame can precede the stop by metres.
+    if(precision){
+     const duration=Math.min(700,Math.max(160,1000*(d-.35)/runSpeed));
+     await sleep(duration);
+     await release();
+    }else await sleep(100);
    }
    stops.push(xy(latest()));segmentStart=waypoint;
   }
@@ -93,13 +105,26 @@ async function exercise(browser,control) {
   return response.json();
  };
  const u={page,context,states,touch:mobile,api};
+ const transport={stopSent:0,stopAck:0,recent:[]};
+ const trace=(kind,d)=>{
+  transport.recent.push({kind,at_ms:Date.now(),seq:d.seq,type:d.type,x:d.x,z:d.z,
+   position:d.position&&{x:d.position.x,z:d.position.z,speed:d.position.speed,blocked:d.position.blocked,last_move:d.position.last_move}});
+  if(transport.recent.length>28)transport.recent.shift();
+ };
  page.on('websocket',ws=>{
   if(!ws.url().endsWith('/api/realtime'))return;
+  ws.on('framesent',frame=>{
+   let input;try{input=JSON.parse(frame.payload.toString());}catch{return;}
+   if(input.type==='input')trace('sent',input);
+   if(input.type==='input'&&input.x===0&&input.z===0)transport.stopSent=input.seq;
+  });
   ws.on('framereceived',frame=>{
    let d;try{d=JSON.parse(frame.payload.toString());}catch{return;}
+   if(d.type==='motion'||d.type==='motion_error')trace('received',d);
    if(d.type==='state'){states.push({city:d.city});if(states.length>2)states.shift();}
    if(!d.position||d.city!==route.city||d.position.zone_id!=='world'||(position&&d.position.last_move<position.last_move))return;
    position=d.position;
+   if(d.type==='motion'&&d.seq===transport.stopSent&&position.speed===0)transport.stopAck=d.seq;
    if(d.type!=='motion'||!collect)return;
    report.acks++;if(position.blocked)report.blocked++;
    const at=xy(position);report.travelled_m+=distance(previous,at);previous=at;
@@ -122,19 +147,19 @@ async function exercise(browser,control) {
   if(!mobile)await page.getByRole('button',{name:'walk',exact:true}).click();
   await page.screenshot({path:filename+'-spawn.jpg',type:'jpeg',quality:70});
   collect=true;report.stage='outward';
-  await drive(page,control,()=>position,route.turns.slice(1),report.turns,report.speeds.run,navigation);
+  await drive(page,control,()=>position,route.turns.slice(1),report.turns,report.speeds.run,navigation,transport);
   await sleep(300);
   report.destination=xy((await api('/world/'+route.city)).position);
   report.displacement_m=distance(report.start,report.destination);
   assert.ok(distance(report.destination,route.destination)<2&&report.displacement_m>=250,'Server confirmed the outward route');
   await page.screenshot({path:filename+'-destination.jpg',type:'jpeg',quality:70});
   report.stage='return';
-  await drive(page,control,()=>position,route.turns.slice(0,-1).reverse(),report.turns,report.speeds.run,navigation);
+  await drive(page,control,()=>position,route.turns.slice(0,-1).reverse(),report.turns,report.speeds.run,navigation,transport);
   await sleep(300);report.end=xy((await api('/world/'+route.city)).position);
   assert.ok(distance(report.start,report.end)<2&&report.acks>0,'Server confirmed the return');
   report.result='PASS';
  } catch(e){
-  report.error=e.message.split('\n')[0];
+  report.error=e.message.split('\n')[0];report.transport=transport;
   if(position)report.last_realtime_position=xy(position);
   if(registered&&position)try{
    report.last_http_position=xy((await api('/world/'+route.city)).position);

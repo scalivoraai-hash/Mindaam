@@ -261,6 +261,11 @@ def world(city: str, u=Depends(current_user), db=Depends(get_db)):
 def move(data: Movement, u=Depends(current_user), db=Depends(get_db)):
     db.scalar(select(User.id).where(User.id==u.id).with_for_update())
     p = db.scalar(select(Presence).where(Presence.user_id == u.id).with_for_update())
+    return move_locked(data,u,db,p)
+
+
+def move_locked(data, u, db, p):
+    """Both callers hold the user and presence locks, in that order."""
     if not p:
         raise HTTPException(409, "Enter world first")
     if (data.city is not None and data.city!=p.city) or (data.zone is not None and data.zone!=p.zone_id):

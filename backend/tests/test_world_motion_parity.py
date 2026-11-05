@@ -53,6 +53,30 @@ def test_socket_motion_stop_invalid_context_and_duplicate(system):
   ws.send_json({**base,'seq':5,'x':-1});assert receive_motion(ws)['position']['x']<b['position']['x']
 
 
+def test_delayed_stop_is_acknowledged_without_applying_stale_travel(system,monkeypatch):
+ from backend.api import main
+ from threading import Event
+ c,dbs=system;h,u=register(c,'delayed_stop');onboard(c,h)
+ started,release=Event(),Event()
+ original=main.realtime_motion
+ def slow_first(token,data):
+  if data.seq==1:
+   started.set()
+   assert release.wait(5)
+  return original(token,data)
+ monkeypatch.setattr(main,'realtime_motion',slow_first)
+ with c.websocket_connect('/api/realtime') as ws:
+  ws.send_json({'token':h['Authorization'][7:]});state=ws.receive_json()
+  base={'type':'input','city':state['city'],'zone':'world','action':'move','x':1,'z':0,'mode':'walk'}
+  ws.send_json({**base,'seq':1});assert started.wait(5)
+  ws.send_json({**base,'seq':2});ws.send_json({**base,'seq':3,'x':0})
+  time.sleep(.45);release.set()
+  first=receive_motion(ws);stop=receive_motion(ws)
+  assert (first['seq'],stop['seq'])==(1,3)
+  assert stop['position']['speed']==0
+  assert (stop['position']['x'],stop['position']['z'])==(first['position']['x'],first['position']['z'])
+
+
 def test_http_rejects_inputs_queued_before_city_or_interior_change(system):
  c,dbs=system;h,u=register(c,'stale_motion');onboard(c,h)
  for context in [{'city':'paris','zone':'world'},{'city':'london','zone':'building:old'}]:

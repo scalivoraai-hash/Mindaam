@@ -14,7 +14,7 @@ from .core import Strict,serialize
 from .economy import credit,balance
 from .mobility_payments import charge
 from .geography import district,safe_spawn,driving_segments,traversable
-from .growth import require_access,access
+from .growth import require_access,access,WorldAccess
 router=APIRouter(prefix='/api/transit')
 
 class Route(Base):
@@ -107,9 +107,14 @@ def vehicle(db,r,start):
  if not v:v=Vehicle(id=id,route_id=r.id,departure=start,capacity=r.capacity,duration=r.duration,fare=r.fare);db.add(v);db.flush()
  return v
 
+def active_passengers(now):
+ alive=select(Session.user_id).where(Session.expires_at>now)
+ return select(Ticket).join(Presence,Presence.user_id==Ticket.user_id).join(User,User.id==Ticket.user_id).where(
+  Ticket.state=='aboard',Presence.zone_id=='bus:'+Ticket.vehicle_id,
+  Presence.updated_at>now-45,User.suspended==False,User.id.in_(alive))
+
 def real_passengers(db,id):
- alive=select(Session.user_id).where(Session.expires_at>time.time())
- return list(db.scalars(select(Ticket).join(Presence,Presence.user_id==Ticket.user_id).join(User,User.id==Ticket.user_id).where(Ticket.vehicle_id==id,Ticket.state=='aboard',Presence.zone_id=='bus:'+id,Presence.updated_at>time.time()-45,User.suspended==False,User.id.in_(alive))))
+ return list(db.scalars(active_passengers(time.time()).where(Ticket.vehicle_id==id)))
 
 def bus_fraction(now,start,road_length=100):
  # Accelerated approach/departure on approved road geometry; timetable is server-owned.
@@ -131,8 +136,8 @@ def position(r,v,now):
 def stops(db,city):
  rows=[serialize(s) for s in db.scalars(select(Stop).where(Stop.city==city,Stop.enabled==True))]
  return rows or [{'id':city+':central','name':city+' Central','city':city,'offset':0,'x':hub(city)['x'],'z':hub(city)['z']}]
-def boarding_stop(db,u,city):
- p=db.get(Presence,u.id);rows=stops(db,city)
+def boarding_stop(db,u,city,rows=None):
+ p=db.get(Presence,u.id);rows=stops(db,city) if rows is None else rows
  return min(rows,key=lambda s:math.hypot(s['x']-(p.x if p else 0),s['z']-(p.z if p else 0)))
 
 def passenger_position(journey,seat):
@@ -159,16 +164,26 @@ def board(city:str,u=Depends(current_user),db=Depends(get_db)):
  if city not in catalog or not catalog[city]['enabled']:raise HTTPException(404,'World unavailable')
  now=time.time();rows=[];vehicles=[]
  h=hub(city)
- stop=boarding_stop(db,u,city) if routes else None
- for r in routes:
-  if r.destination not in catalog or not all(catalog[r.destination].get(k,True) for k in ['enabled','public','joinable','transport_enabled']):continue
-  start=slot(r,now);id=f'{r.id}:{int(start)}';n=len(real_passengers(db,id));instance=db.get(Vehicle,id);fare=instance.fare if instance else r.fare;capacity=instance.capacity if instance else r.capacity;arrival=start+stop['offset'];boarding_end=arrival+(15 if stop['offset'] else 30)
+ city_stops=stops(db,city)
+ stop=boarding_stop(db,u,city,city_stops) if routes else None
+ visible=[r for r in routes if r.destination in catalog and all(catalog[r.destination].get(k,True) for k in ['enabled','public','joinable','transport_enabled'])]
+ departures=[(r,slot(r,now)) for r in visible]
+ ids=[f'{r.id}:{int(start)}' for r,start in departures]
+ instances={v.id:v for v in db.scalars(select(Vehicle).where(Vehicle.id.in_(ids)))} if ids else {}
+ passenger_counts={}
+ unlocked=set()
+ if ids:
+  counts=active_passengers(now).where(Ticket.vehicle_id.in_(ids)).with_only_columns(Ticket.vehicle_id,func.count()).group_by(Ticket.vehicle_id)
+  passenger_counts=dict(db.execute(counts).all())
+  unlocked=set(db.scalars(select(WorldAccess.destination_id).where(WorldAccess.user_id==u.id,WorldAccess.destination_id.in_(destinations))))
+ for r,start in departures:
+  id=f'{r.id}:{int(start)}';n=passenger_counts.get(id,0);instance=instances.get(id);fare=instance.fare if instance else r.fare;capacity=instance.capacity if instance else r.capacity;arrival=start+stop['offset'];boarding_end=arrival+(15 if stop['offset'] else 30)
   last=start if start-now<60 else start-r.frequency
   if -60<now-last<65:
    road=h['road'];fraction=bus_fraction(now,last,math.dist(road[0],road[-1]));idx=min(19,int(fraction*20));factor=fraction*20-idx;a,b=road[idx],road[idx+1]
    if fraction<1:vehicles.append({'id':f'{r.id}:{int(last)}','number':r.number,'destination_name':catalog[r.destination]['name'],'position':{'x':a[0]+(b[0]-a[0])*factor,'z':a[1]+(b[1]-a[1])*factor,'heading':h['heading']}})
-  rows.append({**serialize(r),'fare':fare,'currency':'xp','capacity':capacity,'destination_name':catalog[r.destination]['name'],'vehicle_id':id,'stop_id':stop['id'],'stop_name':stop['name'],'arrival_at':arrival,'following_at':arrival+r.frequency,'boarding_until':boarding_end,'passengers':n,'full':n>=capacity,'state':'BOARDING' if arrival<=now<=boarding_end else 'APPROACHING' if 0<arrival-now<60 else 'SCHEDULED','position':h,'locked':not bool(access(db,u,r.destination))})
- return {'server_time':now,'hub':{**h,'name':catalog[city]['name']+' Central'},'stops':stops(db,city),'routes':rows,'vehicles':vehicles,'journey':journey(db,u),'balance':balance(db,u.id,'xp'),'currency':'xp','network_note':'Travel via the country interchange when there is no direct route.'}
+  rows.append({**serialize(r),'fare':fare,'currency':'xp','capacity':capacity,'destination_name':catalog[r.destination]['name'],'vehicle_id':id,'stop_id':stop['id'],'stop_name':stop['name'],'arrival_at':arrival,'following_at':arrival+r.frequency,'boarding_until':boarding_end,'passengers':n,'full':n>=capacity,'state':'BOARDING' if arrival<=now<=boarding_end else 'APPROACHING' if 0<arrival-now<60 else 'SCHEDULED','position':h,'locked':r.destination not in unlocked})
+ return {'server_time':now,'hub':{**h,'name':catalog[city]['name']+' Central'},'stops':city_stops,'routes':rows,'vehicles':vehicles,'journey':journey(db,u),'balance':balance(db,u.id,'xp'),'currency':'xp','network_note':'Travel via the country interchange when there is no direct route.'}
 
 class VehicleInput(Strict):
  vehicle_id:str=Field(max_length=150)
