@@ -1,5 +1,5 @@
 import catalog from '../../../shared/city-street-furniture.json' with {type:'json'};
-type Feature={id:string;tags:Record<string,string>;points:number[][]};
+type Feature={id:string;osm_id:string;tags:Record<string,string>;points:number[][]};
 /** Separate visual data: immutable collision/geography cache hashes stay unchanged. */
 export async function loadCityStreetFurniture(city:string):Promise<Feature[]>{
  const entry=(catalog as Record<string,{path:string;sha256:string;nodes:number}>)[city];if(!entry)return [];

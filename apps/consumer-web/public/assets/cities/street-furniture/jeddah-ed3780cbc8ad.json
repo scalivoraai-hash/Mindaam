@@ -1,0 +1,1 @@
+{"city":"jeddah","features":[{"id":"2013723886219","osm_type":"node","osm_id":"13723886219","tags":{"highway":"traffic_signals","traffic_signals:direction":"forward"},"points":[[-134.89,-613.22]]},{"id":"2013723886220","osm_type":"node","osm_id":"13723886220","tags":{"highway":"traffic_signals","traffic_signals:direction":"backward"},"points":[[-138.87,-663.42]]}]}
