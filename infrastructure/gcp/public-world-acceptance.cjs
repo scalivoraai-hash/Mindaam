@@ -27,7 +27,6 @@ async function verifyPublicWorld(browser,origin,out){
    assert.ok(await form.getByRole('button',{name:'Enter Mindaam'}).isDisabled(),'Sign-in waits for interactive handlers');
   } finally {
    resumeScripts();
-   await page.unroute('**/_next/**/*.js',holdScript);
   }
   const heading=page.getByRole('heading',{name:'A Living World. Together.'});
   await heading.waitFor();
