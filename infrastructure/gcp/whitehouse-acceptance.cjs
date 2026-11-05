@@ -3,6 +3,7 @@ const {randomUUID}=require('node:crypto');
 
 // Runs inside the existing staging-only browser workflow, on two disposable accounts.
 async function verifyWhitehouse(a,b,screenshot){
+ await require('./public-world-acceptance.cjs').verifyPublicWorld(a.page.context().browser(),new URL(a.page.url()).origin,'gcp-evidence');
  const profile=await a.api('/visual-profile/milton-keynes');
  assert.equal(profile.profile,'cinematic-world-v2');
  for(const city of Object.keys(require('../../shared/city-visual-styles.json')))assert.equal((await a.api('/visual-profile/'+city)).profile,'cinematic-world-v2',city);
@@ -46,6 +47,24 @@ async function verifyWhitehouse(a,b,screenshot){
  await a.page.locator('.world-access-modal').getByRole('button',{name:/^Enter /}).click();
  await a.page.locator('.world-canvas[data-ready="true"][data-visual-profile="cinematic-world-v2"] canvas').waitFor();
  assert.deepEqual((await a.api('/me')).avatar,appearance);
+ // Follow the mapped Whitehouse corridor with the same focused Walk control a player uses.
+ // The next ordinary city switch brings the tester back to the second user's district.
+ const start=(await a.api('/world/milton-keynes')).position;
+ await a.page.getByRole('button',{name:'walk',exact:true}).click();
+ await a.page.keyboard.down('w');
+ try {
+  await a.page.waitForFunction(origin=>{
+   const p=window.__qaMotion;
+   return p?.zone_id==='world'&&Math.hypot(p.x-origin.x,p.z-origin.z)>=100;
+  },start,{timeout:60000});
+ } finally {await a.page.keyboard.up('w');}
+ const observed=await a.api('/world/milton-keynes'),end=observed.position;
+ const displacement=Math.hypot(end.x-start.x,end.z-start.z);
+ assert.ok(displacement>=100,'100 metres confirmed by the staging server');
+ require('node:fs').writeFileSync('gcp-evidence/whitehouse-long-keyboard.json',JSON.stringify({
+  city:'milton-keynes',start:[start.x,start.z],end:[end.x,end.z],displacement,
+  control:'keyboard',speeds:observed.movement_config?.speeds
+ },null,2));
  for(const name of ['London','Whitehouse']){
   await a.page.getByRole('button',{name:'Explore Mindaam Cities',exact:true}).click();
   await a.page.locator('.world-search input').fill(name);
@@ -64,7 +83,6 @@ async function verifyWhitehouse(a,b,screenshot){
   await a.page.getByRole('button',{name:mode,exact:true}).click();let moved=false;
   for(const key of ['d','w']){
    const before=(await a.api('/world/milton-keynes')).position;
-   await a.page.evaluate(()=>document.activeElement?.blur());
    await a.page.keyboard.down(key);await a.page.waitForTimeout(900);await a.page.keyboard.up(key);
    await a.page.waitForTimeout(200);const after=(await a.api('/world/milton-keynes')).position;
    if(Math.hypot(after.x-before.x,after.z-before.z)>.3){moved=true;break}

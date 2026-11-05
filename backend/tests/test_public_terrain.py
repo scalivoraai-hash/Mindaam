@@ -113,3 +113,14 @@ def test_unclassified_open_ground_continuous_without_road_limit(public_ground):
         assert not g.traversable('test',-30,20,mode)
     assert not t.permits('test',51,0)
     assert not t.permits('test',-30,20,open_ground=False)
+
+
+def test_forward_input_can_follow_an_oblique_wall(public_ground, monkeypatch):
+    # Cardinal input has no alternate axis. A diagonal facade permits a tangent,
+    # but the player must stay on the original side and within the input budget.
+    monkeypatch.setattr(g, 'district', lambda city: {'radius':50, 'features':[
+        {'tags':{'building':'yes'}, 'points':[[0,0],[20,20],[20,-10],[0,-10],[0,0]]}
+    ]})
+    x,z=g.safe_step('oblique',-1,1,9,0)
+    assert x>2 and z>=x and math.hypot(x+1,z-1)<=9
+    assert g.traversable('oblique',x,z)

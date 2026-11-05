@@ -654,14 +654,15 @@ def manage_store(business_id: str, u=Depends(current_user), db=Depends(get_db)):
         ],
     }
 
-from .geography import district
+from .geography import safe_spawn
 
 @router.get('/world-preview/{city}')
 def world_preview(city: str, db=Depends(get_db)):
     """Public catalogue geometry only; never presence, private profiles or rewards."""
     check_city(city)
     objects=db.scalars(select(Collectible).where(Collectible.city==city,Collectible.active==True,Collectible.starts_at<=time.time(),Collectible.ends_at>time.time())).all()
-    return {'city':city,'zone':next(c['zone'] for c in CITIES if c['id']==city),'simulated':True,'preview':True,'collectibles':[{'id':c.id,'title':c.title,'kind':c.kind,'x':c.x,'z':c.z} for c in objects],'players':[],'position':{'x':district(city)['spawn'][0],'z':district(city)['spawn'][1]}}
+    spawn_x,spawn_z=safe_spawn(city)
+    return {'city':city,'zone':next(c['zone'] for c in CITIES if c['id']==city),'simulated':True,'preview':True,'collectibles':[{'id':c.id,'title':c.title,'kind':c.kind,'x':c.x,'z':c.z} for c in objects],'players':[],'position':{'x':spawn_x,'z':spawn_z}}
 
 
 @router.get('/auth/providers')

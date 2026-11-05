@@ -71,7 +71,11 @@ export default function World({cameraOpen=false,onCloseCamera,hudHidden=false,in
   };
   inputTick.current=tick;if(!interactive){reset();return}
   const editing=(target:EventTarget|null)=>(target as HTMLElement)?.closest?.('input,textarea,select,button,a,dialog,[contenteditable="true"]');
-  const down=(e:KeyboardEvent)=>{if(editing(e.target))return;const k=e.key.toLowerCase();
+  const down=(e:KeyboardEvent)=>{
+   const k=e.key.toLowerCase();
+   const movementControl=(e.target as HTMLElement)?.closest?.('.transport button,.mobile-joystick');
+   const direction=['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k);
+   if(editing(e.target)&&!(movementControl&&direction))return;
    if((k==='e'||k===' ')&&!e.repeat){const w=latest.current,p=w?.position,c=w?.collectibles?.find((c:Data)=>p&&Math.hypot(c.x-p.x,c.z-p.z)<=5);if(c&&collect.current){e.preventDefault();collect.current(c.id)}return}
    if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)){e.preventDefault();if(!keys.has(k)){keys.add(k);tick()}}
   };

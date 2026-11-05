@@ -83,6 +83,12 @@ def safe_step(city, x, z, dx, dz, mode='walk'):
                 if (ax or az) and traversable(city,x+ax,z+az,mode):
                     x,z=x+ax,z+az
                     break
+            else:
+                if mode in {'walk','run'}:
+                    from .terrain import edge_slide
+                    ax,az=edge_slide(city,x,z,sx,sz)
+                    if (ax or az) and traversable(city,x+ax,z+az,mode):
+                        x,z=x+ax,z+az
     return x,z
 
 def nearest_safe_position(city,x,z,max_distance=3):
