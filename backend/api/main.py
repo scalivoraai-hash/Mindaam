@@ -446,3 +446,6 @@ app.include_router(movement_policy_router)
 
 from .visual_profile import router as visual_profile_router
 app.include_router(visual_profile_router)
+
+from .property_economy import router as property_router
+app.include_router(property_router)
