@@ -45,6 +45,7 @@ class Price(Base):
     scope: Mapped[str] = mapped_column(String(120), primary_key=True)
     category: Mapped[str] = mapped_column(String(40), primary_key=True)
     xp: Mapped[int]
+    expires: Mapped[float | None]
     enabled: Mapped[bool]
 
 
@@ -100,7 +101,7 @@ def pricing(db, p, rules=None):
             if rules is not None
             else db.get(Price, (scope, p.category))
         )
-        if rule:
+        if rule and (rule.expires is None or rule.expires > time.time()):
             return rule.xp, rule.enabled
     return 2000, p.category != "venue"
 
@@ -116,7 +117,7 @@ def view(db, p, u, rules=None):
         owner=display,
         id=p.id,
         city=p.city,
-        district=next((c['zone'] for c in CITIES if c['id']==p.city),p.city),
+        district=next((c["zone"] for c in CITIES if c["id"] == p.city), p.city),
         category=p.category,
         name=p.name or p.title,
         x=p.x,
@@ -247,6 +248,10 @@ def purchase(key: str, data: Purchase, u=Depends(current_user), db=Depends(get_d
     if old:
         if old.property_id != key or old.amount != data.amount or old.seller:
             raise HTTPException(409, "Purchase reference conflict")
+        if p.owner != u.id or p.generation != old.generation:
+            raise HTTPException(
+                409, "This receipt belongs to an earlier ownership period"
+            )
         return {"receipt": old.id, "balance": balance(db, u.id, "xp")}
     rules = policy(db)
     if not rules.purchase or balance(db, u.id, "xp") < rules.minimum_xp:
@@ -411,6 +416,7 @@ def set_price(data: Pricing, u=Depends(super_admin), db=Depends(get_db)):
             scope=data.scope,
             category=data.category,
             xp=data.amount,
+            expires=None,
             enabled=data.enabled,
         )
     )
