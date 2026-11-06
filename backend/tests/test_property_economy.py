@@ -219,3 +219,108 @@ def test_private_entry_and_offer_rejections(system):
             balance(db, bob["id"], "xp") == 4000
             and db.get(Property, key).owner == alice["id"]
         )
+
+
+def test_reversal_requires_independent_review_and_is_exactly_once(system):
+    from backend.api.models import User
+
+    c, sessions = system
+    h, u = explorer(c, sessions, "buyer", 2000)
+    key = c.get("/api/properties/city/london", headers=h).json()["items"][0]["id"]
+    t = c.post(
+        "/api/properties/" + key + "/claim",
+        headers=h,
+        json={"amount": 2000, "request_key": str(uuid4())},
+    ).json()["receipt"]
+    admins = [register(c, n) for n in ("operator", "reviewer")]
+    with sessions.begin() as db:
+        for _, account in admins:
+            db.get(User, account["id"]).role = "super_admin"
+    base = "/api/properties/admin/trades/" + t
+    assert (
+        c.post(
+            base + "/review",
+            headers=admins[0][0],
+            json={"reason": "Correct an erroneous test claim"},
+        ).status_code
+        == 200
+    )
+    assert c.post(base + "/reverse", headers=admins[0][0]).status_code == 403
+    for _ in range(2):
+        assert c.post(base + "/reverse", headers=admins[1][0]).json() == {
+            "reversed": True
+        }
+    with sessions() as db:
+        assert (
+            db.get(Property, key).owner is None and balance(db, u["id"], "xp") == 2000
+        )
+
+
+def test_postgresql_competing_claims():
+    import os, pytest
+    from threading import Barrier
+    from fastapi import HTTPException
+    from sqlalchemy import text
+    from sqlalchemy.orm import Session
+    from backend.api.db import engine, Base, APP_ENV
+    from backend.api.cli import seed
+    from backend.api.models import User
+    from backend.api.growth import select_starter
+    from backend.api.property_economy import (
+        purchase,
+        Purchase,
+        register as register_city,
+    )
+
+    if not os.getenv("DATABASE_URL", "").startswith("postgresql"):
+        pytest.skip("Uses the existing disposable PostgreSQL CI service")
+    assert APP_ENV == "test"
+    schema = "property_race_" + uuid4().hex
+    scoped = engine.execution_options(schema_translate_map={None: schema})
+    with engine.begin() as conn:
+        conn.execute(text(f'CREATE SCHEMA "{schema}"'))
+    try:
+        Base.metadata.create_all(scoped)
+        with Session(scoped) as db, db.begin():
+            seed(db)
+            for account in ["buyer1", "buyer2"]:
+                u = User(
+                    id=account,
+                    email=account + "@example.test",
+                    username=account,
+                    password_hash="test-only",
+                    onboarded=True,
+                )
+                db.add(u)
+                db.flush()
+                select_starter(db, u, "london", confirmed=True)
+                credit(db, u.id, 2000, "test", "pg-race", "fixture", "xp")
+            register_city(db, "london")
+            key = db.scalar(
+                select(Property.id).where(
+                    Property.city == "london", Property.category != "venue"
+                )
+            )
+        barrier = Barrier(2)
+
+        def buy(account):
+            try:
+                with Session(scoped) as db, db.begin():
+                    u = db.get(User, account)
+                    barrier.wait(timeout=10)
+                    purchase(key, Purchase(amount=2000, request_key=uuid4()), u, db)
+                return 200
+            except HTTPException as exc:
+                return exc.status_code
+
+        with ThreadPoolExecutor(2) as pool:
+            assert sorted(pool.map(buy, ["buyer1", "buyer2"])) == [200, 409]
+        with Session(scoped) as db:
+            assert len(db.scalars(select(Trade)).all()) == 1
+            assert sorted(balance(db, a, "xp") for a in ["buyer1", "buyer2"]) == [
+                0,
+                2000,
+            ]
+    finally:
+        with engine.begin() as conn:
+            conn.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))

@@ -9,9 +9,9 @@ depends_on = None
 
 
 def upgrade():
-    from backend.api.property_economy import Property, Price, Offer, Trade
+    from backend.api.property_economy import Property, Price, Offer, Trade, Reversal
 
-    for model in (Property, Price, Offer, Trade):
+    for model in (Property, Price, Offer, Trade, Reversal):
         model.__table__.create(op.get_bind(), checkfirst=True)
 
 

@@ -18,6 +18,7 @@ from .growth import require_access, require_open
 from .economy import balance, credit
 from .world import blocked
 from .property_inventory import inventory, outlines
+from .locations import CITIES
 
 router = APIRouter(prefix="/api/properties")
 
@@ -31,6 +32,7 @@ class Property(Base):
     x: Mapped[float]
     z: Mapped[float]
     owner: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
+    resale: Mapped[bool] = mapped_column(default=True)
     generation: Mapped[int] = mapped_column(default=0)
     name: Mapped[str] = mapped_column(default="")
     style: Mapped[dict] = mapped_column(JSON, default=dict)
@@ -55,6 +57,9 @@ class Trade(Base):
     amount: Mapped[int]
     request_key: Mapped[str]
     created: Mapped[float] = mapped_column(default=time.time)
+    generation: Mapped[int]
+    prior_cost: Mapped[int | None]
+    prior_acquired: Mapped[float | None]
     __table_args__ = (UniqueConstraint("buyer", "request_key"),)
 
 
@@ -85,19 +90,23 @@ def register(db, city):
     return len(rows)
 
 
-def pricing(db, p):
+def pricing(db, p, rules=None):
     from .expansion import Destination
 
     country = db.get(Destination, p.city).country
     for scope in (p.id, p.city, country, "*"):
-        rule = db.get(Price, (scope, p.category))
+        rule = (
+            rules.get((scope, p.category))
+            if rules is not None
+            else db.get(Price, (scope, p.category))
+        )
         if rule:
             return rule.xp, rule.enabled
     return 2000, p.category != "venue"
 
 
-def view(db, p, u):
-    xp, enabled = pricing(db, p)
+def view(db, p, u, rules=None):
+    xp, enabled = pricing(db, p, rules)
     from .public_profiles import visible
 
     owner = db.get(User, p.owner) if p.owner else None
@@ -107,6 +116,7 @@ def view(db, p, u):
         owner=display,
         id=p.id,
         city=p.city,
+        district=next((c['zone'] for c in CITIES if c['id']==p.city),p.city),
         category=p.category,
         name=p.name or p.title,
         x=p.x,
@@ -115,6 +125,7 @@ def view(db, p, u):
         mine=p.owner == u.id,
         price=xp,
         enabled=enabled,
+        resale=p.resale,
         style={k: v for k, v in p.style.items() if k != "guests" or p.owner == u.id},
         cost=p.cost if p.owner == u.id else None,
         acquired=p.acquired if p.owner == u.id else None,
@@ -154,7 +165,14 @@ def transfer(db, p, buyer, seller, amount, key):
             ),
         )
     t = Trade(
-        property_id=p.id, buyer=buyer, seller=seller, amount=amount, request_key=key
+        property_id=p.id,
+        buyer=buyer,
+        seller=seller,
+        amount=amount,
+        request_key=key,
+        generation=p.generation + 1,
+        prior_cost=p.cost,
+        prior_acquired=p.acquired,
     )
     db.add(t)
     db.flush()
@@ -191,9 +209,16 @@ def browse(city: str, u=Depends(current_user), db=Depends(get_db), offset: int =
     if presence and presence.city == city:
         dx, dz = Property.x - presence.x, Property.z - presence.z
         q = q.order_by(dx * dx + dz * dz)
-    rows = db.scalars(q.order_by(Property.id).offset(max(0, offset)).limit(48))
+    rows = list(db.scalars(q.order_by(Property.id).offset(max(0, offset)).limit(48)))
+    from .expansion import Destination
+
+    scopes = [city, db.get(Destination, city).country, "*", *[p.id for p in rows]]
+    rules = {
+        (r.scope, r.category): r
+        for r in db.scalars(select(Price).where(Price.scope.in_(scopes)))
+    }
     return {
-        "items": [view(db, p, u) for p in rows if p.id in inventory(city)],
+        "items": [view(db, p, u, rules) for p in rows if p.id in inventory(city)],
         "balance": balance(db, u.id, "xp"),
     }
 
@@ -254,7 +279,7 @@ def notify(db, user, msg, key):
 def offer(key: str, data: Bid, u=Depends(current_user), db=Depends(get_db)):
     p = locked_property(db, key)
     require_access(db, u, p.city)
-    if not policy(db).resale:
+    if not p.resale or not policy(db).resale:
         raise HTTPException(409, "Property resale paused")
     if not p.owner or p.owner == u.id or blocked(db, u.id, p.owner):
         raise HTTPException(403, "Offer unavailable")
@@ -342,7 +367,7 @@ def decide(bid_id: str, data: Decision, u=Depends(current_user), db=Depends(get_
     elif data.action == "reject":
         o.state = "rejected"
     else:
-        if not policy(db).resale:
+        if not p.resale or not policy(db).resale:
             raise HTTPException(409, "Property resale paused")
         require_access(db, db.get(User, o.buyer), p.city)
         transfer(db, p, o.buyer, o.seller, o.amount, "offer:" + o.id)
@@ -468,7 +493,7 @@ def detail(key: str, u=Depends(current_user), db=Depends(get_db)):
         p = db.get(Property, key)
     return {
         **view(db, p, u),
-        "outline": outlines(city).get(key,[]),
+        "outline": outlines(city).get(key, []),
         "may_enter": bool(p.owner and may_visit(db, p, u) and p.category != "venue"),
         "balance": balance(db, u.id, "xp"),
     }
@@ -505,7 +530,7 @@ def publish(key: str, data: Studio, u=Depends(current_user), db=Depends(get_db))
         "colors": data.colors,
         "board": data.board,
         "description": data.description.strip(),
-        "access": data.access,
+        "access": "public" if p.category == "venue" else data.access,
         "guests": list(map(str, data.guests)) if data.access == "invite" else [],
     }
     ensure_private_interior(db, p)
@@ -565,7 +590,7 @@ def ensure_private_interior(db, p):
     if interior:
         interior.name = p.name or p.title
         return interior
-    point = nearest_safe_position(p.city, p.x, p.z) or entrance(p.city,(p.x,p.z))
+    point = nearest_safe_position(p.city, p.x, p.z) or entrance(p.city, (p.x, p.z))
     if point is None:
         return None
     interior = PublicBuilding(
@@ -659,3 +684,138 @@ def achievements(u=Depends(current_user), db=Depends(get_db)):
             ("Three-city portfolio", cities, 3),
         )
     ]
+
+
+class Reversal(Base):
+    __tablename__ = "virtual_property_reversals"
+    trade_id: Mapped[str] = mapped_column(ForeignKey(Trade.id), primary_key=True)
+    requester: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    reviewer: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    reason: Mapped[str]
+    applied: Mapped[float | None]
+
+
+class ReversalReason(Strict):
+    reason: str = Field(min_length=12, max_length=500)
+
+
+@router.post("/admin/trades/{trade_id}/review")
+def review_transfer(
+    trade_id: str, data: ReversalReason, u=Depends(super_admin), db=Depends(get_db)
+):
+    t = db.scalar(select(Trade).where(Trade.id == trade_id).with_for_update())
+    if not t or u.id in (t.buyer, t.seller):
+        raise HTTPException(403, "Trade is unavailable for moderation")
+    if db.get(Reversal, trade_id):
+        raise HTTPException(409, "Review already exists")
+    db.add(Reversal(trade_id=trade_id, requester=u.id, reason=data.reason.strip()))
+    audit(db, u, "property.reversal.request", trade_id, {"reason": data.reason})
+    return {"requested": True}
+
+
+@router.post("/admin/trades/{trade_id}/reverse")
+def reverse_transfer(trade_id: str, u=Depends(super_admin), db=Depends(get_db)):
+    row = db.scalar(
+        select(Reversal).where(Reversal.trade_id == trade_id).with_for_update()
+    )
+    if not row or row.requester == u.id:
+        raise HTTPException(403, "An independent Super Admin review is required")
+    if row.applied:
+        return {"reversed": True}
+    t = db.get(Trade, trade_id)
+    if u.id in (t.buyer, t.seller):
+        raise HTTPException(403, "Trade participants cannot approve a reversal")
+    p = locked_property(db, t.property_id)
+    if p.generation != t.generation or p.owner != t.buyer:
+        raise HTTPException(409, "A later ownership change prevents reversal")
+    parties = [t.buyer] if not t.seller else sorted([t.buyer, t.seller])
+    list(
+        db.scalars(
+            select(User.id)
+            .where(User.id.in_(parties))
+            .order_by(User.id)
+            .with_for_update()
+        )
+    )
+    key = "property-reversal:" + t.id
+    if t.seller:
+        if balance(db, t.seller, "xp") < t.amount:
+            raise HTTPException(409, "Seller has insufficient XP to unwind this trade")
+        credit(db, t.seller, -t.amount, "property_reversal", p.id, key, "xp")
+    credit(db, t.buyer, t.amount, "property_reversal", p.id, key, "xp")
+    p.owner, p.acquired, p.cost = t.seller, t.prior_acquired, t.prior_cost
+    p.style, p.name = {}, ""
+    p.generation += 1
+    db.execute(
+        update(Offer)
+        .where(Offer.property_id == p.id, Offer.state.in_(["pending", "countered"]))
+        .values(state="superseded")
+    )
+    row.reviewer, row.applied = u.id, time.time()
+    audit(
+        db,
+        u,
+        "property.reversal.applied",
+        trade_id,
+        {"reason": row.reason, "amount": t.amount, "property": p.id},
+    )
+    for user in parties:
+        notify(db, user, "A reviewed property transaction was reversed.", p.id)
+    return {"reversed": True}
+
+
+@router.post("/{key}/request")
+def request_sale(key: str, u=Depends(current_user), db=Depends(get_db)):
+    from .models import Audit
+
+    p = locked_property(db, key)
+    require_access(db, u, p.city)
+    if (
+        not p.owner
+        or p.owner == u.id
+        or blocked(db, u.id, p.owner)
+        or not policy(db).resale
+    ):
+        raise HTTPException(403, "Purchase request unavailable")
+    if db.scalar(
+        select(Audit.id).where(
+            Audit.actor_id == u.id,
+            Audit.target == key,
+            Audit.action == "property.enquiry",
+            Audit.created_at > time.time() - 86400,
+        )
+    ):
+        raise HTTPException(429, "Already requested today")
+    audit(db, u, "property.enquiry", key, {"generation": p.generation})
+    notify(
+        db,
+        p.owner,
+        "An explorer is interested in purchasing " + (p.name or p.title) + ".",
+        key,
+    )
+    return {"sent": True}
+
+
+class InventoryControl(Strict):
+    category: str = Field(pattern=r"^[a-z][a-z0-9_-]{1,38}$")
+    resale: bool = True
+
+
+@router.patch("/admin/inventory/{key}")
+def control_inventory(
+    key: str, data: InventoryControl, u=Depends(super_admin), db=Depends(get_db)
+):
+    p = locked_property(db, key)
+    if (p.category == "venue") != (data.category == "venue"):
+        raise HTTPException(
+            422, "Venue rights must remain separate from building ownership"
+        )
+    audit(
+        db,
+        u,
+        "property.inventory",
+        key,
+        {"previous_category": p.category, **data.model_dump()},
+    )
+    p.category, p.resale = data.category, data.resale
+    return {"saved": True}

@@ -6,9 +6,12 @@ import {openUserProfile} from './UserProfile';
 import styles from './PropertyDesk.module.css';
 
 export default function PropertyDesk({city,selected,onWallet,onExplore,onVisit}:{city:string;selected?:string;onWallet:()=>void;onExplore:()=>void;onVisit:(w:Data)=>void}){
+ const [browseCity,setBrowseCity]=useState(city),[cities,setCities]=useState<Data[]>([]);
+ useEffect(()=>{api('/cities').then(rows=>setCities(rows.filter((c:Data)=>c.enabled&&c.public&&c.joinable))).catch(e=>setMessage(e.message))},[]);
  const [tab,setTab]=useState('Nearby'),[rows,setRows]=useState<Data[]>([]),[item,setItem]=useState<Data|null>(null);
  const [xp,setXP]=useState(0),[confirming,confirm]=useState(false),[won,setWon]=useState(false);
  const [version,refresh]=useState(0),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+ const [since,setSince]=useState(''),[status,setStatus]=useState('all');
  const [filter,setFilter]=useState(''),[page,setPage]=useState(0);
  const [draftColors,setDraftColors]=useState<Record<string,string>>({});
  const key=useRef(''),lock=useRef(false);
@@ -18,10 +21,10 @@ export default function PropertyDesk({city,selected,onWallet,onExplore,onVisit}:
  }
  useEffect(()=>{if(selected)open(selected).catch(e=>setMessage(e.message))},[selected]);
  useEffect(()=>{let current=true;
-   const path=tab==='Nearby'?'city/'+city+'?offset='+page*48:tab==='Portfolio'?'portfolio':tab==='Offers'?'offers':tab==='Achievements'?'achievements':'history';
+   const path=tab==='Nearby'?'city/'+browseCity+'?offset='+page*48:tab==='Portfolio'?'portfolio':tab==='Offers'?'offers':tab==='Achievements'?'achievements':'history';
    api('/properties/'+path).then(d=>{if(current){setRows(d.items||d);if(typeof d.balance==='number')setXP(d.balance)}}).catch(e=>{if(current)setMessage(e.message)});
    return()=>{current=false};
- },[city,tab,page,version]);
+ },[browseCity,tab,page,version]);
  async function run(fn:()=>Promise<void>){if(lock.current)return;lock.current=true;setBusy(true);setMessage('');
    try{await fn();refresh(n=>n+1)}catch(e){setMessage((e as Error).message)}finally{lock.current=false;setBusy(false)}
  }
@@ -29,7 +32,7 @@ export default function PropertyDesk({city,selected,onWallet,onExplore,onVisit}:
  return <section className={styles.desk} aria-busy={busy}>
  <nav aria-label="My Properties">{['Nearby','Portfolio','Offers','History','Achievements'].map(t=><button key={t} aria-pressed={tab===t&&!item} onClick={()=>{setTab(t);setItem(null);setFilter('');setPage(0);setMessage('')}}>{t}</button>)}</nav>
  {message&&<p role="status">{message}</p>}
- {item?<article key={item.id}><PropertyPreview name={item.name} points={item.outline||[]} colors={draftColors}/><small>{item.city} · {item.category}</small><h3>{item.name}</h3>
+ {item?<article key={item.id}><PropertyPreview name={item.name} points={item.outline||[]} colors={draftColors}/><small>{item.district} · {item.city} · {item.category}</small><h3>{item.name}</h3>
  <p>{item.mine?'Your property':item.owned?'🏡 This property has an owner':item.enabled?'Available':'Reserved'}{item.owner?' · '+item.owner:''}</p>
  <p>Spendable balance <b>{xp.toLocaleString()} XP</b></p>
  {won&&<div role="status"><strong>🎉 Congratulations! You’re now a property owner!</strong><p>Your new property is ready. Give it a name, customise it and make it yours!</p></div>}
@@ -49,15 +52,17 @@ export default function PropertyDesk({city,selected,onWallet,onExplore,onVisit}:
  <label>Access<select name="access" defaultValue={item.style.access||'private'}>{['private','friends','invite','public'].map(a=><option key={a}>{a}</option>)}</select></label>
  <label>Invited explorer IDs<input name="guests" defaultValue={(item.style.guests||[]).join(', ')}/></label>
  <button disabled={busy} className="primary">Save and publish</button></form>}
- {item.owned&&!item.mine&&<form onSubmit={e=>{const f=form(e);run(async()=>{await api('/properties/'+item.id+'/offer','POST',{amount:Number(f.get('amount'))});setMessage('Offer delivered to the owner.')})}}>
+ {item.owned&&!item.mine&&item.resale&&<button disabled={busy} onClick={()=>run(async()=>{await api('/properties/'+item.id+'/request','POST',{});setMessage('Purchase request delivered.')})}>Request to purchase</button>}
+ {item.owned&&!item.mine&&item.resale&&<form onSubmit={e=>{const f=form(e);run(async()=>{await api('/properties/'+item.id+'/offer','POST',{amount:Number(f.get('amount'))});setMessage('Offer delivered to the owner.')})}}>
  <label>Your XP offer<input type="number" name="amount" min="1" max={xp} required/></label><button disabled={busy}>Make an XP offer</button></form>}
  {item.owner&&<button onClick={()=>openUserProfile(item.owner_id)}>View owner profile</button>}
  {item.owned&&<button disabled={busy} onClick={()=>run(async()=>onVisit(await api('/places/travel/visit','POST',{city:item.city,place_id:'property:'+item.id})))}>Visit property</button>}
  {item.may_enter&&<button disabled={busy} onClick={()=>run(async()=>{await api('/buildings/home:'+item.id+'/enter','POST',{});onVisit(await api('/world/'+item.city))})}>Enter property</button>}
  {item.category==='venue'&&item.mine&&<button onClick={()=>window.dispatchEvent(new Event('mindaam-property-host'))}>Organise an event</button>}
  <small>Ownership grants a virtual entitlement inside Mindaam. XP has no cash value.</small></article>:
- <>{(tab==='Nearby'||tab==='Portfolio')&&<label>Find a property<input type="search" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Name, city or category"/></label>}
- {rows.filter(r=>[r.name,r.city,r.category].join(' ').toLowerCase().includes(filter.toLowerCase())).map(r=>
+ <>{tab==='Nearby'&&<label>Explore properties by city<select value={browseCity} onChange={e=>{setBrowseCity(e.target.value);setRows([]);setPage(0)}}>{cities.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}{(tab==='Nearby'||tab==='Portfolio')&&<label>Find a property<input type="search" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Name, city or category"/></label>}
+ {(tab==='Nearby'||tab==='Portfolio')&&<div className={styles.filters}><label>Status<select value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All</option><option value="owned">Owned</option><option value="available">Available</option><option value="reserved">Reserved</option></select></label>{tab==='Portfolio'&&<label>Acquired since<input type="date" value={since} onChange={e=>setSince(e.target.value)}/></label>}</div>}
+ {rows.filter(r=>(tab!=='Portfolio'||!since||r.acquired*1000>=Date.parse(since))&&(!['Portfolio','Nearby'].includes(tab)||status==='all'||status===(r.owned?'owned':r.enabled?'available':'reserved'))).filter(r=>[r.name,r.city,r.category].join(' ').toLowerCase().includes(filter.toLowerCase())).map(r=>
  tab==='Offers'?<article key={r.id}><b>{r.amount} XP</b><p>{r.property_id} · {r.state} · {r.incoming?'Incoming':'Outgoing'}</p>
  {((r.state==='pending'&&r.incoming)||(r.state==='countered'&&!r.incoming))&&<form onSubmit={e=>{const f=form(e);const action=(e.nativeEvent as SubmitEvent).submitter?.getAttribute('value');run(async()=>{await api('/properties/offers/'+r.id,'POST',{action,expected_amount:r.amount,amount:action==='counter'?Number(f.get('counter')):null});onWallet()})}}>
  <button value="accept" disabled={busy}>Accept</button><button value="reject" disabled={busy}>Reject</button>{r.incoming&&<><input type="number" min="1" aria-label="Counteroffer XP" name="counter"/><button value="counter" disabled={busy}>Counteroffer</button></>}</form>}</article>:

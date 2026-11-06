@@ -6,3 +6,5 @@ Registration runs when an active district is seeded and can be repeated by an op
 The most specific enabled or disabled price rule wins, in property, city, country and global order. An unconfigured building defaults to 2,000 XP. Offers expire after seven days. XP is rechecked at acceptance. A sale resets the name, appearance, guest list and private-access policy for the new owner. Both ledger entries and the transfer receipt share a database transaction. Ordinary users cannot edit ledger entries. Wallet corrections use the existing operator review procedure.
 
 The nearby property boards and facade colours consume the existing authorised world snapshot. Owner identity follows profile visibility. Access to a separately instantiated property interior is enforced on entry and checked again inside the room.
+
+Property-specific reversals require a recorded reason and a different Super Admin to approve. Neither operator can be a party to the trade. Reversals append compensating XP entries and restore the prior entitlement, reject a later transfer and reject insufficient seller funds. Original receipts remain available for audit.

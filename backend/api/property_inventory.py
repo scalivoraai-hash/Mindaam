@@ -114,7 +114,11 @@ def nearby(city, x, z):
     ]
     return sorted(rows, key=lambda row: math.hypot(row["x"] - x, row["z"] - z))[:8]
 
+
 @lru_cache(maxsize=64)
 def outlines(city):
-    return {f"{city}:{f['id']}": f['points'] for f in district(city)['features']
-            if f.get('id') and f['tags'].get('building')}
+    return {
+        f"{city}:{f['id']}": f["points"]
+        for f in district(city)["features"]
+        if f.get("id") and f["tags"].get("building")
+    }

@@ -30,8 +30,11 @@ async function main(){
    users.push({ctx,page,desk,post});
   }
   const [seller,buyer]=users;
-  const panel=await seller.desk();
-  await panel.locator('button[class*="card"]').first().click();
+  await seller.page.locator('.destination-card.is-owned').first().click();
+  await seller.page.locator('.world-access-modal').getByRole('button',{name:/^Enter /}).click();
+  await seller.page.locator('.world-canvas[data-ready="true"] canvas').first().waitFor({timeout:60000});
+  await seller.page.getByRole('button',{name:'🏡 Nearby property',exact:true}).click();
+  const panel=seller.page.getByRole('dialog',{name:'My Properties'});
   const headline=panel.getByRole('heading',{level:3});
   await panel.getByRole('button',{name:/MAKE IT MINE/}).click();
   await panel.getByRole('button',{name:'Confirm purchase'}).click();
@@ -41,6 +44,9 @@ async function main(){
   await panel.getByRole('button',{name:'Save and publish'}).click();
   await panel.getByText('Property published.').waitFor();
   assert.equal(await headline.innerText(),sign);
+  const snapshot=await (await buyer.ctx.request.get(origin+'/api/world/london')).json();
+  assert(snapshot.properties.some(row=>row.name===sign&&row.owned),'Nearby second account receives persistent owner nameboard');
+
   await seller.page.screenshot({path:out+'/owner-studio.png'});
   const second=await buyer.desk();await second.getByRole('button',{name:new RegExp(sign)}).click();
   await second.getByLabel('Your XP offer').fill('2500');await second.getByRole('button',{name:'Make an XP offer'}).click();
