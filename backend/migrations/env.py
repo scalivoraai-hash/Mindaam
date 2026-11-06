@@ -1,6 +1,6 @@
 from alembic import context
 from backend.api.db import Base, engine, DATABASE_URL
-from backend.api import models, commerce, identity, discovery, gameplay, subscriptions, talk, oauth, growth, transit, civic, operations, expansion, mobility, business_spatial, gifts, venue_rentals, event_tickets, profile_media, feedback
+from backend.api import models, commerce, identity, discovery, gameplay, subscriptions, talk, oauth, growth, transit, civic, operations, expansion, mobility, business_spatial, gifts, venue_rentals, event_tickets, profile_media, feedback, property_economy
 
 config = context.config
 target_metadata = Base.metadata

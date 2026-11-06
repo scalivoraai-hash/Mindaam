@@ -178,7 +178,9 @@ def snapshot(db, u, city):
     from .events import visible as event_visible
     markers=[{'id':e.id,'title':e.title,'x':e.x,'z':e.z,'mode':e.communication_mode,'participants':db.scalar(select(func.count()).select_from(Attendee).where(Attendee.event_id==e.id,Attendee.state=='active'))} for e in db.scalars(select(Event).where(Event.city==city,Event.status=='live',Event.x!=None,Event.z!=None).limit(20)) if event_visible(db,e,u)]
     from .movement_policy import public as movement_config
+    from .property_economy import neighborhood
     return {
+        "properties": neighborhood(db,city,own.x,own.z) if own.zone_id=="world" else [],
         "movement_config":movement_config(db),
         "server_time":sampled_at,
         "events":markers,

@@ -48,6 +48,17 @@ def fast_travel(data:Travel,u=Depends(current_user),db=Depends(get_db)):
  recent=db.scalar(select(Audit).where(Audit.actor_id==u.id,Audit.action=='virtual_fast_travel',Audit.created_at>time.time()-30))
  if recent:raise HTTPException(429,'Fast travel is available once every 30 seconds')
  d=district(data.city);f=next((f for f in d['features'] if f['id']==data.place_id and f['tags'].get('name') and any(k in f['tags'] for k in ['amenity','shop','leisure','tourism'])),None)
+ if data.place_id.startswith('property:'):
+  from .property_economy import Property
+  from .civic import entrance
+  prop=db.get(Property,data.place_id.removeprefix('property:'))
+  if not prop or prop.city!=data.city or not prop.owner:raise HTTPException(404,'Property unavailable')
+  target=entrance(data.city,(prop.x,prop.z))
+  if not target:raise HTTPException(409,'No accessible mapped approach')
+  if not p:p=Presence(user_id=u.id);db.add(p)
+  p.city=data.city;p.x,p.z=target;p.mode='walk';p.updated_at=p.last_move=time.time();u.city=data.city
+  db.add(Audit(actor_id=u.id,action='virtual_fast_travel',target=prop.id));db.flush()
+  return snapshot(db,u,data.city)
  if not f:raise HTTPException(404,'Mapped destination unavailable')
  q=f['points'];x=sum(a[0] for a in q)/len(q);z=sum(a[1] for a in q)/len(q)
  candidates=[]
