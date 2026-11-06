@@ -33,7 +33,7 @@ export default function Home(){const [cities,setCities]=useState<Data[]>([]),[di
 const insideEvent=world?.scene?.template==='auditorium'?world.scene.id:'';
 useEffect(()=>{setPanel('');setHudPanel('');setHudHidden(false);if(insideEvent)window.dispatchEvent(new Event('pulse-minimise-chat'));},[insideEvent]);
 const [propertyId,setPropertyId]=useState('');
-useEffect(()=>{const select=(e:Event)=>{setPropertyId((e as CustomEvent).detail);setPanel('My Properties')};window.addEventListener('mindaam-property',select);return()=>window.removeEventListener('mindaam-property',select)},[]);
+useEffect(()=>{const select=(e:Event)=>{setPropertyId((e as CustomEvent).detail);setPanel('My Properties')};const host=()=>setPanel('Events');window.addEventListener('mindaam-property-host',host);window.addEventListener('mindaam-property',select);return()=>{window.removeEventListener('mindaam-property-host',host);window.removeEventListener('mindaam-property',select)}},[]);
 const [hudPanel,setHudPanel]=useState(''),[hudHidden,setHudHidden]=useState(false);
 useEffect(()=>{if(panel){setHudPanel('');window.dispatchEvent(new Event('pulse-close-business'))}},[panel]);
 useEffect(()=>{const show=()=>{setHudPanel('');setPanel('')};window.addEventListener('pulse-business-card',show);window.addEventListener('pulse-business-opened',show);return()=>{window.removeEventListener('pulse-business-card',show);window.removeEventListener('pulse-business-opened',show)}},[]);
@@ -96,7 +96,7 @@ return <main className={"app"+(!user?" auth-shell":"")+(entered?" world-playing"
 {panel==='Events'&&<Events city={city} cities={cities} userId={user?.id} initialId={insideEvent||eventId} insideId={insideEvent}/>}
 {panel==='Leaderboard'&&<Rankings city={city}/>}
 {panel==='Notifications'&&<RecordList rows={list(data,'notifications')} empty="You’re all caught up." render={n=><><b>{n.title||n.kind}</b><p>{n.body||n.message}</p></>}/>}
-{panel==='My Properties'&&user&&<PropertyDesk city={city} selected={propertyId} onWallet={readWallet} onExplore={()=>open('Collections')}/>}
+{panel==='My Properties'&&user&&<PropertyDesk city={city} selected={propertyId} onWallet={readWallet} onVisit={w=>{setWorld(w);setCity(w.city);setEntered(true);setMode('walk');setPanel('')}} onExplore={()=>open('Collections')}/>}
 {panel==='Settings'&&<button onClick={()=>{setPropertyId('');open('My Properties')}}>🏡 My Properties</button>}
 {panel==='Edit Profile'&&user&&<ProfileEditor user={user} onSave={setUser}/>}
 {panel==='Help Shape Mindaam'&&user&&<ProductFeedback/>}

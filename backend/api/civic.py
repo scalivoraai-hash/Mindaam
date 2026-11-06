@@ -81,7 +81,7 @@ def listing(db,city,x=None,z=None):
  from sqlalchemy import func
  from .business_spatial import BusinessSpatial
  inside_ids=select('store:'+BusinessSpatial.business_id).where(BusinessSpatial.parent_building_id!=None)
- query=select(PublicBuilding).where(PublicBuilding.city==city,PublicBuilding.enabled==True,~PublicBuilding.id.in_(inside_ids))
+ query=select(PublicBuilding).where(PublicBuilding.city==city,PublicBuilding.enabled==True,~PublicBuilding.id.like('home:%'),~PublicBuilding.id.in_(inside_ids))
  if x is not None and z is not None:query=query.where(PublicBuilding.x.between(x-110,x+110),PublicBuilding.z.between(z-110,z+110)).order_by((PublicBuilding.x-x)*(PublicBuilding.x-x)+(PublicBuilding.z-z)*(PublicBuilding.z-z))
  alive=select(Session.user_id).where(Session.expires_at>time.time())
  counts=dict(db.execute(select(Presence.zone_id,func.count()).join(User,User.id==Presence.user_id).where(Presence.city==city,Presence.zone_id.like('building:%'),Presence.updated_at>time.time()-45,User.suspended==False,User.id.in_(alive)).group_by(Presence.zone_id)).all())
@@ -93,6 +93,10 @@ def enter(id:str,u=Depends(current_user),db=Depends(get_db)):
  db.scalar(select(User.id).where(User.id==u.id).with_for_update());b=db.scalar(select(PublicBuilding).where(PublicBuilding.id==id).with_for_update());p=db.get(Presence,u.id)
  if not b or not b.enabled:raise HTTPException(404,'This property is not open to visitors')
  require_access(db,u,b.city)
+ if id.startswith('home:'):
+  from .property_economy import Property,may_visit
+  home=db.get(Property,b.source_id)
+  if not home or not may_visit(db,home,u):raise HTTPException(403,'Private property')
  from .mobility import current
  if current(db,u):raise HTTPException(409,'Exit your rental first')
  if not p or p.city!=b.city or p.zone_id!='world' or math.hypot(p.x-b.x,p.z-b.z)>10:raise HTTPException(409,'Approach the public entrance first')
@@ -140,6 +144,11 @@ def scene(db,p):
  b=db.get(PublicBuilding,p.zone_id[9:])
  if not b or not b.enabled:
   exit_building(db,db.get(User,p.user_id));return None
+ if b.id.startswith('home:'):
+  from .property_economy import Property,may_visit
+  home=db.get(Property,b.source_id);visitor=db.get(User,p.user_id)
+  if not home or not may_visit(db,home,visitor):
+   exit_building(db,visitor);return None
  # One reused world renderer, clearly labelled configurable interiors; no claim of survey accuracy.
  from .business_spatial import BusinessSpatial,card
  from .commerce import Business

@@ -25,7 +25,10 @@ def profile_view(db, viewer, person):
     count = lambda *clauses: db.scalar(select(func.count()).select_from(Social).where(*clauses)) or 0
     presence = db.get(Presence, person.id)
     events = db.scalars(select(Event).where(Event.host_id==person.id, Event.visibility=='public').order_by(Event.starts_at.desc()).limit(30)).all()
+    from .property_economy import Property
+    properties=db.scalars(select(Property).where(Property.owner==person.id).order_by(Property.acquired.desc()).limit(48))
     return {
+        'properties':[{'name':p.name or p.title,'city':p.city,'category':p.category} for p in properties if viewer.id==person.id or p.style.get('access')=='public'],
         'id': person.id, 'username': person.username, 'avatar': person.avatar,
         **display_profile(person), 'joined_at': person.created_at,
         'photos': {k: '/api/profiles/'+person.id+'/photos/'+k+'?v='+str((person.profile or {})[k+'_version']) for k in ('picture','cover') if (person.profile or {}).get(k+'_version')},

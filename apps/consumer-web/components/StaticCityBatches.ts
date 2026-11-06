@@ -2,8 +2,10 @@ import * as T from 'three';
 import {mergeGeometries} from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 /** Keep spatial culling while packing solid colours into vertex colours. */
-function* buildBatches(district:T.Group,cancelled=()=>false):Generator<void,{chunks:T.Group[];dispose:()=>void},void>{
+type Range={mesh:T.Mesh;part:string;start:number;count:number;original:T.Color};
+function* buildBatches(district:T.Group,cancelled=()=>false):Generator<void,{chunks:T.Group[]; tint:(id:string,colors:Record<string,string>)=>void; pick:(hit:T.Intersection)=>string|undefined;dispose:()=>void},void>{
   const batches=new Map<string,{material:T.Material;geometries:T.BufferGeometry[];originals:T.Mesh[];x:number;z:number}>();
+  const ranges=new Map<string,Range[]>();
   const shared=new Map<string,T.MeshStandardMaterial>(),chunks:T.Group[]=[];
   district.updateMatrixWorld(true);
   const meshes:T.Mesh[]=[];
@@ -36,6 +38,7 @@ function* buildBatches(district:T.Group,cancelled=()=>false):Generator<void,{chu
   const removals=new Map<T.Object3D,Set<T.Mesh>>();
   for(const batch of batches.values()){
     if(cancelled())break;
+    const counts=batch.geometries.map(g=>g.getAttribute('position').count);
     const geometry=mergeGeometries(batch.geometries,false);
     for(const g of batch.geometries)g.dispose();
     batch.geometries.length=0;
@@ -43,10 +46,26 @@ function* buildBatches(district:T.Group,cancelled=()=>false):Generator<void,{chu
     geometry.computeBoundingSphere();
     const chunk=new T.Group();chunk.position.set(batch.x,0,batch.z);
     const m=new T.Mesh(geometry,batch.material);m.castShadow=true;m.receiveShadow=true;chunk.add(m);district.add(chunk);chunks.push(chunk);
-    for(const original of batch.originals){
+    let offset=0;
+    const ids:{start:number;end:number;id:string}[]=[];
+    for(const [index,original] of batch.originals.entries()){
+      const start=offset;offset+=counts[index];
+      let parent:T.Object3D|null=original.parent;
+      while(parent&&!parent.userData.propertyId)parent=parent.parent;
+      if(parent?.userData.propertyId){
+        const id=parent.userData.propertyId;
+        ids.push({start,end:offset,id});
+        const attr=geometry.getAttribute('color');
+        if(attr&&original.userData.propertyPart){
+          const list=ranges.get(id)||[];
+          list.push({mesh:m,part:original.userData.propertyPart,start,count:counts[index],original:new T.Color().fromBufferAttribute(attr as T.BufferAttribute,start)});
+          ranges.set(id,list);
+        }
+      }
       if(original.parent){let group=removals.get(original.parent);if(!group){group=new Set();removals.set(original.parent,group)}group.add(original)}
       if(!original.geometry.userData.shared)original.geometry.dispose();
     }
+    m.userData.propertyRanges=ids;
     yield;
   }
   // Release cloned geometry from a cancelled, unmerged batch.
@@ -63,7 +82,16 @@ function* buildBatches(district:T.Group,cancelled=()=>false):Generator<void,{chu
       parent.dispatchEvent({type:'childremoved',child});
     }
   }
-  return {chunks,dispose:()=>shared.forEach(m=>m.dispose())};
+  return {chunks,
+    pick:(hit:T.Intersection)=>{const index=(hit.faceIndex??-1)*3;return hit.object.userData.propertyRanges?.find((r:{start:number;end:number})=>index>=r.start&&index<r.end)?.id as string|undefined},
+    tint:(id:string,colors:Record<string,string>)=>{
+      for(const range of ranges.get(id)||[]){
+        const color=colors[range.part]?new T.Color(colors[range.part]):range.original;
+        const attr=range.mesh.geometry.getAttribute('color') as T.BufferAttribute;
+        for(let i=range.start;i<range.start+range.count;i++)attr.setXYZ(i,color.r,color.g,color.b);
+        attr.addUpdateRange(range.start*3,range.count*3);attr.needsUpdate=true;
+      }
+    },dispose:()=>shared.forEach(m=>m.dispose())};
 }
 
 /** Synchronous callers retain the same geometry and disposal contract. */
