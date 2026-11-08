@@ -86,9 +86,14 @@ async function main(){
   await b.page.reload();await b.page.getByRole('button',{name:'Account settings',exact:true}).click();await b.page.getByRole('button',{name:'🏡 My Properties',exact:true}).click();
   await panel.getByRole('button',{name:'Portfolio',exact:true}).click();await panel.locator('button[class*="card"]').first().click();await panel.getByText('Property Studio',{exact:true}).waitFor();
   await b.page.screenshot({path:out+'/property-mobile-owner.png'});
+  // Transfer deliberately resets the seller's customization. The new owner
+  // publishes their own name before verifying the world-rendered nameboard.
+  const newOwnerName=name+' New Owner';await panel.getByLabel('Name my property').fill(newOwnerName);
+  await panel.getByRole('button',{name:'Save and publish'}).click();await panel.getByText('Property published.').waitFor();
+  assert.equal((await b.api('/properties/detail/'+encodeURIComponent(ids[0]))).name,newOwnerName);
   await panel.getByRole('button',{name:'Visit property',exact:true}).click();await panel.waitFor({state:'hidden'});
   await b.page.locator('.world-canvas[data-ready=true] canvas').first().waitFor({timeout:60000});
-  await b.page.waitForFunction(name=>window.qaPropertyNames.includes(name),name);
+  await b.page.waitForFunction(name=>window.qaPropertyNames.includes(name),newOwnerName);
   await b.page.screenshot({path:out+'/property-nameboard-world.png'});evidence.nameboard_texture=true;
   const surface=await b.page.locator('.world-canvas canvas').first().boundingBox();assert(surface);
   for(let angle=0;angle<4;angle++){
