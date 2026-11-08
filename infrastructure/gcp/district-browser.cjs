@@ -81,7 +81,13 @@ async function drive(page, control, latest, target, stops, runSpeed, navigation,
     // Measure the stopping position after the release acknowledgement.
     // With a held key, the last running frame can precede the stop by metres.
     if(precision){
-     const duration=Math.min(700,Math.max(160,1000*(d-.35)/runSpeed));
+     // Keydown emits an input immediately. Near a waypoint, the previous
+     // 160 ms minimum also emitted the 120 ms repeat. On a slow round trip
+     // those two impulses crossed the target before the neutral ACK, then
+     // crossed back on the next attempt. Use one short physical tap here;
+     // keep the same waypoint tolerance and eight-second progress/release
+     // assertions, and still measure only the acknowledged stopping point.
+     const duration=!touch&&d<2 ? 30 : Math.min(700,Math.max(160,1000*(d-.35)/runSpeed));
      await sleep(duration);
      await release();
     }else await sleep(100);
