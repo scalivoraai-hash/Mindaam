@@ -8,6 +8,7 @@ from diagnostics import get_json
 from urllib.parse import urlencode
 
 PATTERNS={
+ 'readiness_dependency':r'Readiness failed dependency=(?:database|postgis_catalogue|redis) exception=[A-Za-z][A-Za-z0-9_]*',
  'pool_exhaustion':r'QueuePool limit of size \d+ overflow \d+ reached, connection timed out, timeout [\d.]+',
  'statement_timeout':r'canceling statement due to statement timeout',
  'lock_timeout':r'canceling statement due to lock timeout',

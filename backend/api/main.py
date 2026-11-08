@@ -262,14 +262,30 @@ async def live():
 @app.get("/api/health")
 @app.get("/ready")
 def ready():
+    dependency = "database"
     try:
         with engine.connect() as c:
             c.execute(text("SELECT 1 FROM users LIMIT 1"))
             if APP_ENV in {"staging", "production"}:
-                c.execute(text("SELECT PostGIS_Version()"))
+                # Loading the PostGIS shared library in a fresh pooled backend
+                # can monopolise a scarce connection on the small SQL tier.
+                # Routine readiness checks installed schema, not library startup;
+                # release security/recovery checks still execute PostGIS itself.
+                dependency = "postgis_catalogue"
+                version = c.execute(text(
+                    "SELECT extversion FROM pg_catalog.pg_extension WHERE extname = 'postgis'"
+                )).scalar_one_or_none()
+                if not version:
+                    raise RuntimeError("Required spatial extension is missing")
+        dependency = "redis"
         if redis_client:
             redis_client.ping()
-    except Exception:
+    except Exception as error:
+        # Exception messages may contain SQL, hosts or credentials. Log only
+        # bounded code categories so a 503 can be correlated without that data.
+        logging.getLogger("pulseworld.readiness").error(
+            "Readiness failed dependency=%s exception=%s", dependency, type(error).__name__
+        )
         raise HTTPException(503, "Database/migrations or Redis unavailable")
     return {"status": "ready", "environment": APP_ENV, "release_ready": False}
 
