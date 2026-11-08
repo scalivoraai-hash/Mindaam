@@ -19,6 +19,7 @@ async function main(){
   for(const [i,width] of [1280,390].entries()){
    const ctx=await browser.newContext({viewport:{width,height:850},hasTouch:i===1});
    const page=await ctx.newPage();
+   await ctx.addInitScript(()=>{window.qaPropertyNames=[];const original=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(text,...args){if(this.canvas.width===512&&this.canvas.height===112)window.qaPropertyNames.push(String(text));return original.call(this,text,...args)}});
    async function api(path,method='GET',data){
     const r=await ctx.request.fetch(origin+'/api'+path,{method,data,headers:{Origin:origin,'X-Pulse-Client':'web'}});
     assert(r.ok(),method+' '+path+' HTTP '+r.status());return r.json();
@@ -85,6 +86,16 @@ async function main(){
   await b.page.reload();await b.page.getByRole('button',{name:'Account settings',exact:true}).click();await b.page.getByRole('button',{name:'🏡 My Properties',exact:true}).click();
   await panel.getByRole('button',{name:'Portfolio',exact:true}).click();await panel.locator('button[class*="card"]').first().click();await panel.getByText('Property Studio',{exact:true}).waitFor();
   await b.page.screenshot({path:out+'/property-mobile-owner.png'});
+  await panel.getByRole('button',{name:'Visit property',exact:true}).click();await panel.waitFor({state:'hidden'});
+  await b.page.locator('.world-canvas[data-ready=true] canvas').first().waitFor({timeout:60000});
+  await b.page.waitForFunction(name=>window.qaPropertyNames.includes(name),name);
+  await b.page.screenshot({path:out+'/property-nameboard-world.png'});evidence.nameboard_texture=true;
+  const surface=await b.page.locator('.world-canvas canvas').first().boundingBox();assert(surface);
+  for(let angle=0;angle<4;angle++){
+   await b.page.mouse.move(surface.x+surface.width*.25,surface.y+surface.height*.45);await b.page.mouse.down();
+   await b.page.mouse.move(surface.x+surface.width*.5,surface.y+surface.height*.45,{steps:20});await b.page.mouse.up();
+   await b.page.waitForTimeout(300);await b.page.screenshot({path:out+'/property-nameboard-angle-'+angle+'.png'});
+  }
   evidence.resale={xp:12,buyer_delta:-12,seller_delta:12};evidence.two_city_portfolio=true;
   await require('./seating-acceptance.cjs')({origin,out,host:{...a,api:(path,data)=>a.api(path,data?'POST':'GET',data)},guest:{...b,api:(path,data)=>b.api(path,data?'POST':'GET',data)},record:check=>{evidence.seating_checks.push(check);console.log('PASS',check)}});
  }finally{

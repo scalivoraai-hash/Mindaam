@@ -14,6 +14,7 @@ async function main(){
   const users=[];
   for(const [index,width] of [1280,390].entries()){
    const ctx=await browser.newContext({viewport:{width,height:850}}),page=await ctx.newPage();
+   await ctx.addInitScript(()=>{window.qaPropertyNames=[];const original=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(text,...args){if(this.canvas.width===512&&this.canvas.height===112)window.qaPropertyNames.push(String(text));return original.call(this,text,...args)}});
    const post=async(path,data)=>{const r=await ctx.request.post(origin+'/api'+path,{data,headers:{Origin:origin,'X-Pulse-Client':'web'}});assert(r.ok(),path+' '+await r.text());return r.json()};
    const name='propertyqa'+index+Date.now().toString(36);
    const account=await post('/auth/register',{username:name,email:name+'@example.test',password:'Local-Property-Acceptance-93!',confirm_password:'Local-Property-Acceptance-93!',adult:true,accepted_terms:true,accepted_privacy:true});
@@ -48,6 +49,12 @@ async function main(){
   assert(snapshot.properties.some(row=>row.name===sign&&row.owned),'Nearby second account receives persistent owner nameboard');
 
   await seller.page.screenshot({path:out+'/owner-studio.png'});
+  await panel.getByRole('button',{name:'Visit property',exact:true}).click();
+  await panel.waitFor({state:'hidden'});
+  await seller.page.locator('.world-canvas[data-ready="true"] canvas').first().waitFor({timeout:60000});
+  await seller.page.waitForFunction(name=>window.qaPropertyNames.includes(name),sign);
+  await seller.page.screenshot({path:out+'/property-nameboard-world.png'});
+  await seller.desk();await panel.getByRole('button',{name:new RegExp(sign)}).click();
   const second=await buyer.desk();await second.getByRole('button',{name:new RegExp(sign)}).click();
   await second.getByLabel('Your XP offer').fill('2500');await second.getByRole('button',{name:'Make an XP offer'}).click();
   await second.getByText('Offer delivered to the owner.').waitFor();
