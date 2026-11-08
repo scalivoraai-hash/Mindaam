@@ -8,6 +8,7 @@ from common import Blocked,command
 from owner_recover import OwnerCloud,OWNER,verified_owner
 from release_candidate import selected
 from readiness import ready_service
+from owner_feature_checks import verify as verify_feature_reads
 
 class Diagnostic(Blocked):
  """Only locally defined stage/category labels may reach the terminal."""
@@ -31,7 +32,7 @@ def stage(name):
 def require(name,condition,category):
  if not condition:raise Diagnostic(name,category)
 
-def verify(origin,environment='staging'):
+def verify(origin,environment='staging',verify_features=False):
  # Labels are local constants, never remote response text or URLs.
  require('environment',environment in ('staging','production'),'invalid_environment')
  prefix=environment+'.'
@@ -52,7 +53,7 @@ def verify(origin,environment='staging'):
  try:
   body=call('login','/api/auth/admin-login',200,{'identifier':OWNER,'password':password},True)
  finally:del password
- failure=None
+ failure=None;feature_evidence={}
  try:
   with stage(prefix+'identity'):
    require(prefix+'identity',isinstance(body,dict) and isinstance(body.get('user'),dict),'response_shape')
@@ -67,6 +68,10 @@ def verify(origin,environment='staging'):
    require(prefix+'cookie',str(cookies[0].get_nonstandard_attr('SameSite','')).lower()=='lax','samesite_invalid')
   call('dashboard','/api/super-admin/overview',200)
   call('session','/api/me',200)
+  if verify_features:
+   with stage(prefix+'feature_reads'):
+    require(prefix+'feature_reads',environment=='staging','staging_only')
+    feature_evidence=verify_feature_reads(call,u['id'])
  except Diagnostic as e:failure=e
  finally:
   try:call('logout','/api/auth/logout',200,{})
@@ -74,7 +79,7 @@ def verify(origin,environment='staging'):
    if failure is None:failure=e
  if failure:raise failure
  call('logout_validation','/api/super-admin/overview',401)
- return {'owner_login':True,'dashboard':True,'secure_cookie':True,'logout':True,'owner_identity':OWNER}
+ return {'owner_login':True,'dashboard':True,'secure_cookie':True,'logout':True,'owner_identity':OWNER,**feature_evidence}
 
 def run(sha,approve=False):
  if os.getenv('CI') or os.getenv('GITHUB_ACTIONS'):raise Blocked('Run privately in owner Cloud Shell')
@@ -108,7 +113,7 @@ def run(sha,approve=False):
  result={'sha':sha,'image':release['image'],'principal':OWNER,'status':'PASS','environments':{}}
  for env,origin in [('staging',release['origin']),('production','https://mindaam.com')]:
   with stage(env+'.service_readiness'):service=ready_service(c,'mindaam-'+env)
-  checks=verify(origin,env)
+  checks=verify(origin,env,verify_features=env=='staging')
   checks.update(revision=service['status']['latestReadyRevisionName'],image=service['spec']['template']['spec']['containers'][0]['image'])
   result['environments'][env]=checks
  result['completed_at']=time.time()
