@@ -3,6 +3,19 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from staging_diagnostics import summarize
 class StagingDiagnostics(unittest.TestCase):
+ def test_postgres_probe_statements_export_categories_only(self):
+  rows=[{'textPayload':statement} for statement in [
+   'private-account STATEMENT: SELECT 1 FROM users LIMIT 1',
+   'private-account STATEMENT: SELECT PostGIS_Version()',
+   'private-account STATEMENT: SELECT 1',
+   "private-account STATEMENT: SELECT password FROM users WHERE token='secret'",
+  ]]
+  result=summarize(rows)
+  self.assertEqual([row['signals'].get('readiness_probes') for row in result],
+                   [['users_schema'],['postgis_extension'],['connection_ping'],None])
+  for private in ['private-account','secret','password','STATEMENT:']:
+   self.assertNotIn(private,str(result))
+
  def test_database_logs_and_latency_are_sanitized(self):
   rows=[{'textPayload':'private-user private-db ERROR: canceling statement due to statement timeout SELECT password FROM users',
          'httpRequest':{'latency':'9.631s','requestUrl':'https://private/?token=secret'}},
