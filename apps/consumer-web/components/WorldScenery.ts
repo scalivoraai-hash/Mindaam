@@ -98,7 +98,7 @@ function* buildEnvironment(parent:T.Group,geo:Geography,city='',cancelled=()=>fa
     const style=buildingStyle(f.tags,f.id),n=style.hash,palette=regionalPalette(city,style.palette,palettes[style.palette],f.tags),height=style.height;
     if(cinematic){palette.wall=cinematic.palette[n%cinematic.palette.length];if(cinematic.roof==='terracotta')palette.roof='#a56e53'}
     if((region==='gulf'||cinematic?.roof==='flat')&&!f.tags['roof:shape'])style.roof='flat';
-    const group=new T.Group();group.position.set(c[0],0,c[1]);parent.add(group);buildings.push(group);
+    const group=new T.Group();group.position.set(c[0],0,c[1]);group.userData.propertyId=city+':'+f.id;parent.add(group);buildings.push(group);
     const shape=shapeFor(f,c),positions:number[]=[],uvs:number[]=[];
     for(const ring of [f.points,...(f.holes||[])]){
       const area=ring.slice(0,-1).reduce((sum,p,i)=>sum+p[0]*ring[i+1][1]-ring[i+1][0]*p[1],0);
@@ -111,8 +111,8 @@ function* buildEnvironment(parent:T.Group,geo:Geography,city='',cancelled=()=>fa
     }
     const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));geometry.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));geometry.computeVertexNormals();
     const colours=new Float32Array(positions.length),colour=new T.Color(palette.wall);for(let i=0;i<colours.length;i+=3){colours[i]=colour.r;colours[i+1]=colour.g;colours[i+2]=colour.b}geometry.setAttribute('color',new T.BufferAttribute(colours,3));
-    const wall=new T.Mesh(geometry,facades[style.atlas]);wall.castShadow=true;wall.receiveShadow=true;group.add(wall);
-    const roof=mesh(new T.ExtrudeGeometry(shape,{depth:.22,bevelEnabled:false}),palette.roof,group,0,height,0);roof.rotation.x=-Math.PI/2;
+    const wall=new T.Mesh(geometry,facades[style.atlas]);wall.userData.propertyPart='wall';wall.castShadow=true;wall.receiveShadow=true;group.add(wall);
+    const roof=mesh(new T.ExtrudeGeometry(shape,{depth:.22,bevelEnabled:false}),palette.roof,group,0,height,0);roof.userData.propertyPart='roof';roof.rotation.x=-Math.PI/2;
     const bounds=new T.Box2().setFromPoints(shape.getPoints()),w=bounds.max.x-bounds.min.x,d=bounds.max.y-bounds.min.y;
     // Respect irregular footprint edges; no oversized rectangular roof over an arbitrary polygon.
     const area=Math.abs(points.reduce((a,p,i)=>a+p[0]*points[(i+1)%points.length][1]-points[(i+1)%points.length][0]*p[1],0))/2;
@@ -124,7 +124,7 @@ function* buildEnvironment(parent:T.Group,geo:Geography,city='',cancelled=()=>fa
        const midpoint=(ids:number[])=>[(corners[ids[0]][0]+corners[ids[1]][0])/2,height+ridge,(corners[ids[0]][2]+corners[ids[1]][2])/2];
        const r=midpoint(first),q=midpoint(second),[a0,b0]=first.map(i=>corners[i]),[d0,c0]=second.map(i=>corners[i]);
        const positions=[a0,b0,r,d0,q,c0,a0,r,q,a0,q,d0,b0,c0,q,b0,q,r].flat();const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));geometry.computeVertexNormals();
-       const roof=mesh(geometry,palette.roof,group);roof.material=material(palette.roof);(roof.material as T.Material).side=T.DoubleSide;
+       const roof=mesh(geometry,palette.roof,group);roof.userData.propertyPart='roof';roof.material=material(palette.roof);(roof.material as T.Material).side=T.DoubleSide;
       }
     }
     // Cinematic details own entrances/trim; retain the base footprint and far facade.
@@ -134,7 +134,7 @@ function* buildEnvironment(parent:T.Group,geo:Geography,city='',cancelled=()=>fa
     for(let i=1;i<f.points.length;i++){
       const a=f.points[i-1],b=f.points[i],len=distance(a,b);if(len<2)continue;
       const edge=new T.Group();edge.position.set((a[0]+b[0])/2-c[0],0,(a[1]+b[1])/2-c[1]);edge.rotation.y=Math.atan2(b[0]-a[0],b[1]-a[1])+Math.PI/2;group.add(edge);
-      box(edge,palette.trim,0,height-.16,0,len,.23,.23);box(edge,'#b3ada0',0,.2,0,len,.4,.16);
+      box(edge,palette.trim,0,height-.16,0,len,.23,.23).userData.propertyPart='trim';box(edge,'#b3ada0',0,.2,0,len,.4,.16);
       if(height>9)box(edge,palette.trim,0,3.1,0,len,.16,.2);
     }
     const commercial=style.family==='shop',office=style.family==='office',civic=style.family==='civic';
@@ -152,10 +152,10 @@ function* buildEnvironment(parent:T.Group,geo:Geography,city='',cancelled=()=>fa
     }
     if(civic){for(const x of [-width/2,width/2]){box(frontage,palette.trim,x,2,.25,.38,4,.6)}box(frontage,palette.trim,0,4.1,.3,width+.8,.35,1)}
     box(frontage,palette.accent,0,1.5,.07,width,2.9,.2);
-    const window=(x:number,w:number)=>{const panel=box(frontage,'#40677e',x,1.5,.2,w,2.2,.06);panel.material=glass;box(frontage,palette.trim,x,2.63,.23,w+.12,.1,.1);box(frontage,palette.trim,x,.37,.23,w+.12,.1,.1)};
+    const window=(x:number,w:number)=>{const panel=box(frontage,'#40677e',x,1.5,.2,w,2.2,.06);panel.material=glass;panel.userData.propertyPart='window';box(frontage,palette.trim,x,2.63,.23,w+.12,.1,.1);box(frontage,palette.trim,x,.37,.23,w+.12,.1,.1)};
     if(commercial||office){window(-width*.3,width*.3);window(width*.3,width*.3);box(frontage,palette.accent,0,3.05,.55,width+.1,.22,commercial?1.3:.6);box(frontage,'#dfc193',0,2.89,1.18,width+.1,.12,.07)}
     else window(-width*.26,width*.25);
-    box(frontage,'#233c4b',commercial?0:width*.24,1.25,.21,.95,2.45,.12);box(frontage,'#b8d3d7',commercial?0:width*.24,1.7,.28,.65,1.18,.03);
+    box(frontage,'#233c4b',commercial?0:width*.24,1.25,.21,.95,2.45,.12).userData.propertyPart='door';box(frontage,'#b8d3d7',commercial?0:width*.24,1.7,.28,.65,1.18,.03);
     box(frontage,'#d9bb85',(commercial?0:width*.24)+.3,1.08,.3,.05,.2,.05);
     if(commercial){for(const x of [-width/2,width/2]){box(frontage,'#645344',x,.33,1.2,.7,.65,.7);oval(frontage,'#558069',x,.88,1.2,.48,.43,.45)}}
   }

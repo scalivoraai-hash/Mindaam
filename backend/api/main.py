@@ -24,6 +24,8 @@ from . import (
     gameplay,
     subscriptions,
     events,
+    auditorium_seating,
+    operator_recovery,
     growth,transit,civic,operations,expansion,mobility,business_spatial,gifts,event_presentation,event_tickets,event_engagement,event_creators,grand_arena,venue_rentals,credit_catalog,collectible_rotation,
 )
 from .auth import user_for_token
@@ -125,6 +127,7 @@ async def lifespan(app):
 app = FastAPI(title="Mindaam API", version="0.1.0-alpha", lifespan=lifespan)
 for route in [
     core.router,
+    operator_recovery.router,
     world.router,
     social.router,
     media.router,
@@ -272,12 +275,12 @@ def ready():
 
 
 def realtime_state(token, with_expiry=False):
-    with SessionLocal.begin() as db:
+    with SessionLocal() as db:
         u = user_for_token(db, token)
         expires_at=db.get(Session,hashlib.sha256(token.encode()).hexdigest()).expires_at
         p = db.get(Presence, u.id)
         result = (
-            world.snapshot(db, u, p.city)
+            world.snapshot(db, u, p.city, release_lock=True)
             if p
             else {"players": [], "collectibles": []}
         )
@@ -299,6 +302,7 @@ def realtime_state(token, with_expiry=False):
         result['media']=media.sessions(u,db)
         result['nearby_conversations']=conversations.nearby_conversations(db,u)
         result['communication_rules']=conversations.rules()
+        db.commit()
         if redis_client:
             redis_client.setex(
                 "presence:" + u.id,
@@ -466,3 +470,6 @@ app.include_router(movement_policy_router)
 
 from .visual_profile import router as visual_profile_router
 app.include_router(visual_profile_router)
+
+from .property_economy import router as property_router
+app.include_router(property_router)

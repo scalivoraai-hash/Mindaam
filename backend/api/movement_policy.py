@@ -12,7 +12,7 @@ router=APIRouter(prefix='/api')
 KEY='movement_transport_v1'
 # Preserve the approved outdoor pace and currently effective vehicle maxima.
 DEFAULTS={'walk':2.0,'run':4.6875,'bike':84.0,'ebike':93.0,'scooter':34.0,'car':120.0,'boat':20.0,'swim':3.0}
-BOUNDS={'walk':(.5,4),'run':(1,8),'bike':(2,84),'ebike':(2,100),'scooter':(2,45),'car':(5,120),'boat':(1,30),'swim':(.5,5)}
+BOUNDS={'walk':(.5,100),'run':(1,100),'bike':(2,84),'ebike':(2,100),'scooter':(2,45),'car':(5,120),'boat':(1,30),'swim':(.5,5)}
 LABELS={'walk':'Avatar walking','run':'Avatar running','bike':'Bicycle','ebike':'Electric bicycle','scooter':'Motorbike / city scooter','car':'Car','boat':'Boat','swim':'Swimming'}
 
 def initial(db):
@@ -38,8 +38,8 @@ def public(db):
  return {k:value[k] for k in ('version','speeds','updated_at')}
 
 class Speeds(Strict):
- walk:float=Field(ge=.5,le=4,allow_inf_nan=False,strict=True)
- run:float=Field(ge=1,le=8,allow_inf_nan=False,strict=True)
+ walk:float=Field(ge=.5,le=100,allow_inf_nan=False,strict=True)
+ run:float=Field(ge=1,le=100,allow_inf_nan=False,strict=True)
  bike:float=Field(ge=2,le=120,allow_inf_nan=False,strict=True)
  ebike:float=Field(ge=2,le=120,allow_inf_nan=False,strict=True)
  scooter:float=Field(ge=2,le=120,allow_inf_nan=False,strict=True)
@@ -48,7 +48,7 @@ class Speeds(Strict):
  swim:float=Field(ge=.5,le=120,allow_inf_nan=False,strict=True)
  @model_validator(mode='after')
  def ordered(self):
-  if self.walk>=self.run:raise ValueError('Walking must be slower than running')
+  if self.walk>self.run:raise ValueError('Walking must not exceed running')
   return self
 
 class Update(Strict):

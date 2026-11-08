@@ -261,3 +261,48 @@ jobs:
         with:
           name: cinematic-v2
           path: /tmp/mindaam-v2-evidence/
+
+  property-browser:
+    name: XP property browser acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_ENV: test
+      DATABASE_URL: sqlite:////tmp/property-browser-ci.db
+      PUBLIC_ORIGIN: http://127.0.0.1:3173
+      API_INTERNAL_URL: http://127.0.0.1:8173
+      QA_NODE_MODULES: /tmp/mindaam-property-qa/node_modules
+      QA_OUTPUT: /tmp/property-browser-evidence
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt && npm ci --ignore-scripts
+      - run: npm run build
+      - run: |
+          npm install --prefix /tmp/mindaam-property-qa --no-save playwright@1.62.1
+          bash scripts/ci/install-browser.sh /tmp/mindaam-property-qa/node_modules/.bin/playwright chromium
+      - name: Verify property purchase, naming and transfer using two accounts
+        run: |
+          python -m alembic -c backend/alembic.ini upgrade head
+          python -m backend.api.cli seed
+          python -m uvicorn backend.api.main:app --host 127.0.0.1 --port 8173 > /tmp/property-api.log 2>&1 &
+          api=$!
+          node node_modules/next/dist/bin/next start apps/consumer-web --hostname 127.0.0.1 -p 3173 > /tmp/property-web.log 2>&1 &
+          web=$!
+          trap 'kill "$api" "$web" 2>/dev/null || true' EXIT
+          curl -fsS --retry 30 --retry-connrefused --retry-all-errors --retry-delay 1 http://127.0.0.1:3173/api/health
+          node scripts/tests/property-browser.cjs
+          node scripts/tests/recovery-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: property-browser
+          path: /tmp/property-browser-evidence

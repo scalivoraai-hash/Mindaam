@@ -98,6 +98,10 @@ def seed_world(db,city,name):
             kind='gem' if index%4==3 else 'fruit'
             title='Crystal' if kind=='gem' else ['Apple','Orange','Bananas'][index%3]
             db.add(Collectible(id=str(uuid5(NAMESPACE_URL,f'mylilworlds:trail:{city}:{index}')),city=city,title=title,kind=kind,x=x,z=z))
+    from .property_economy import register
+    d=db.get(Destination,city)
+    if d and d.status=='ACTIVE' and d.joinable and d.public:
+        register(db,city)
     repair_terrain_positions(db,city)
     if not db.scalar(select(Mission.id).where(Mission.city==city).limit(1)):
         db.add(Mission(id=str(uuid5(NAMESPACE_URL,'mylilworlds:mission:'+city)),city=city,title='Explore '+name,description='Follow the public paths. Collect 3 fruit and 1 crystal.',requirements={'fruit':3,'gem':1},credits=30,xp=50))

@@ -221,3 +221,8 @@ The lock-order fix in application 1af2051d13e56aff76ec69ad0cbcec73146aa7df passe
 
 ## 2026-10-31 — targeted Settings feedback relocation
 Moved the existing Help Shape Mindaam form from Edit Profile to its own Settings entry; reused the component/API and retained profile fields and administrator review. Expanded the read-only ledger report with redacted account references, exact ledger fingerprints, verified purchase linkage, category breakdowns and conservative proposed balances. No ledger adjustments are authorised by this report. Exact report approval, backup recovery evidence and SHA-specific production approval remain mandatory. Staging acceptance retains all assertions and now records sanitized request observations for timeout diagnosis.
+
+
+## 2026-11-08 staging recovery candidate (not a deployment claim)
+
+Extended existing PR #6 locally on main `92b817874f91515ecf661cdc132baf74158385bf`; PR #7 remains merged and unchanged. Bounded Cloud Run diagnostics identified player-lock contention, connection-pool exhaustion and stale Presence writes during exploration. Snapshot locking is shortened while mutation atomicity and movement/security assertions are preserved. Added 100 m/s configurable walk/run ceilings with unchanged defaults, persisted auditorium seating, user-property/account KPIs, audited profile corrections and verified purchase-backed PC reconciliation. See ADR-0037 for scope, evidence and safeguards. Exact staging and production acceptance remain release gates; local tests are not evidence of deployment.

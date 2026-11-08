@@ -354,6 +354,8 @@ def exit_venue(id:str,u=Depends(current_user),db=Depends(get_db)):
  from .geography import safe_spawn,traversable
  p=db.get(Presence,u.id)
  if p and p.zone_id=='event:'+id:
+  from .auditorium_seating import release
+  release(db,u.id)
   x,z=p.return_position.get('x',0),p.return_position.get('z',0);p.x,p.z=(x,z) if traversable(p.city,x,z) else safe_spawn(p.city);p.zone_id='world';p.return_position={};p.last_move=time.time();p.updated_at=time.time()
  return {'ok':True}
 def auditorium_scene(db,p,u):
