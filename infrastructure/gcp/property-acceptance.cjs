@@ -7,16 +7,15 @@ const origin='https://mindaam-staging-qfrofqn4pq-nw.a.run.app';
 assert.equal(release.environment,'staging');assert.equal(release.origin,origin);assert.equal(process.env.MINDAAM_PROJECT_ID,'mindaam');
 assert.match(process.env.GITHUB_RUN_ID,/^\d+$/);
 assert.equal(release.sha,process.env.RELEASE_SHA);
-const evidence={sha:release.sha,revision:release.revision,image:release.image,cities:{},quotes_restored:false};
+const evidence={seating_checks:[],sha:release.sha,revision:release.revision,image:release.image,cities:{},quotes_restored:false};
 const out='gcp-evidence';fs.mkdirSync(out,{recursive:true});
-const ids=[];
+const ids=[],users=[],originalQuotes={};
 const quote=(action)=>execFileSync('gcloud',['run','jobs','execute','mindaam-migrate-staging','--project=mindaam','--region=europe-west2','--wait',
  '--args=-m,backend.api.staging_property_quotes,'+action+','+process.env.GITHUB_RUN_ID+','+ids.join(',')],{stdio:['ignore','ignore','inherit']});
 async function main(){
  const browser=await chromium.launch({args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  let prepared=false;
  try{
-  const users=[];
   for(const [i,width] of [1280,390].entries()){
    const ctx=await browser.newContext({viewport:{width,height:850},hasTouch:i===1});
    const page=await ctx.newPage();
@@ -25,11 +24,11 @@ async function main(){
     assert(r.ok(),method+' '+path+' HTTP '+r.status());return r.json();
    }
    const username='gcpqaProp'+crypto.randomBytes(5).toString('hex'),password=crypto.randomBytes(24).toString('base64url')+'!aA1';
-   await api('/auth/register','POST',{username,email:username+'@example.test',password,confirm_password:password,adult:true,accepted_terms:true,accepted_privacy:true});
+   const account=await api('/auth/register','POST',{username,email:username+'@example.test',password,confirm_password:password,adult:true,accepted_terms:true,accepted_privacy:true});
    await api('/onboarding','POST',{city:'london',avatar:{},privacy:'City Mode',location_consent:false,analytics_consent:false,interests:[]});
    await api('/world/enter','POST',{city:'london'});
    const balance=(await api('/wallet')).xp;assert(balance>=12,'Acceptance accounts require legitimately earned XP');
-   users.push({api,page,balance});
+   users.push({api,page,balance,id:account.user.id,username,ctx});
   }
   const [a,b]=users;
   for(const city of ['london','milton-keynes']){
@@ -41,7 +40,7 @@ async function main(){
    const candidates=(await a.api('/properties/city/'+city)).items;
    const p=candidates.find(x=>!x.owned&&x.enabled&&x.category!=='venue'&&snapshot.properties.some(n=>n.id===x.id))||
            candidates.find(x=>!x.owned&&x.enabled&&x.category!=='venue');
-   assert(p,city+' must expose mapped inventory');ids.push(p.id);
+   assert(p,city+' must expose mapped inventory');ids.push(p.id);originalQuotes[p.id]={price:p.price,enabled:p.enabled};
   }
   quote('prepare');prepared=true;
   for(const [i,city] of ['london','milton-keynes'].entries()){
@@ -87,8 +86,9 @@ async function main(){
   await panel.getByRole('button',{name:'Portfolio',exact:true}).click();await panel.locator('button[class*="card"]').first().click();await panel.getByText('Property Studio',{exact:true}).waitFor();
   await b.page.screenshot({path:out+'/property-mobile-owner.png'});
   evidence.resale={xp:12,buyer_delta:-12,seller_delta:12};evidence.two_city_portfolio=true;
+  await require('./seating-acceptance.cjs')({origin,out,host:{...a,api:(path,data)=>a.api(path,data?'POST':'GET',data)},guest:{...b,api:(path,data)=>b.api(path,data?'POST':'GET',data)},record:check=>{evidence.seating_checks.push(check);console.log('PASS',check)}});
  }finally{
-  try{if(prepared){quote('restore');evidence.quotes_restored=true;}}
+  try{if(prepared){quote('restore');evidence.quote_restoration=[];for(const key of ids){const after=await users[0].api('/properties/detail/'+encodeURIComponent(key));assert.deepEqual({price:after.price,enabled:after.enabled},originalQuotes[key],'Original quote restored for '+key);evidence.quote_restoration.push({id:key,before:originalQuotes[key],after:{price:after.price,enabled:after.enabled}});}evidence.quotes_restored=true;}}
   finally{fs.writeFileSync(out+'/property-acceptance.json',JSON.stringify(evidence,null,2));await browser.close()}
  }
 }

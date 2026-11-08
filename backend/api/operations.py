@@ -408,16 +408,18 @@ def directory(q:str='',status:Literal['all','active','suspended']='all',sort:Lit
  return {'items':directory_rows(db,list(rows)),'total':total,'page':page,'limit':limit,'presence_window_seconds':90}
 
 @router.get('/super-admin/users/{id}/detail')
-def user_detail(id:str,tab:Literal['overview','profile','wallet','social','events','cities','payments','audit','activity','reports']='overview',page:int=Query(1,ge=1),u=Depends(super_admin),db=Depends(get_db)):
+def user_detail(id:str,tab:Literal['overview','profile','wallet','properties','social','events','cities','payments','audit','activity','reports']='overview',page:int=Query(1,ge=1),u=Depends(super_admin),db=Depends(get_db)):
  from .models import Social,Report
  from .commerce import Payment
  from .venue_rentals import purchased_available,VenueBooking
  from .event_tickets import EventTicket
  from .economy import balance
+ from .property_economy import Property
  person=db.get(User,id)
  if not person:raise HTTPException(404,'User not found')
  result={'user':operator_user(db,person),'tab':tab,'page':page,'limit':25}
  if tab in {'overview','profile'}:result['profile']={k:v for k,v in (person.profile or {}).items() if k in {'display_name','bio','languages','theme'}}
+ elif tab=='properties':query=select(Property).where(Property.owner==id).order_by(Property.acquired.desc(),Property.id)
  elif tab=='activity':query=select(UserActivity).where(UserActivity.user_id==id).order_by(UserActivity.day.desc())
  elif tab=='reports':query=select(Report).where(Report.target_id==id).order_by(Report.created_at.desc(),Report.id)
  elif tab=='wallet':
@@ -436,6 +438,11 @@ def user_detail(id:str,tab:Literal['overview','profile','wallet','social','event
   query=select(WorldAccess).where(WorldAccess.user_id==id)
  elif tab=='payments':query=select(Payment).where(Payment.user_id==id).order_by(Payment.created_at.desc())
  elif tab=='audit':query=select(Audit).where(Audit.target==id).order_by(Audit.created_at.desc())
+ if tab=='overview':
+  result['kpis']={'Spendable XP':result['user']['xp'],'Pulse Credits':result['user']['credits'],
+   'Owned properties':db.scalar(select(func.count()).select_from(Property).where(Property.owner==id)),
+   'Hosted events':db.scalar(select(func.count()).select_from(Event).where(Event.host_id==id)),
+   'Active days':db.scalar(select(func.count()).select_from(UserActivity).where(UserActivity.user_id==id))}
  if tab not in {'overview','profile'}:
   result['total']=db.scalar(select(func.count()).select_from(query.order_by(None).subquery()))
   result['items']=[serialize(row) for row in db.scalars(query.offset((page-1)*25).limit(25))]

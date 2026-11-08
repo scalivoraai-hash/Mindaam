@@ -77,6 +77,27 @@ def test_delayed_stop_is_acknowledged_without_applying_stale_travel(system,monke
   assert (stop['position']['x'],stop['position']['z'])==(first['position']['x'],first['position']['z'])
 
 
+def test_busy_player_row_drops_travel_and_retries_the_latest_stop(system,monkeypatch):
+ from backend.api import main
+ from threading import Event
+ c,dbs=system;h,u=register(c,'busy_player');onboard(c,h)
+ attempted=Event();calls=[];original=main.realtime_motion
+ def busy(token,data):
+  calls.append(data.seq)
+  if data.seq==1:attempted.set();return None
+  if data.seq==2 and calls.count(2)==1:return None
+  return original(token,data)
+ monkeypatch.setattr(main,'realtime_motion',busy)
+ with c.websocket_connect('/api/realtime') as ws:
+  ws.send_json({'token':h['Authorization'][7:]});state=ws.receive_json()
+  base={'type':'input','city':state['city'],'zone':'world','action':'move','x':1,'z':0,'mode':'walk'}
+  ws.send_json({**base,'seq':1});assert attempted.wait(5)
+  ws.send_json({**base,'seq':2,'x':0});stop=receive_motion(ws)
+  assert stop['seq']==2 and stop['position']['speed']==0
+  assert stop['position']['x']==state['position']['x'] and calls==[1,2,2]
+  ws.send_json({**base,'seq':3});assert receive_motion(ws)['position']['x']>stop['position']['x']
+
+
 def test_http_rejects_inputs_queued_before_city_or_interior_change(system):
  c,dbs=system;h,u=register(c,'stale_motion');onboard(c,h)
  for context in [{'city':'paris','zone':'world'},{'city':'london','zone':'building:old'}]:

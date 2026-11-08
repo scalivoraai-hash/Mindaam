@@ -86,12 +86,15 @@ def visible(db, viewer, target, p, pviewer):
     return math.hypot(p.x - pviewer.x, p.z - pviewer.z) <= 180
 
 
-def snapshot(db, u, city):
+def snapshot(db, u, city, *, release_lock=False):
     db.scalar(select(User.id).where(User.id==u.id).with_for_update())
     check_city(city)
     from .growth import require_access
     require_access(db,u,city)
-    own = db.get(Presence, u.id)
+    # Refresh before heartbeat/expiry repairs: a websocket can have read this
+    # row before waiting for the user lock, while cleanup changes its lifetime.
+    own = db.scalar(select(Presence).where(Presence.user_id == u.id)
+                    .with_for_update().execution_options(populate_existing=True))
     if not own or own.city != city:
         raise HTTPException(409, "Enter this city first")
     # Movement already refreshes presence. Rewriting it on every snapshot
@@ -109,6 +112,12 @@ def snapshot(db, u, city):
     from .events import auditorium_scene
     interior=interior or auditorium_scene(db,own,u)
     operations.activity(db,u)
+    from .auditorium_seating import synchronize,occupancy
+    seat=synchronize(db,own,u,interior)
+    if release_lock:
+        # End the authoritative repair/heartbeat transaction before the many
+        # rendering reads. Mutation callers retain their enclosing transaction.
+        db.commit()
     claimed = select(Claim.collectible_id).where(Claim.user_id == u.id)
     objects = db.scalars(
         select(Collectible).where(
@@ -164,11 +173,15 @@ def snapshot(db, u, city):
                 }
             )
     if interior and interior.get('template')=='auditorium':
+        seats=occupancy(db,interior['id'])
         roles={a.user_id:a.role for a in db.scalars(select(Attendee).where(Attendee.event_id==interior['id'],Attendee.state=='active'))}
         players=[p for p in players if p['id'] in roles]
         players.sort(key=lambda p:(roles[p['id']] not in ['host','cohost','speaker'],p['distance'],p['id']))
         players=players[:48]
-        for p in players:p['event_role']=roles[p['id']];p['y']=.7 if p['z']<-6 else 0
+        for p in players:
+            p['event_role']=roles[p['id']];p['y']=.7 if p['z']<-6 else 0
+            p['seated']=p['id'] in seats
+            p['seat']=seats.get(p['id'])
     from .commerce import world_businesses
     from .business_spatial import BusinessSpatial
     from .talk import rules
@@ -193,7 +206,7 @@ def snapshot(db, u, city):
         "transit":transit.board(city,u,db) if own.zone_id=='world' else None,
         "city": city,
         "zone": next(c["zone"] for c in CITIES if c["id"] == city),
-        "position": {"x": own.x, "z": own.z, "mode": own.mode, "last_move": own.last_move,"zone_id":own.zone_id,"y":transit.passenger_position(ride,ride['seat'])['y'] if ride else .7 if interior and interior.get('template')=='auditorium' and own.z<-6 else 0},
+        "position": {"seated":seat is not None,"seat":seat,"x": own.x, "z": own.z, "mode": own.mode, "last_move": own.last_move,"zone_id":own.zone_id,"y":transit.passenger_position(ride,ride['seat'])['y'] if ride else .7 if interior and interior.get('template')=='auditorium' and own.z<-6 else 0},
         "collectibles": [] if own.zone_id!='world' else [
             serialize(c) for c in objects if math.hypot(c.x - own.x, c.z - own.z) < 200
         ],
@@ -256,7 +269,7 @@ def enter(data: CityInput, u=Depends(current_user), db=Depends(get_db)):
 
 @router.get("/world/{city}")
 def world(city: str, u=Depends(current_user), db=Depends(get_db)):
-    return snapshot(db, u, city)
+    return snapshot(db, u, city, release_lock=True)
 
 
 @router.post("/world/move")
@@ -292,6 +305,9 @@ def move_locked(data, u, db, p):
     acceleration=speeds[data.mode]/MOVEMENT['accelerationSeconds']
     speed = min(speeds[data.mode], previous+acceleration*dt)
     if not (data.dx or data.dz):speed=0
+    if (data.dx or data.dz) and p.zone_id.startswith('event:'):
+        from .auditorium_seating import release
+        release(db,u.id)
     old_x,old_z=p.x,p.z
     x = p.x + data.dx / length * speed * dt
     z = p.z + data.dz / length * speed * dt

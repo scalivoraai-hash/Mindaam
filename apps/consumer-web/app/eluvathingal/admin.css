@@ -18,3 +18,6 @@
 .ops-shell.ops-enterprise>header .brand{flex:0 0 190px;width:190px;min-width:0;margin:0}.ops-shell.ops-enterprise>header .brand-artwork{display:block;width:100%;box-sizing:border-box}.ops-shell.ops-enterprise>header .brand-wordmark{width:100%;height:auto;max-width:100%}.ops-enterprise table.ops-table td{min-width:120px;word-break:normal;overflow-wrap:normal}.ops-enterprise table.ops-table td:first-child{min-width:190px;overflow-wrap:anywhere}
 @media(max-width:759px){.ops-shell.ops-enterprise>header .brand{flex-basis:138px;width:138px;margin-right:auto}.ops-shell.ops-enterprise>header .brand-wordmark{width:100%}.ops-enterprise>header>a:last-of-type{margin-left:auto}}
 .ops-shell.ops-enterprise{background:var(--ops-bg)!important}.ops-enterprise .ops-main{background:transparent!important}.ops-enterprise :is(.ops-kpis article,.ops-chart,.ops-record,.ops-table-scroll,.ops-detail-page){background:var(--ops-panel)!important}
+
+/* Keep grouped admin navigation vertical at narrow widths; consumer styles use rows. */
+@media(max-width:759px){.ops-enterprise .ops-layout>nav{flex-direction:column;align-items:stretch}.ops-enterprise .ops-nav-group{display:block;width:100%;min-width:0}.ops-enterprise .ops-nav-group button{white-space:normal;overflow-wrap:anywhere}.ops-enterprise .ops-nav-collapsed>nav{display:none}}

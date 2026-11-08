@@ -74,7 +74,7 @@ class StateCache:
         self.misses+=1
         value,expires_at=build()
         after=revision()
-        dynamic=bool(value.get('journey') or any(p.get('vehicle',{} ) and p['vehicle'].get('kind')=='bus' for p in value.get('players',[])) or any(m.get('state')=='accepted' for m in value.get('media',[])))
+        dynamic=bool(value.get('scene',{} ) and value['scene'].get('template')=='auditorium' or value.get('journey') or any(p.get('vehicle',{} ) and p['vehicle'].get('kind')=='bus' for p in value.get('players',[])) or any(m.get('state')=='accepted' for m in value.get('media',[])))
         self.value=value; self.expires_at=expires_at
         # A concurrent transaction may have changed auth/state during the build.
         # Never label the preceding snapshot with that new revision.

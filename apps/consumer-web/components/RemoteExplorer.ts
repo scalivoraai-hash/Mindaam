@@ -41,6 +41,7 @@ export function remoteExplorer(appearance:Record<string,string>,makeHuman:typeof
    }
    if(player.seated)avatar.userData.sit();
   }
+  if(player.seated&&!kind){avatar.userData.sit();root.rotation.y=Math.PI;}
   vehicle?.children[0]?.userData.rollWheels?.((player.vehicle?.speed||0)*dt);
   root.userData.person=player;root.userData.movementState=player.movement_state;
  };

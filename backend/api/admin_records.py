@@ -82,7 +82,24 @@ def rows(db, kind, page, limit, q, status, sort, days, event_id='', user_id=''):
         for r,obj in zip(items,objects):
             r.update(participants=attendance.get(r['id'],0),tickets_sold=tickets.get(r['id'],0),reservation_id=bookings.get(r['id']),
                 venue_mode=obj.venue_mode or ('standard' if obj.venue_experience_type!='auditorium' else 'grand_arena' if bookings.get(obj.id) or (obj.programme or {}).get('arena_booking_required') else 'virtual_auditorium'),admission='Paid' if obj.ticket_price else 'Free')
-    return {'items':items,'total':total,'page':page,'limit':limit}
+    filtered=query.subquery()
+    kpis={'matching_records':total}
+    if kind in {'transactions','xp'}:
+        from sqlalchemy import case
+        issued,spent=db.execute(select(
+            func.coalesce(func.sum(case((filtered.c.amount>0,filtered.c.amount),else_=0)),0),
+            func.coalesce(func.sum(case((filtered.c.amount<0,-filtered.c.amount),else_=0)),0))).one()
+        kpis.update(positive_entries=int(issued),debit_entries=int(spent))
+    elif kind=='payments':
+        paid=select(filtered).where(filtered.c.status=='paid').subquery()
+        count,gross,refunds=db.execute(select(func.count(),func.coalesce(func.sum(paid.c.amount_pence),0),func.coalesce(func.sum(paid.c.refunded_pence),0))).one()
+        kpis.update(completed_purchases=count,gross_purchases_pence=int(gross),refunded_pence=int(refunds))
+    elif status_col is not None:
+        field=filtered.c[status_col.key]
+        for value,count in db.execute(select(field,func.count()).group_by(field).order_by(func.count().desc()).limit(6)):
+            label='enabled' if value is True else 'disabled' if value is False else str(value or 'not_recorded')
+            kpis[label+'_records']=count
+    return {'items':items,'total':total,'page':page,'limit':limit,'kpis':kpis}
 
 
 def detail(db,kind,id):
