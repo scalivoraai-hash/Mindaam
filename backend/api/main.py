@@ -283,7 +283,7 @@ def ready():
     except Exception as error:
         # Exception messages may contain SQL, hosts or credentials. Log only
         # bounded code categories so a 503 can be correlated without that data.
-        logging.getLogger("pulseworld.readiness").warning(
+        logging.getLogger("pulseworld.readiness").error(
             "Readiness failed dependency=%s exception=%s", dependency, type(error).__name__
         )
         raise HTTPException(503, "Database/migrations or Redis unavailable")

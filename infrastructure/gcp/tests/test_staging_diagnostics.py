@@ -3,6 +3,11 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from staging_diagnostics import summarize
 class StagingDiagnostics(unittest.TestCase):
+ def test_readiness_dependency_does_not_export_exception_message(self):
+  value=summarize([{'textPayload':'Readiness failed dependency=database exception=TimeoutError private-host password=secret'}])
+  self.assertEqual(value[0]['signals'],{'readiness_dependency':['Readiness failed dependency=database exception=TimeoutError']})
+  self.assertNotIn('private-host',str(value));self.assertNotIn('secret',str(value))
+
  def test_postgres_probe_statements_export_categories_only(self):
   rows=[{'textPayload':statement} for statement in [
    'private-account STATEMENT: SELECT 1 FROM users LIMIT 1',
