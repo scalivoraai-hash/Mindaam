@@ -121,6 +121,7 @@ jobs:
           QA_NODE_MODULES: /tmp/mindaam-qa/node_modules
         run: |
           if ! git diff --quiet "$RELEASE_SHA^1" "$RELEASE_SHA" -- backend/api/world.py backend/api/auditorium_seating.py infrastructure/gcp/seating-acceptance.cjs backend/api/property_economy.py backend/api/property_inventory.py apps/consumer-web/components/PropertyDesk.tsx infrastructure/gcp/property-acceptance.cjs; then
+            python infrastructure/gcp/property-coverage.py
             node infrastructure/gcp/property-acceptance.cjs
           fi
       - name: Actual staging multiplayer, media and forced TURN over TLS
