@@ -35,6 +35,8 @@ def summarize(rows):
   frames=re.findall(r'File "[^"\n]*/backend/api/([a-z_]+\.py)", line (\d+), in ([A-Za-z_][A-Za-z_0-9]*)',text)
   status=row.get('httpRequest',{}).get('status')
   if isinstance(status,int) and not isinstance(status,bool):matches['http_status']=status
+  latency=row.get('httpRequest',{}).get('latency','')
+  if isinstance(latency,str) and re.fullmatch(r'\d+(?:\.\d+)?s',latency):matches['http_latency_seconds']=float(latency[:-1])
   request_path=urlsplit(row.get('httpRequest',{}).get('requestUrl','')).path
   if request_path in {'/api/payments/checkout','/api/health','/ready','/api/live'}:matches['request_route']=request_path
   elif re.fullmatch(r'/api/events/[^/]+/venue/booking',request_path):matches['request_route']='/api/events/[id]/venue/booking'
@@ -53,8 +55,16 @@ def run(c,sha):
  start=datetime.datetime.fromtimestamp(release['deployed_at'],datetime.timezone.utc).isoformat()
  end=datetime.datetime.now(datetime.timezone.utc).isoformat()
  query=f'resource.type="cloud_run_revision" AND resource.labels.service_name="mindaam-staging" AND resource.labels.revision_name="{release["revision"]}" AND timestamp>="{start}" AND severity>=ERROR'
- rows=c.gc('logging','read',query,'--limit=200','--format=json(timestamp,severity,textPayload,jsonPayload.message,httpRequest.status,httpRequest.requestUrl)')
+ rows=c.gc('logging','read',query,'--limit=200','--format=json(timestamp,severity,textPayload,jsonPayload.message,httpRequest.status,httpRequest.requestUrl,httpRequest.latency)')
  result={'sha':sha,'revision':release['revision'],'read_only':True,'release_approval':False,'error_log_limit':200,'errors':summarize(rows),'metrics':{}}
+ # Readiness deliberately returns a generic dependency error. Correlate it
+ # with server-side PostgreSQL errors without exporting SQL, identities or
+ # connection strings from the shared instance's raw log payloads.
+ database_query=(f'resource.type="cloudsql_database" AND resource.labels.database_id="{c.project}:mindaam-postgres" '
+                 f'AND timestamp>="{start}" AND timestamp<="{end}" '
+                 'AND (severity>=ERROR OR textPayload=~"(?i)(error|fatal|panic|timeout|deadlock)")')
+ database_rows=c.gc('logging','read',database_query,'--limit=200','--format=json(timestamp,severity,textPayload,jsonPayload.message)')
+ result['database_errors']=summarize(database_rows)
  token=command(['gcloud','auth','print-access-token'],sensitive=True)
  for metric in ['cloudsql.googleapis.com/database/postgresql/num_backends','cloudsql.googleapis.com/database/cpu/utilization','cloudsql.googleapis.com/database/memory/components','run.googleapis.com/container/memory/utilizations','run.googleapis.com/container/cpu/utilizations']:
   scope=f'resource.labels.database_id="{c.project}:mindaam-postgres"' if metric.startswith('cloudsql.') else f'resource.labels.revision_name="{release["revision"]}"'
