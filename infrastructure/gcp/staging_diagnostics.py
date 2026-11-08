@@ -43,6 +43,15 @@ def summarize(rows):
   if frames:matches['backend_frames']=[{'file':f,'line':int(n),'function':fn} for f,n,fn in frames]
   statements=re.findall(r'\[SQL: (SELECT|UPDATE|INSERT INTO|DELETE FROM)\s+([a-z_]+)',text)
   if statements:matches['statement_kinds']=[{'operation':op,'relation':table} for op,table in statements]
+  # PostgreSQL emits the failed SQL separately from the ERROR record. Export
+  # only fixed probe categories, never SQL text or any bound account values.
+  probes={
+   'users_schema':r'\bSELECT\s+1\s+FROM\s+users\s+LIMIT\s+1\b',
+   'postgis_extension':r'\bSELECT\s+PostGIS_Version\s*\(\s*\)',
+   'connection_ping':r'\bSTATEMENT:\s*SELECT\s+1\s*;?\s*$',
+  }
+  identified=[name for name,pattern in probes.items() if re.search(pattern,text,re.I)]
+  if identified:matches['readiness_probes']=identified
   result.append({'timestamp':row.get('timestamp'),'severity':row.get('severity'),'signals':{k:v for k,v in matches.items() if v}})
  return result
 
@@ -62,7 +71,7 @@ def run(c,sha):
  # connection strings from the shared instance's raw log payloads.
  database_query=(f'resource.type="cloudsql_database" AND resource.labels.database_id="{c.project}:mindaam-postgres" '
                  f'AND timestamp>="{start}" AND timestamp<="{end}" '
-                 'AND (severity>=ERROR OR textPayload=~"(?i)(error|fatal|panic|timeout|deadlock)")')
+                 'AND (severity>=ERROR OR textPayload=~"(?i)(error|fatal|panic|timeout|deadlock|statement:)")')
  database_rows=c.gc('logging','read',database_query,'--limit=200','--format=json(timestamp,severity,textPayload,jsonPayload.message)')
  result['database_errors']=summarize(database_rows)
  token=command(['gcloud','auth','print-access-token'],sensitive=True)
