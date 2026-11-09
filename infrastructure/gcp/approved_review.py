@@ -19,6 +19,9 @@ def prepare(c,sha):
  for env in ('staging','production'):
   checks=access.get('environments',{}).get(env,{})
   if checks.get('owner_identity')!=OWNER or not all(checks.get(k) is True for k in ('owner_login','dashboard','secure_cookie','logout')):raise Blocked('Incomplete '+env+' owner access evidence')
+  if env=='staging':
+   from owner_feature_checks import require_evidence
+   require_evidence(checks)
   service=ready_service(c,'mindaam-'+env)
   if checks.get('revision')!=service['status']['latestReadyRevisionName'] or checks.get('image')!=service['spec']['template']['spec']['containers'][0]['image']:raise Blocked('Owner access revision drift')
  for scenario,approved in [('idle',48.76),('light',91.98)]:
