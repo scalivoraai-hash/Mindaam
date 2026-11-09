@@ -34,6 +34,21 @@ async function main(){
   await seller.page.locator('.destination-card.is-owned').first().click();
   await seller.page.locator('.world-access-modal').getByRole('button',{name:/^Enter /}).click();
   await seller.page.locator('.world-canvas[data-ready="true"] canvas').first().waitFor({timeout:60000});
+  await seller.page.locator('.world-atmosphere > button').waitFor();
+  for(const width of [390,820,1024,1280]){
+   await seller.page.setViewportSize({width,height:850});
+   const layout=await seller.page.evaluate(()=>{
+    const action=document.querySelector('.world-info > button[title="My Properties"]'),r=action.getBoundingClientRect();
+    const controls=[...document.querySelectorAll('.world-atmosphere > button,.city-pulse > button,.world-info .compact-location,.world-info .info-toggle')];
+    const overlaps=controls.filter(e=>{const b=e.getBoundingClientRect();return b.width&&b.height&&Math.min(r.right,b.right)>Math.max(r.left,b.left)&&Math.min(r.bottom,b.bottom)>Math.max(r.top,b.top)}).map(e=>e.className||e.textContent);
+    return {overlaps,width:r.width,height:r.height,inside:r.left>=0&&r.right<=innerWidth,rect:{x:r.x,y:r.y,width:r.width,height:r.height},hit:document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.outerHTML.slice(0,350),reachable:action.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};
+   });
+   await seller.page.screenshot({path:out+'/property-hud-'+width+'.png'});
+   assert.deepEqual(layout.overlaps,[],`Property shortcut overlaps another world control at ${width}px`);
+   assert.ok(layout.inside&&layout.reachable,`Property shortcut must remain clickable at ${width}px: ${JSON.stringify(layout)}`);
+   if(width<=1024)assert.ok(layout.width>=44&&layout.height>=44,'Mobile property target is at least 44px');
+  }
+  console.log('PASS: property shortcut clears city, discovery, weather and City Pulse controls at mobile, tablet and desktop widths');
   await seller.page.getByRole('button',{name:'🏡 Nearby property',exact:true}).click();
   const panel=seller.page.getByRole('dialog',{name:'My Properties'});
   const headline=panel.getByRole('heading',{level:3});
