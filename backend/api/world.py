@@ -3,7 +3,7 @@ import os
 import logging
 import math
 import time
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import Field
 from sqlalchemy import select, func, or_, and_
 from .db import get_db, APP_ENV
@@ -267,7 +267,14 @@ def enter(data: CityInput, u=Depends(current_user), db=Depends(get_db)):
     return snapshot(db, u, data.city)
 
 
-@router.get("/world/{city}")
+async def snapshot_admission(request: Request):
+    # This route dependency runs before authentication opens its DB session.
+    # HTTP fallback reads share the socket snapshot budget, including cleanup.
+    async with request.app.state.realtime_snapshot_gate:
+        yield
+
+
+@router.get("/world/{city}", dependencies=[Depends(snapshot_admission)])
 def world(city: str, u=Depends(current_user), db=Depends(get_db)):
     return snapshot(db, u, city, release_lock=True)
 
@@ -279,7 +286,7 @@ def move(data: Movement, u=Depends(current_user), db=Depends(get_db)):
     return move_locked(data,u,db,p)
 
 
-def move_locked(data, u, db, p):
+def move_locked(data, u, db, p, *, input_received=None):
     """Both callers hold the user and presence locks, in that order."""
     if not p:
         raise HTTPException(409, "Enter world first")
@@ -295,7 +302,16 @@ def move_locked(data, u, db, p):
         raise HTTPException(422, "Unsupported movement mode")
     if data.mode not in {"walk", "run"}:
         raise HTTPException(403,'Pick up a configured rental first; existing vehicle access is honoured there')
-    now = time.time()
+    processed_at = time.time()
+    now = processed_at
+    if input_received is not None:
+        received_at,received_monotonic=input_received
+        # Receipt is stamped by the websocket receiver, never by the client.
+        # Database/worker delay must not become additional travelled time. Check
+        # freshness again after authorization, locks and movement-policy reads.
+        now=max(p.last_move,min(received_at,processed_at))
+        if time.monotonic()-received_monotonic>.35 or received_at<=p.last_move:
+            data=data.model_copy(update={'dx':0,'dz':0})
     dt = min(max(now - p.last_move, 0), 0.3)
     if now-p.last_move>.5:dt=MOVEMENT['inputIntervalMs']/1000
     # A released avatar did not travel while waiting for its next press. Bound
@@ -350,7 +366,7 @@ def move_locked(data, u, db, p):
             p.x,p.z=safe_step(p.city,p.x,p.z,data.dx/length*speed*dt,data.dz/length*speed*dt,data.mode)
     p.mode = data.mode
     p.last_move = now
-    p.updated_at = now
+    p.updated_at = processed_at
     p.motion_speed = speed
     from .motion_diagnostics import observe
     observe(u.id,p.city,p.zone_id,p.mode,p.x,p.z,bool(speed),bool(speed and dt>.03 and math.hypot(p.x-old_x,p.z-old_z)<.01))
