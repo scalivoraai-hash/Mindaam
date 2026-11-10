@@ -3,8 +3,14 @@ const fs = require('node:fs');
 
 async function verifyPublicWorld(browser,origin,out){
  const context = await browser.newContext({reducedMotion:'reduce'});
+ let page;
+ const observations=[];
+ const record=value=>{observations.push(value);if(observations.length>80)observations.shift();};
  try {
-  const page=await context.newPage();
+  page=await context.newPage();
+  page.on('framenavigated',frame=>{if(frame===page.mainFrame())record({kind:'navigation',path:new URL(frame.url()).pathname});});
+  page.on('requestfailed',request=>record({kind:'requestfailed',path:new URL(request.url()).pathname,error:request.failure()?.errorText}));
+  page.on('response',response=>{if(response.status()>=400)record({kind:'http',path:new URL(response.url()).pathname,status:response.status()});});
   await page.addInitScript(()=>{
    window.layoutShift=null;
    if(!window.PerformanceObserver?.supportedEntryTypes?.includes('layout-shift'))return;
@@ -67,6 +73,11 @@ async function verifyPublicWorld(browser,origin,out){
   await page.getByRole('link',{name:/Preview the World/}).first().click();
   await page.waitForURL('**/explore');
   fs.writeFileSync(out+'/public-world.json',JSON.stringify({measurements,metrics},null,2));
+ } catch(error) {
+  fs.writeFileSync(out+'/public-world-failure.json',JSON.stringify({error:error.message,path:page?new URL(page.url()).pathname:null,observations},null,2));
+  if(page)await page.screenshot({path:out+'/public-world-failure.jpg',timeout:5000,mask:[page.locator('input,textarea')]}).catch(()=>{});
+  throw error;
  } finally {await context.close();}
 }
 module.exports={verifyPublicWorld};
+

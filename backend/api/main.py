@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text, select, delete, or_
 from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.orm import aliased
 from .db import engine, SessionLocal, APP_ENV
 from . import (
     core,
@@ -29,7 +30,7 @@ from . import (
     growth,transit,civic,operations,expansion,mobility,business_spatial,gifts,event_presentation,event_tickets,event_engagement,event_creators,grand_arena,venue_rentals,credit_catalog,collectible_rotation,
 )
 from .auth import user_for_token
-from .models import Presence, Notification, MediaSession, Session, User
+from .models import Presence, Notification, MediaSession, Session, User, Config
 from .core import serialize
 from . import conversations
 from pydantic import Field, ValidationError, PrivateAttr
@@ -349,14 +350,34 @@ class MotionInput(core.Strict):
 def realtime_motion(token, data):
     """Use the same authenticated movement/lease handlers, never client positions."""
     with SessionLocal.begin() as db:
-        u=user_for_token(db,token)
+        identity=db.execute(select(Session,User).join(User,User.id==Session.user_id)
+            .where(Session.id==hashlib.sha256(token.encode()).hexdigest())
+            .with_for_update(of=User,skip_locked=True)).first()
         # Impulses expire while a world snapshot or a zone transition owns this
         # lock. Let the socket sample the next fresh input instead of blocking
         # a database worker for three seconds and disconnecting the player.
-        if db.scalar(select(User.id).where(User.id==u.id).with_for_update(skip_locked=True)) is None:
+        if identity is None:
+            # Distinguish an occupied user lock from an invalid/revoked session.
+            # Authentication failures must still close the connection.
+            user_for_token(db,token)
             return None
-        p=(db.scalar(select(Presence).where(Presence.user_id==u.id).with_for_update())
-           if data.action=='move' else db.get(Presence,u.id))
+        session,u=identity
+        if session.expires_at<time.time():raise HTTPException(401,'Session expired. Please sign in.')
+        if u.suspended:raise HTTPException(403,'Account unavailable')
+        if data.action=='move':
+            # Load the same authorization/configuration rows in one round trip.
+            # Hold strong references until commit so db.get in the existing
+            # validators uses this transaction's identity map, not new queries.
+            from .movement_policy import KEY
+            policy_row=aliased(Config);demand_row=aliased(Config)
+            movement_rows=db.execute(select(Presence,expansion.Destination,growth.WorldAccess,policy_row,demand_row)
+                .outerjoin(expansion.Destination,expansion.Destination.id==Presence.city)
+                .outerjoin(growth.WorldAccess,(growth.WorldAccess.user_id==Presence.user_id)&(growth.WorldAccess.destination_id==Presence.city))
+                .outerjoin(policy_row,policy_row.key==KEY)
+                .outerjoin(demand_row,demand_row.key=='city_demand')
+                .where(Presence.user_id==u.id).with_for_update(of=Presence)).first()
+            p=movement_rows[0] if movement_rows else None
+        else:p=db.get(Presence,u.id)
         if not p or (p.city,p.zone_id)!=(data.city,data.zone):
             raise HTTPException(409,'Your location changed. Movement was cleared.')
         growth.require_access(db,u,p.city)
