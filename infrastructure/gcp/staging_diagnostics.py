@@ -81,6 +81,9 @@ def run(c,sha):
   params={'filter':f'metric.type="{metric}" AND {scope}','interval.startTime':start,'interval.endTime':end,'pageSize':1000}
   data=get_json('https://monitoring.googleapis.com/v3/projects/'+c.project+'/timeSeries?'+urlencode(params),token,c.project)
   result['metrics'][metric]=data
+ from staging_pool_probe import collect
+ result['pool_activity']=collect(c,release)
+ result['pool_probe_cleanup']=True
  Path('gcp-evidence').mkdir(exist_ok=True)
  Path('gcp-evidence/staging-diagnostics.json').write_text(json.dumps(result,indent=2))
  print('Exact staging error categories and numeric resource evidence collected; no log payloads exported.')
