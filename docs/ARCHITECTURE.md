@@ -146,3 +146,5 @@ HTTP GET world snapshots acquire the existing per-process snapshot semaphore as 
 ### Transaction-local movement read batching (2026-11-10)
 
 Realtime pedestrian input authenticates and locks its user in one joined session/user query, then locks presence and preloads destination, world entitlement and movement/demand configuration in a second query. Existing authorization and policy functions still execute against that transaction's identity map; strong references keep the loaded rows available until commit. There is no cross-request permission/configuration cache. A busy user lock remains SKIP LOCKED, while invalid or expired sessions and suspended accounts still fail closed. Presence is locked after the user, and rental checks remain authoritative. This reduces the configured outdoor path from nine SELECTs to three without changing input receipt clocks, the 350 ms stale-input limit, movement integration, collisions, speeds or wallet behavior.
+
+Staging property/seating acceptance is triggered by realtime-handler changes as well as world, property and auditorium modules, so a socket-only correction cannot silently reuse the earlier image's seating result.
