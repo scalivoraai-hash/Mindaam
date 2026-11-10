@@ -298,6 +298,10 @@ def move_locked(data, u, db, p):
     now = time.time()
     dt = min(max(now - p.last_move, 0), 0.3)
     if now-p.last_move>.5:dt=MOVEMENT['inputIntervalMs']/1000
+    # A released avatar did not travel while waiting for its next press. Bound
+    # restart acceleration to one input interval instead of charging idle time.
+    # Continued movement retains elapsed-time integration and the existing cap.
+    if not p.motion_speed:dt=min(dt,MOVEMENT['inputIntervalMs']/1000)
     length = max(1, math.hypot(data.dx, data.dz))
     # Preview-matched walking and a distinct faster run use the same shared contract.
     # Released input stops immediately. Render interpolation supplies the soft stop.

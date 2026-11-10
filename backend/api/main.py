@@ -101,6 +101,9 @@ async def deliver_mail():
 
 @asynccontextmanager
 async def lifespan(app):
+    # Full read models issue many queries. Queue before opening a DB session so
+    # concurrent sockets cannot occupy the entire small pool with snapshots.
+    app.state.realtime_snapshot_gate = asyncio.Semaphore(1)
     if APP_ENV!='test':
         def initialise():
             with SessionLocal.begin() as db:
@@ -361,6 +364,18 @@ def realtime_motion(token, data):
         return {'type':'motion','seq':data.seq,'city':data.city,'input_zone':data.zone,**result}
 
 
+async def sample_realtime_state(build):
+    async with app.state.realtime_snapshot_gate:
+        worker = asyncio.create_task(run_in_threadpool(build))
+        try:
+            return await asyncio.shield(worker)
+        except asyncio.CancelledError:
+            # A disconnected socket must not release admission while its sync
+            # database worker still owns the connection.
+            await asyncio.gather(worker, return_exceptions=True)
+            raise
+
+
 @app.websocket("/api/realtime")
 async def realtime(socket: WebSocket):
     origin = socket.headers.get("origin")
@@ -381,14 +396,14 @@ async def realtime(socket: WebSocket):
             async with send_lock:await socket.send_json(value)
         state_cache=realtime_cache.StateCache()
         def read_state():return state_cache.read(lambda:realtime_state(token,with_expiry=True))
-        initial_state=await run_in_threadpool(read_state)
+        initial_state=await sample_realtime_state(read_state)
         initial_state['movement_transport']='input-v1'
         await send(initial_state)
         async def states():
             while True:
                 await asyncio.sleep(.5)
                 try:
-                    result=await run_in_threadpool(read_state)
+                    result=await sample_realtime_state(read_state)
                 except OperationalError as error:
                     if getattr(error.orig,'sqlstate',None)!='55P03':raise
                     # SessionLocal rolled back. Never send a cached state for a
