@@ -253,4 +253,8 @@ District workflow 42845682940 exposed further movement stalls and was cancelled 
 
 The WebKit job failed its final /explore navigation wait. The identical public-world acceptance passed against the same staging image in a separate WebKit 26.5 reproduction; its 30-second wait and assertions were unchanged. The CI failure remains unresolved until approved-workflow acceptance passes. Failure-only URL/network/screenshot capture is added to make another navigation failure actionable. No application rebuild is claimed yet for these corrections; production approval remains separate.
 
+
+### PR20 movement CI timing investigation (2026-11-10)
+The failed PR run 42848227087 has a 631 ms interval between car acknowledgements 401/402 while browser inputs continued at 120 ms. Input 402 took 524 ms to acknowledge; the unchanged 300 ms vehicle integration cap limited distance correctly. The equivalent push run 42848193906 has no comparable car stall. Existing artifacts do not establish whether SQL contention or a Python pause caused the gap. Add bounded SQL/GC/wall/CPU timing to the disposable local browser-test server only; never log query parameters or credentials. All assertions and deadlines remain unchanged. Local compilation, fixture import and production-environment rejection are checked; local browser launch is blocked by workspace socket restrictions. Fresh CI evidence is required before merging or releasing.
+
 The changed-property/seating staging gate now includes backend/api/main.py: changes to realtime input authentication/processing affect seating approach, standing and release acknowledgements even when world.py is unchanged. This is an additive test trigger; no test is skipped, weakened or given a longer timeout.
