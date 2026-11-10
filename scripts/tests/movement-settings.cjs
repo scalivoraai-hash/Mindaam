@@ -9,7 +9,7 @@ const pass=name=>{checks.push(name);console.log('PASS',name)};
 async function until(fn,label){const end=Date.now()+60000;while(Date.now()<end){if(await fn())return;await wait(100)}throw Error('Timed out: '+label)}
 async function main(){
  execFileSync(python,['-m','scripts.tests.multiplayer_fixture','init'],{cwd:root,env});
- for(const [bin,args,name]of [[python,['-m','uvicorn','backend.api.main:app','--host','127.0.0.1','--port','8000'],'api'],[process.execPath,['node_modules/next/dist/bin/next','start','apps/consumer-web','--hostname','127.0.0.1'],'web']]){const fd=fs.openSync(out+'/'+name+'.log','w');children.push(spawn(bin,args,{cwd:root,env,stdio:['ignore',fd,fd]}))}
+ for(const [bin,args,name]of [[python,['-m','uvicorn','scripts.tests.motion_diagnostic_server:app','--host','127.0.0.1','--port','8000'],'api'],[process.execPath,['node_modules/next/dist/bin/next','start','apps/consumer-web','--hostname','127.0.0.1'],'web']]){const fd=fs.openSync(out+'/'+name+'.log','w');children.push(spawn(bin,args,{cwd:root,env,stdio:['ignore',fd,fd]}))}
  await until(async()=>{try{return (await fetch(origin+'/api/health')).ok}catch{return false}},'startup');
  browser=await chromium.launch({executablePath:process.env.QA_CHROMIUM,args:['--no-sandbox','--disable-dev-shm-usage','--disable-webgl']});
  const player=await browser.newContext({viewport:{width:1440,height:900},hasTouch:true}),admin=await browser.newContext({viewport:{width:1280,height:900}}),p=await player.newPage(),a=await admin.newPage(),frames=[],errors=[];

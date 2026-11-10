@@ -146,3 +146,7 @@ HTTP GET world snapshots acquire the existing per-process snapshot semaphore as 
 ### Transaction-local movement read batching (2026-11-10)
 
 Realtime pedestrian input authenticates and locks its user in one joined session/user query, then locks presence and preloads destination, world entitlement and movement/demand configuration in a second query. Existing authorization and policy functions still execute against that transaction's identity map; strong references keep the loaded rows available until commit. There is no cross-request permission/configuration cache. A busy user lock remains SKIP LOCKED, while invalid or expired sessions and suspended accounts still fail closed. Presence is locked after the user, and rental checks remain authoritative. This reduces the configured outdoor path from nine SELECTs to three without changing input receipt clocks, the 350 ms stale-input limit, movement integration, collisions, speeds or wallet behavior.
+
+
+### Disposable movement acceptance diagnostics
+The movement-settings browser fixture starts a test-only timing wrapper, guarded to APP_ENV=local and its disposable /tmp SQLite database prefix. It records bounded slow SQL operation names (no SQL text/parameters), GC pauses, and motion wall/thread-CPU duration in existing test artifacts. It changes no movement handler, timing budget, collision rule, assertion, or deployed application entry point. Use this to distinguish database waiting from process pauses before correcting a CI displacement failure.
