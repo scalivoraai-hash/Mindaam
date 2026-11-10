@@ -32,7 +32,7 @@ from .auth import user_for_token
 from .models import Presence, Notification, MediaSession, Session, User
 from .core import serialize
 from . import conversations
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, PrivateAttr
 from typing import Literal
 
 
@@ -334,6 +334,8 @@ def realtime_state(token, with_expiry=False):
 
 
 class MotionInput(core.Strict):
+    # Internal receipt clocks cannot be supplied through the input JSON schema.
+    _received: tuple[float, float] | None = PrivateAttr(default=None)
     type: Literal['input']
     seq: int = Field(ge=1, le=9007199254740991)
     city: str = Field(max_length=50)
@@ -359,7 +361,7 @@ def realtime_motion(token, data):
             raise HTTPException(409,'Your location changed. Movement was cleared.')
         growth.require_access(db,u,p.city)
         result=(mobility.drive(mobility.Drive(steer=data.x,throttle=-data.z),u,db)
-                if data.action=='drive' else world.move_locked(world.Movement(dx=data.x,dz=data.z,mode=data.mode),u,db,p))
+                if data.action=='drive' else world.move_locked(world.Movement(dx=data.x,dz=data.z,mode=data.mode),u,db,p,input_received=data._received))
         if 'position' not in result:result={'position':result,'exited':result.get('exited',False)}
         return {'type':'motion','seq':data.seq,'city':data.city,'input_zone':data.zone,**result}
 
@@ -428,7 +430,8 @@ async def realtime(socket: WebSocket):
                 # Keep a press/release pair so a quick tap is not erased.
                 # The two-slot bound and age check prevent an old input backlog.
                 if pending.full():pending.get_nowait()
-                pending.put_nowait((time.monotonic(),data))
+                data._received=(time.time(),now)
+                pending.put_nowait((now,data))
         async def moves():
             while True:
                 received,data=await pending.get()
