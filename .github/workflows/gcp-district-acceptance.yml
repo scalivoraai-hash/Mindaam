@@ -24,6 +24,8 @@ jobs:
       sha: ${{ steps.plan.outputs.sha }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
       - id: plan
         env:
           GH_TOKEN: ${{ github.token }}
@@ -41,10 +43,13 @@ jobs:
           fi
           gh run download "$RUN_ID" --name "$name" --dir /tmp/district-release
           python - <<'PY'
-          import json, os, pathlib
+          import json, os, pathlib, sys
+          sys.path.insert(0, "infrastructure/gcp")
+          from district_source import verify_source
           release=json.loads(pathlib.Path('/tmp/district-release/deployment-result.json').read_text())
           assert release['environment']=='staging' and release['origin']=='https://mindaam-staging-qfrofqn4pq-nw.a.run.app'
-          assert release['sha']==os.environ['GITHUB_SHA'], 'Current main differs from this release'
+          evidence=verify_source(release['sha'],os.environ['GITHUB_SHA'])
+          print(json.dumps(evidence,sort_keys=True))
           cities=[r['city'] for r in json.loads(pathlib.Path('scripts/tests/district-routes.json').read_text())]
           selected=os.environ.get('CITY')
           if selected:
@@ -62,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ needs.release.outputs.sha }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24'
@@ -99,7 +104,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ needs.release.outputs.sha }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24'
