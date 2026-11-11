@@ -152,3 +152,6 @@ Realtime pedestrian input authenticates and locks its user in one joined session
 The movement-settings browser fixture starts a test-only timing wrapper, guarded to APP_ENV=local and its disposable /tmp SQLite database prefix. It records bounded slow SQL operation names (no SQL text/parameters), GC pauses, and motion wall/thread-CPU duration in existing test artifacts. It changes no movement handler, timing budget, collision rule, assertion, or deployed application entry point. Use this to distinguish database waiting from process pauses before correcting a CI displacement failure.
 
 Staging property/seating acceptance is triggered by realtime-handler changes as well as world, property and auditorium modules, so a socket-only correction cannot silently reuse the earlier image's seating result.
+
+
+Staging property/seating acceptance is mandatory for each staging deployment. A first-parent tip diff is not a reliable record of changes since the serving release: a workflow-only merge can follow application changes. Removing that conditional preserves all test assertions and avoids modifying the ancestor-image resume guard. Current-main builds continue to reuse successful application CI only after exact application/test content comparison.
