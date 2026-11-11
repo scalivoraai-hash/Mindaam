@@ -349,6 +349,7 @@ class MotionInput(core.Strict):
 
 def realtime_motion(token, data):
     """Use the same authenticated movement/lease handlers, never client positions."""
+    started=time.monotonic();phases=[]
     with SessionLocal.begin() as db:
         identity=db.execute(select(Session,User).join(User,User.id==Session.user_id)
             .where(Session.id==hashlib.sha256(token.encode()).hexdigest())
@@ -361,6 +362,7 @@ def realtime_motion(token, data):
             # Authentication failures must still close the connection.
             user_for_token(db,token)
             return None
+        phases.append(('authentication',time.monotonic()))
         session,u=identity
         if session.expires_at<time.time():raise HTTPException(401,'Session expired. Please sign in.')
         if u.suspended:raise HTTPException(403,'Account unavailable')
@@ -380,11 +382,16 @@ def realtime_motion(token, data):
         else:p=db.get(Presence,u.id)
         if not p or (p.city,p.zone_id)!=(data.city,data.zone):
             raise HTTPException(409,'Your location changed. Movement was cleared.')
+        phases.append(('context',time.monotonic()))
         growth.require_access(db,u,p.city)
         result=(mobility.drive(mobility.Drive(steer=data.x,throttle=-data.z),u,db)
                 if data.action=='drive' else world.move_locked(world.Movement(dx=data.x,dz=data.z,mode=data.mode),u,db,p,input_received=data._received))
         if 'position' not in result:result={'position':result,'exited':result.get('exited',False)}
-        return {'type':'motion','seq':data.seq,'city':data.city,'input_zone':data.zone,**result}
+        response={'type':'motion','seq':data.seq,'city':data.city,'input_zone':data.zone,**result}
+        phases.append(('simulation',time.monotonic()))
+    from .motion_diagnostics import timing
+    timing(started,data._received[1] if data._received else None,phases)
+    return response
 
 
 async def sample_realtime_state(build):
@@ -450,9 +457,9 @@ async def realtime(socket: WebSocket):
                 last_seq=data.seq
                 # Keep a press/release pair so a quick tap is not erased.
                 # The two-slot bound and age check prevent an old input backlog.
-                if pending.full():pending.get_nowait()
+                from .motion_queue import enqueue
                 data._received=(time.time(),now)
-                pending.put_nowait((now,data))
+                enqueue(pending,now,data)
         async def moves():
             while True:
                 received,data=await pending.get()

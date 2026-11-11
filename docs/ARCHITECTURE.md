@@ -155,3 +155,8 @@ Staging property/seating acceptance is triggered by realtime-handler changes as 
 
 
 Staging property/seating acceptance is mandatory for each staging deployment. A first-parent tip diff is not a reliable record of changes since the serving release: a workflow-only merge can follow application changes. Removing that conditional preserves all test assertions and avoids modifying the ancestor-image resume guard. Current-main builds continue to reuse successful application CI only after exact application/test content comparison.
+
+
+### Latest held-input sampling and bounded staging timing
+Consecutive held direction samples in the two-entry socket queue are superseded by the newest server-stamped receipt. Consecutive releases similarly keep the latest sequence for acknowledgement. Press/release edges and action/location transitions are retained, bounded to the most recent two entries. Queue updates contain no await; the single socket event loop cannot interleave a worker dequeue. Authorization, locks, receipt-clock integration, stale rejection and the neutral-release retry path are unchanged. This removes FIFO ageing under database delay without accepting stale travel.
+Staging-only slow-transaction diagnostics report authentication, context, simulation, commit-and-publication and entry queue milliseconds at most once per ten seconds per process. They contain no user identifiers, credentials, SQL or coordinates, and do not enable production tracing or change transaction durability.
