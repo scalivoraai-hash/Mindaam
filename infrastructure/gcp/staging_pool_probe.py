@@ -16,13 +16,23 @@ p=conninfo_to_dict(os.environ['DATABASE_URL'].replace('postgresql+psycopg://','p
 p['connect_timeout']=5
 p['options']='-c default_transaction_read_only=on -c statement_timeout=2000'
 result={'read_only':True,'samples':[]}
-with psycopg.connect(**p,autocommit=True) as c:
+started=time.monotonic()
+connection=psycopg.connect(**p,autocommit=True)
+result['connection_ms']=round(1000*(time.monotonic()-started),3)
+with connection as c:
  assert c.execute('SELECT current_database(),current_user').fetchone()==('mindaam_staging','mindaam_staging')
  assert c.execute('SHOW default_transaction_read_only').fetchone()[0]=='on'
+ result['settings']=dict(c.execute("SELECT name,setting FROM pg_settings WHERE name IN ('synchronous_commit','fsync','wal_sync_method','commit_delay','commit_siblings','track_io_timing','track_wal_io_timing')").fetchall())
+ wal_query='SELECT wal_records::float8,wal_bytes::float8,wal_write::float8,wal_sync::float8,wal_write_time::float8,wal_sync_time::float8 FROM pg_stat_wal'
+ result['wal_before']=list(c.execute(wal_query).fetchone())
  for i in range(60):
+  started=time.monotonic()
   rows=c.execute(QUERY).fetchall()
-  result['samples'].append({'at':time.time(),'groups':[dict(zip(('state','wait_type','wait','connections','oldest_transaction_seconds','oldest_query_seconds'),r)) for r in rows]})
+  elapsed=round(1000*(time.monotonic()-started),3)
+  result['samples'].append({'at':time.time(),'query_ms':elapsed,'groups':[dict(zip(('state','wait_type','wait','connections','oldest_transaction_seconds','oldest_query_seconds'),r)) for r in rows]})
   if i<59:time.sleep(.5)
+ result['wal_after']=list(c.execute(wal_query).fetchone())
+ result['wal_fields']=['records','bytes','writes','syncs','write_ms','sync_ms']
 print('MINDAAM_POOL_RESULT '+json.dumps(result,separators=(',',':')))
 '''
 
