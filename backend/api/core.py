@@ -122,7 +122,7 @@ def get_config(db=Depends(get_db)):
 
 
 @router.post("/auth/register", status_code=201)
-def register(data: Register, request: Request, response: Response, db=Depends(get_db)):
+def register(data: Register, request: Request, response: Response, db=Depends(get_db, scope="function")):
     if request.headers.get("x-pulse-client") == "web" and (data.confirm_password is None or data.accepted_privacy is not True):
         raise HTTPException(422, "Password confirmation and privacy acceptance required")
     email = data.email.strip().lower()
@@ -172,12 +172,12 @@ def authenticate(data, request, response, db, admin_only=False):
 
 
 @router.post("/auth/login")
-def login(data: Login, request: Request, response: Response, db=Depends(get_db)):
+def login(data: Login, request: Request, response: Response, db=Depends(get_db, scope="function")):
     return authenticate(data, request, response, db)
 
 
 @router.post("/auth/admin-login")
-def admin_login(data: Login, request: Request, response: Response, db=Depends(get_db)):
+def admin_login(data: Login, request: Request, response: Response, db=Depends(get_db, scope="function")):
     return authenticate(data, request, response, db, admin_only=True)
 
 

@@ -3,6 +3,15 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from staging_diagnostics import summarize
 class StagingDiagnostics(unittest.TestCase):
+ def test_movement_timings_export_only_bounded_numeric_phases(self):
+  from staging_diagnostics import movement_timings
+  rows=[{'timestamp':'now','textPayload':'private-prefix movement_transaction_timing {"authentication_ms":200,"context_ms":NaN,"simulation_ms":-1,"commit_and_publish_ms":130000,"queue_ms":true,"token":"secret"}'},
+        {'textPayload':'movement_transaction_timing invalid'},
+        {'textPayload':'movement_transaction_timing []'}]
+  value=movement_timings(rows)
+  self.assertEqual(value,[{'timestamp':'now','phases_ms':{'authentication_ms':200}}])
+  self.assertNotIn('secret',str(value));self.assertNotIn('private',str(value))
+
  def test_readiness_dependency_does_not_export_exception_message(self):
   value=summarize([{'textPayload':'Readiness failed dependency=database exception=TimeoutError private-host password=secret'}])
   self.assertEqual(value[0]['signals'],{'readiness_dependency':['Readiness failed dependency=database exception=TimeoutError']})

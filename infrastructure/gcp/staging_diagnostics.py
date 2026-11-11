@@ -56,6 +56,20 @@ def summarize(rows):
   result.append({'timestamp':row.get('timestamp'),'severity':row.get('severity'),'signals':{k:v for k,v in matches.items() if v}})
  return result
 
+def movement_timings(rows):
+ result=[]
+ allowed={'authentication_ms','context_ms','simulation_ms','commit_and_publish_ms','queue_ms'}
+ for row in rows:
+  text=row.get('textPayload','')+' '+str(row.get('jsonPayload',{}).get('message',''))
+  if 'movement_transaction_timing ' not in text:continue
+  payload=text.split('movement_transaction_timing ',1)[1].strip()
+  try:value=json.loads(payload)
+  except (ValueError,TypeError):continue
+  if not isinstance(value,dict):continue
+  phases={k:v for k,v in value.items() if k in allowed and type(v) in (int,float) and 0<=v<=120000}
+  if phases:result.append({'timestamp':row.get('timestamp'),'phases_ms':phases})
+ return result
+
 def run(c,sha):
  release=c.get_json(f'releases/{sha}/staging.json')
  if not release or release.get('sha')!=sha:raise Blocked('Exact staging release required')
@@ -67,6 +81,8 @@ def run(c,sha):
  query=f'resource.type="cloud_run_revision" AND resource.labels.service_name="mindaam-staging" AND resource.labels.revision_name="{release["revision"]}" AND timestamp>="{start}" AND severity>=ERROR'
  rows=c.gc('logging','read',query,'--limit=200','--format=json(timestamp,severity,textPayload,jsonPayload.message,httpRequest.status,httpRequest.requestUrl,httpRequest.latency)')
  result={'sha':sha,'revision':release['revision'],'read_only':True,'release_approval':False,'error_log_limit':200,'errors':summarize(rows),'metrics':{}}
+ timing_query=f'resource.type="cloud_run_revision" AND resource.labels.service_name="mindaam-staging" AND resource.labels.revision_name="{release["revision"]}" AND timestamp>="{start}" AND (textPayload:"movement_transaction_timing " OR jsonPayload.message:"movement_transaction_timing ")'
+ result['movement_timings']=movement_timings(c.gc('logging','read',timing_query,'--limit=200','--format=json(timestamp,textPayload,jsonPayload.message)'))
  # Readiness deliberately returns a generic dependency error. Correlate it
  # with server-side PostgreSQL errors without exporting SQL, identities or
  # connection strings from the shared instance's raw log payloads.
