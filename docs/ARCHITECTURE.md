@@ -150,3 +150,5 @@ Realtime pedestrian input authenticates and locks its user in one joined session
 
 ### Disposable movement acceptance diagnostics
 The movement-settings browser fixture starts a test-only timing wrapper, guarded to APP_ENV=local and its disposable /tmp SQLite database prefix. It records bounded slow SQL operation names (no SQL text/parameters), GC pauses, and motion wall/thread-CPU duration in existing test artifacts. It changes no movement handler, timing budget, collision rule, assertion, or deployed application entry point. Use this to distinguish database waiting from process pauses before correcting a CI displacement failure.
+
+Staging property/seating acceptance is triggered by realtime-handler changes as well as world, property and auditorium modules, so a socket-only correction cannot silently reuse the earlier image's seating result.

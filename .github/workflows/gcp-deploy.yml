@@ -120,7 +120,7 @@ jobs:
         env:
           QA_NODE_MODULES: /tmp/mindaam-qa/node_modules
         run: |
-          if ! git diff --quiet "$RELEASE_SHA^1" "$RELEASE_SHA" -- backend/api/world.py backend/api/auditorium_seating.py infrastructure/gcp/seating-acceptance.cjs backend/api/property_economy.py backend/api/property_inventory.py apps/consumer-web/components/PropertyDesk.tsx apps/consumer-web/components/PropertyDesk.module.css apps/consumer-web/app/page.tsx infrastructure/gcp/property-acceptance.cjs; then
+          if ! git diff --quiet "$RELEASE_SHA^1" "$RELEASE_SHA" -- backend/api/main.py backend/api/world.py backend/api/auditorium_seating.py infrastructure/gcp/seating-acceptance.cjs backend/api/property_economy.py backend/api/property_inventory.py apps/consumer-web/components/PropertyDesk.tsx apps/consumer-web/components/PropertyDesk.module.css apps/consumer-web/app/page.tsx infrastructure/gcp/property-acceptance.cjs; then
             python infrastructure/gcp/property-coverage.py
             node infrastructure/gcp/property-acceptance.cjs
           fi
