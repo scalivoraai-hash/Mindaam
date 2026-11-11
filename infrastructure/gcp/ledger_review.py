@@ -1,8 +1,9 @@
-"""Read-only aggregate PC audit using the existing production migration job."""
+"""Read-only wallet/property audit using the existing production migration job."""
 import base64,json,time,subprocess
 from pathlib import Path
 from common import Blocked
 from readiness import ready_service
+from data_integrity import require_integrity
 
 def probe_source():
  path=Path(__file__).resolve().parents[2]/'backend/api/ledger_reconciliation.py'
@@ -12,7 +13,7 @@ def probe_source():
 os.environ['DATABASE_URL']=os.environ['RUNTIME_DATABASE_URL']
 from backend.api.db import SessionLocal
 from sqlalchemy import text
-'''+source+'''
+'''+source+'\n'+Path(__file__).with_name('data_integrity.py').read_text()+'''
 with SessionLocal.begin() as db:
  db.execute(text('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ'))
  db.execute(text('SET TRANSACTION READ ONLY'))
@@ -20,6 +21,7 @@ with SessionLocal.begin() as db:
  assert identity==('mindaam_production','mindaam_production')
  assert db.execute(text('SHOW transaction_read_only')).scalar()=='on'
  result=inspect(db)
+ result['integrity']=inspect_integrity(lambda sql: db.execute(text(sql)))
  for account in result['accounts']:account.pop('user_id')
  result['report_sha256']=hashlib.sha256(json.dumps(result,sort_keys=True,separators=(',',':')).encode()).hexdigest()
  result['database_identity_verified']=True
@@ -55,4 +57,5 @@ def run(c,sha):
  Path('gcp-evidence').mkdir(exist_ok=True)
  Path('gcp-evidence/ledger-review.json').write_text(json.dumps(result,indent=2))
  c.put_json(f'releases/{sha}/ledger-review.json',result)
+ require_integrity(result.get('integrity',{}))
  print('Actual redacted account-level ledger dry run recorded. No balances changed; owner review and backup required before adjustments.')

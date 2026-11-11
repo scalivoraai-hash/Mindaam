@@ -30,7 +30,7 @@ class LedgerReviewTests(unittest.TestCase):
     self.calls.append(args)
     if args[:3]==('run','jobs','describe'):return {'metadata':{},'spec':{'template':{'spec':{'template':{'spec':{'serviceAccountName':self.sa('migrate'),'containers':[{'image':'image@sha256:test'}]}}}}}}
     if args[:3]==('run','jobs','execute'):return {'metadata':{'name':'execution'}}
-    if args[:2]==('logging','read'):return [{'textPayload':'MINDAAM_LEDGER_DRY_RUN '+json.dumps({'mode':'DRY_RUN_ONLY','adjustments_applied':False,'database_identity_verified':True,'totals':{}})}]
+    if args[:2]==('logging','read'):return [{'textPayload':'MINDAAM_LEDGER_DRY_RUN '+json.dumps({'mode':'DRY_RUN_ONLY','adjustments_applied':False,'database_identity_verified':True,'totals':{},'integrity':{'read_only':True,'currencies':{k:{'inconsistent_accounts':0,'negative_accounts':0,'qa_kind_entries':0} for k in ('xp','credits')},'staging_qa_accounts':0,'orphan_wallet_entries':0,'duplicate_wallet_keys':0,'properties':{'schema_present':False,'partial_schema':False,'trade_entries_without_schema':0}}})}]
     raise AssertionError(args)
    def put_json(self,key,value):self.saved=value
   c=Cloud();service={'status':{'latestReadyRevisionName':'revision'},'spec':{'template':{'spec':{'containers':[{'image':'image@sha256:test'}]}}}}
