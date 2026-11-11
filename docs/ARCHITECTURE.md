@@ -162,3 +162,6 @@ Consecutive held direction samples in the two-entry socket queue are superseded 
 Staging-only slow-transaction diagnostics report authentication, context, simulation, commit-and-publication and entry queue milliseconds at most once per ten seconds per process. They contain no user identifiers, credentials, SQL or coordinates, and do not enable production tracing or change transaction durability.
 
 Password authentication session issuance uses function-scoped database dependencies on registration, login and Super Admin login. The yield finalizer must commit before response headers, otherwise a browser can receive a valid-looking session cookie whose row is not yet visible to its immediate /me request. The registration transaction still includes consent, referral and audit records atomically; commit failure cannot publish a successful cookie response.
+
+
+Static bundled map coordinates are cached as immutable numeric tuples (including polygon holes), retaining identical JSON arrays and collision values while allowing Python's cyclic collector to untrack them. The public synchronous geography route constructs JSONResponse in its worker so FastAPI does not recursively re-encode the large map on the realtime event loop. GC remains enabled; there is no global freeze, collection suppression, timing relaxation or geometry change.

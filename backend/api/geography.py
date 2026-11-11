@@ -3,6 +3,7 @@ import json, math, gzip, hashlib
 from functools import lru_cache
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
+from starlette.responses import JSONResponse
 from .locations import CITIES
 router=APIRouter(prefix='/api')
 @lru_cache(maxsize=64)
@@ -25,6 +26,13 @@ def district(city):
         additions=json.loads(enrichment.read_text()).get(city,{}).get('buildings',[])
         existing={str(f['id']) for f in result['features']}
         result['features'].extend(f for f in additions if str(f['id']) not in existing)
+    # Map coordinates are static. Immutable numeric tuples are removed from
+    # cyclic-GC tracking, unlike hundreds of thousands of retained point lists.
+    # JSON still encodes the exact same arrays; traversal uses unchanged values.
+    for feature in result['features']:
+        feature['points']=tuple(tuple(p) for p in feature['points'])
+        if 'holes' in feature:
+            feature['holes']=tuple(tuple(tuple(p) for p in ring) for ring in feature['holes'])
     return result
 def segment_distance(x,z,a,b):
     dx,dz=b[0]-a[0],b[1]-a[1];den=dx*dx+dz*dz
@@ -46,7 +54,9 @@ def geometry(city:str):
     from .grand_arena import placement
     geo=district(city);arena=placement(city);radius=max(geo['radius'],max(abs(arena['x']),abs(arena['z']))+25) if arena else geo['radius']
     from .terrain import navigation
-    return {**geo,'radius':radius,'navigation':navigation(city),'arena':arena,'street_vehicles':placements(city)}
+    # Encode the already JSON-native map in this sync endpoint's worker, not
+    # through FastAPI's recursive encoder on the realtime event loop.
+    return JSONResponse({**geo,'radius':radius,'navigation':navigation(city),'arena':arena,'street_vehicles':placements(city)})
 
 @lru_cache(maxsize=64)
 def footprints(city):
