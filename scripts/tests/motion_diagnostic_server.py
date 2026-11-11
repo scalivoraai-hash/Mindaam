@@ -25,7 +25,9 @@ def gc_timing(phase, info):
     else:
         elapsed = time.monotonic() - gc_started.pop(generation, time.monotonic())
         if elapsed > .02:
-            recent.append({'kind': 'gc', 'generation': generation, 'seconds': elapsed, 'at': time.time()})
+            record = {'kind': 'gc', 'generation': generation, 'seconds': elapsed, 'at': time.time()}
+            recent.append(record)
+            print('SCHEDULING_TIMING ' + json.dumps(record), flush=True)
 
 gc.callbacks.append(gc_timing)
 
@@ -56,3 +58,58 @@ def timed_motion(token, data):
         local.seq = None
 
 main.realtime_motion = timed_motion
+
+
+# Observe event-loop pauses outside realtime_motion as well. Code locations only:
+# no frame locals, HTTP bodies, SQL parameters, tokens, or user identifiers.
+import asyncio
+import sys
+from contextlib import asynccontextmanager
+
+original_lifespan = app.router.lifespan_context
+
+@asynccontextmanager
+async def diagnostic_lifespan(app):
+    async with original_lifespan(app):
+        loop_thread = threading.get_ident()
+        stopped = threading.Event()
+        samples = deque(maxlen=30)
+        heartbeat = [time.monotonic()]
+
+        def sample():
+            while not stopped.wait(.02):
+                now = time.monotonic()
+                if now - heartbeat[0] < .1:
+                    continue
+                frame = sys._current_frames().get(loop_thread)
+                stack = []
+                while frame is not None and len(stack) < 12:
+                    stack.append([os.path.basename(frame.f_code.co_filename),
+                                  frame.f_code.co_name, frame.f_lineno])
+                    frame = frame.f_back
+                samples.append({'at': time.time(), 'stack': stack})
+
+        async def pulse():
+            while True:
+                await asyncio.sleep(.02)
+                now = time.monotonic()
+                elapsed = now - heartbeat[0]
+                heartbeat[0] = now
+                if elapsed > .1:
+                    print('SCHEDULING_TIMING ' + json.dumps({
+                        'kind': 'event_loop', 'seconds': elapsed,
+                        'at': time.time(), 'samples': list(samples),
+                        'recent': list(recent)}), flush=True)
+                samples.clear()
+
+        observer = threading.Thread(target=sample, daemon=True)
+        observer.start()
+        task = asyncio.create_task(pulse())
+        try:
+            yield
+        finally:
+            stopped.set()
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+app.router.lifespan_context = diagnostic_lifespan
