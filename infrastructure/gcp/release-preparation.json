@@ -1,1 +1,7 @@
-{"sha":"b3fff7235b039bf997ba84f7edd62e27e0134019","image":"europe-west2-docker.pkg.dev/mindaam/mindaam/app@sha256:2065757173f4f09d798db456596c4485f8dd15ad9792e5085b0177e5de68e217","preparation_authorized":true,"production_approved":false,"source":"Owner instruction: prepare the exact staging image for recovery, security and cost review. Candidate CI 42731835862 passed 19 jobs; staging run 42733968461 and applicable district/browser acceptance must pass. Separate authenticated exact-image owner approval is mandatory."}
+{
+  "sha": "5ab339b4f0426ae1130ea68237e0313b67b5201a",
+  "image": "europe-west2-docker.pkg.dev/mindaam/mindaam/app@sha256:71d9418b7b4d5da132476db4ea445a3b0d2ccf52587f6ba3122847ba1e478ef5",
+  "preparation_authorized": true,
+  "production_approved": false,
+  "source": "Owner instruction: prepare the current staging image for recovery, security and production readiness. Application CI 42946445382 and core staging acceptance 42948085839 passed. District acceptance remains unresolved; mandatory release gates and separate authenticated exact-image owner approval must pass before production promotion."
+}
