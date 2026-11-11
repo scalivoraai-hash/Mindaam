@@ -125,6 +125,18 @@ async function main(){
    await b.page.mouse.move(surface.x+surface.width*.5,surface.y+surface.height*.45,{steps:20});await b.page.mouse.up();
    await b.page.waitForTimeout(300);await b.page.screenshot({path:out+'/property-nameboard-angle-'+angle+'.png'});
   }
+  // A narrow mobile orbit can leave a facade beside the avatar outside the
+  // frame. Retain those screenshots and also inspect a full desktop orbit;
+  // texture creation alone is not evidence that the board is visibly readable.
+  await b.page.setViewportSize({width:1440,height:900});
+  const desktopSurface=await b.page.locator('.world-canvas canvas').first().boundingBox();assert(desktopSurface);
+  for(let angle=0;angle<8;angle++){
+   const startX=desktopSurface.x+desktopSurface.width*.78,y=desktopSurface.y+desktopSurface.height*.45;
+   await b.page.mouse.move(startX,y);await b.page.mouse.down();
+   await b.page.mouse.move(startX-Math.PI/4/.0012,y,{steps:20});await b.page.mouse.up();
+   await b.page.waitForTimeout(300);await b.page.screenshot({path:out+'/property-nameboard-desktop-'+angle+'.png'});
+  }
+  await b.page.setViewportSize({width:390,height:850});
   for(const u of users)assert.equal((await u.api('/wallet')).credits,u.credits);
   evidence.pc_unchanged=true;evidence.resale={xp:12,buyer_delta:-12,seller_delta:12};evidence.two_city_portfolio=true;
   await require('./seating-acceptance.cjs')({origin,out,host:{...a,api:(path,data)=>a.api(path,data?'POST':'GET',data)},guest:{...b,api:(path,data)=>b.api(path,data?'POST':'GET',data)},record:check=>{evidence.seating_checks.push(check);console.log('PASS',check)}});
