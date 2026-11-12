@@ -184,6 +184,10 @@ async function main(){
    const packs=await a.api('/payments/credits');assert.equal(packs.ready,false);assert.ok(packs.packs.length>0);
    const blocked=await a.context.request.post(origin+'/api/payments/checkout',{headers:{Origin:origin,'X-Pulse-Client':'web'},data:{sku:packs.packs[0].id,expected_amount:packs.packs[0].amount_pence,request_id:crypto.randomUUID()}});assert.equal(blocked.status(),409);
    const booking=await a.context.request.post(origin+'/api/events/'+event.id+'/venue/booking',{headers:{Origin:origin,'X-Pulse-Client':'web'},data:{request_id:crypto.randomUUID(),hours:1,starts_at:Date.now()/1000,expected_cost:100}});assert.equal(booking.status(),409);
+   for(const route of ['/api/payments/webhook','/api/subscriptions/webhook']){
+    const delivery=await a.context.request.post(origin+route,{headers:{Origin:origin,'X-Pulse-Client':'web'},data:{type:'invoice.paid',livemode:true}});
+    assert.equal(delivery.status(),409);assert.match((await delivery.json()).detail,/Payments temporarily unavailable during public beta/);
+   }
    assert.deepEqual(await a.api('/wallet'),wallet);checks.payment_gate=true;
   }
   await a.api('/events/'+event.id+'/state/start',{});await b.api('/events/'+event.id+'/join',{});await b.api('/events/'+event.id+'/venue/enter',{});

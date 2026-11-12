@@ -69,3 +69,40 @@ def test_staging_probe_preserves_movement_commit_and_revocation(system,monkeypat
         db.get(User,user['id']).suspended=True
     with pytest.raises(HTTPException) as error:main.realtime_motion(token,data)
     assert error.value.status_code==403
+
+@pytest.mark.parametrize('refresh',[False,True])
+def test_database_admission_delay_uses_fresh_held_input_without_replaying_delay(system,refresh):
+    from backend.api.motion_queue import HeldInputSampler
+    sessions,token,user,data=setup_motion(system)
+    sampler=HeldInputSampler();data._received=(time.time(),time.monotonic());sampler.publish(data)
+    engine=sessions.kw['bind'];thread=threading.get_ident();delayed=[]
+    def delay(conn,cursor,statement,parameters,context,executemany):
+        if threading.get_ident()==thread and not delayed and statement.lstrip().upper().startswith('SELECT'):
+            delayed.append(True)
+            time.sleep(.4)
+            if refresh:
+                newest=data.model_copy(update={'seq':2})
+                newest._received=(time.time(),time.monotonic())
+                sampler.publish(newest)
+    event.listen(engine,'before_cursor_execute',delay)
+    try:result=main.realtime_motion(token,data,sampler.sample)
+    finally:event.remove(engine,'before_cursor_execute',delay)
+    assert result['seq']==(2 if refresh else 1)
+    if refresh:
+        assert 0<result['position']['x']<=result['position']['movement_config']['speeds']['walk']*.12
+        assert result['position']['speed']>0
+    else:
+        assert result['position']['x']==0
+        assert result['position']['speed']==0
+    with sessions() as db:
+        assert db.get(Presence,user['id']).x==result['position']['x']
+
+
+def test_fresh_input_keeps_original_sequence_and_does_not_resample(system):
+    sessions,token,user,data=setup_motion(system)
+    data._received=(time.time(),time.monotonic())
+    def unexpected(_):
+        raise AssertionError('Fresh input must keep its existing integration path')
+    result=main.realtime_motion(token,data,unexpected)
+    assert result['seq']==data.seq
+    assert result['position']['speed']>0

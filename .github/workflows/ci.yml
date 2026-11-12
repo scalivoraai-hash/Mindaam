@@ -130,6 +130,7 @@ jobs:
               QA_OUTPUT=/tmp/mylil-presentation-evidence/outdoor node scripts/tests/outdoor-environment.cjs
               QA_OUTPUT=/tmp/mylil-presentation-evidence/traffic node scripts/tests/traffic-motion.cjs ;;
             movement)
+              node scripts/tests/joystick-hit-targets.cjs
               node scripts/tests/movement-camera.cjs
               QA_OUTPUT=/tmp/mylil-presentation-evidence/settings node scripts/tests/movement-settings.cjs
               QA_OUTPUT=/tmp/mylil-presentation-evidence/public-terrain node scripts/tests/public-terrain-browser.cjs ;;

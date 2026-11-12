@@ -64,12 +64,14 @@ async function main(){
     await until(()=>frames.slice(start).filter(f=>f.type==='motion').at(-1)?.position.speed===0,'touch release acknowledgement');
     const samples=frames.slice(start).filter(f=>f.type==='motion'),moving=samples.filter(f=>f.position.speed>0),last=samples.at(-1).position;
     const displacement=Math.hypot(last.x-route.x,last.z-route.z),seconds=(Date.now()-at)/1000,mps=displacement/seconds;
+    results.speeds.push({name:width+' touch '+label,mps,distance:displacement,seconds,
+     acknowledgements:samples.map(f=>({seq:f.seq,speed:f.position.speed,mode:f.position.mode,roundTripMs:f.roundTripMs,last_move:f.position.last_move}))});
+    console.log('Physical touch measurement',JSON.stringify(results.speeds.at(-1)));
     check(width+' touch '+label+' controlled displacement',mps>(label==='walk'?.8:3.4)&&mps<(label==='walk'?1.4:5));
     check(width+' touch '+label+' intended direction',(last.x-route.x)*route.direction[0]+(last.z-route.z)*route.direction[1]>displacement*.98);
     check(width+' touch '+label+' speed bounded',moving.every(f=>f.position.speed<=(f.position.mode==='walk'?2:4.6875)+.001));
     await wait(400);const stopped=(await api('/world/'+city)).position;
     check(width+' '+endType+' stops movement',Math.hypot(stopped.x-last.x,stopped.z-last.z)<.01);
-    results.speeds.push({name:width+' touch '+label,mps,distance:displacement,seconds});
    }
   }finally{await session.detach()}
  }

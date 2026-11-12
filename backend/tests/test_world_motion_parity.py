@@ -59,11 +59,11 @@ def test_delayed_stop_is_acknowledged_without_applying_stale_travel(system,monke
  c,dbs=system;h,u=register(c,'delayed_stop');onboard(c,h)
  started,release=Event(),Event()
  original=main.realtime_motion
- def slow_first(token,data):
+ def slow_first(token,data,sample_input=None):
   if data.seq==1:
    started.set()
    assert release.wait(5)
-  return original(token,data)
+  return original(token,data,sample_input)
  monkeypatch.setattr(main,'realtime_motion',slow_first)
  with c.websocket_connect('/api/realtime') as ws:
   ws.send_json({'token':h['Authorization'][7:]});state=ws.receive_json()
@@ -82,11 +82,11 @@ def test_busy_player_row_drops_travel_and_retries_the_latest_stop(system,monkeyp
  from threading import Event
  c,dbs=system;h,u=register(c,'busy_player');onboard(c,h)
  attempted=Event();calls=[];original=main.realtime_motion
- def busy(token,data):
+ def busy(token,data,sample_input=None):
   calls.append(data.seq)
   if data.seq==1:attempted.set();return None
   if data.seq==2 and calls.count(2)==1:return None
-  return original(token,data)
+  return original(token,data,sample_input)
  monkeypatch.setattr(main,'realtime_motion',busy)
  with c.websocket_connect('/api/realtime') as ws:
   ws.send_json({'token':h['Authorization'][7:]});state=ws.receive_json()
@@ -216,7 +216,7 @@ def test_coalesced_press_release_is_not_collapsed_to_only_stop(monkeypatch):
  import asyncio
  from backend.api import main
  seen=[]
- def motion(token,data):
+ def motion(token,data,sample_input=None):
   seen.append((data.seq,data.x));return {'type':'motion','seq':data.seq}
  monkeypatch.setattr(main,'realtime_state',lambda token,with_expiry=False:({'type':'state'},time.time()+60) if with_expiry else {'type':'state'})
  monkeypatch.setattr(main,'realtime_motion',motion)
