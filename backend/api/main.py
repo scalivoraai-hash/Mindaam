@@ -350,7 +350,8 @@ class MotionInput(core.Strict):
 def realtime_motion(token, data):
     """Use the same authenticated movement/lease handlers, never client positions."""
     started=time.monotonic();phases=[]
-    with SessionLocal.begin() as db:
+    from .motion_diagnostics import transaction_probe
+    with SessionLocal() as db, transaction_probe(db) as details:
         identity=db.execute(select(Session,User).join(User,User.id==Session.user_id)
             .where(Session.id==hashlib.sha256(token.encode()).hexdigest())
             .with_for_update(of=User,skip_locked=True)).first()
@@ -389,8 +390,12 @@ def realtime_motion(token, data):
         if 'position' not in result:result={'position':result,'exited':result.get('exited',False)}
         response={'type':'motion','seq':data.seq,'city':data.city,'input_zone':data.zone,**result}
         phases.append(('simulation',time.monotonic()))
+        if details:
+            db.flush()
+            phases.append(('flush',time.monotonic()))
+        db.commit()
     from .motion_diagnostics import timing
-    timing(started,data._received[1] if data._received else None,phases)
+    timing(started,data._received[1] if data._received else None,phases,details)
     return response
 
 

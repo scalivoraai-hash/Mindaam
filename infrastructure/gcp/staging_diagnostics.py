@@ -58,7 +58,8 @@ def summarize(rows):
 
 def movement_timings(rows):
  result=[]
- allowed={'authentication_ms','context_ms','simulation_ms','commit_and_publish_ms','queue_ms'}
+ allowed={'authentication_ms','context_ms','simulation_ms','commit_and_publish_ms','queue_ms','flush_ms',
+          'connection_ms','sql_ms','sql_max_ms','sql_count','thread_cpu_ms','gc_overlap_ms'}
  for row in rows:
   text=row.get('textPayload','')+' '+str(row.get('jsonPayload',{}).get('message',''))
   if 'movement_transaction_timing ' not in text:continue

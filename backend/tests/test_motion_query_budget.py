@@ -58,3 +58,14 @@ def test_batched_configuration_is_fresh_each_input(system):
     second=main.realtime_motion(token,data)
     assert second['position']['movement_config']['version']==first['position']['movement_config']['version']+1
     assert second['position']['movement_config']['speeds']['walk']==3
+
+def test_staging_probe_preserves_movement_commit_and_revocation(system,monkeypatch):
+    sessions,token,user,data=setup_motion(system)
+    monkeypatch.setenv('APP_ENV','staging')
+    data._received=(time.time(),time.monotonic())
+    result=main.realtime_motion(token,data)
+    with sessions.begin() as db:
+        assert db.get(Presence,user['id']).x==result['position']['x']
+        db.get(User,user['id']).suspended=True
+    with pytest.raises(HTTPException) as error:main.realtime_motion(token,data)
+    assert error.value.status_code==403
