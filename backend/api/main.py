@@ -347,7 +347,7 @@ class MotionInput(core.Strict):
     mode: Literal['walk','run'] = 'walk'
 
 
-def realtime_motion(token, data):
+def realtime_motion(token, data, sample_input=None):
     """Use the same authenticated movement/lease handlers, never client positions."""
     started=time.monotonic();phases=[]
     from .motion_diagnostics import transaction_probe
@@ -385,6 +385,8 @@ def realtime_motion(token, data):
             raise HTTPException(409,'Your location changed. Movement was cleared.')
         phases.append(('context',time.monotonic()))
         growth.require_access(db,u,p.city)
+        if sample_input is not None:
+            data=sample_input(data)
         result=(mobility.drive(mobility.Drive(steer=data.x,throttle=-data.z),u,db)
                 if data.action=='drive' else world.move_locked(world.Movement(dx=data.x,dz=data.z,mode=data.mode),u,db,p,input_received=data._received))
         if 'position' not in result:result={'position':result,'exited':result.get('exited',False)}
@@ -446,6 +448,8 @@ async def realtime(socket: WebSocket):
                     continue
                 result['movement_transport']='input-v1'
                 await send(result)
+        from .motion_queue import HeldInputSampler
+        input_sampler=HeldInputSampler()
         async def receive_inputs():
             last_seq=0;arrivals=deque()
             while True:
@@ -464,18 +468,22 @@ async def realtime(socket: WebSocket):
                 # The two-slot bound and age check prevent an old input backlog.
                 from .motion_queue import enqueue
                 data._received=(time.time(),now)
+                input_sampler.publish(data)
                 enqueue(pending,now,data)
         async def moves():
+            processed_seq=0
             while True:
                 received,data=await pending.get()
+                if data.seq<=processed_seq:continue
                 # A delayed direction must never move an avatar. A pedestrian
                 # release adds no travel and must still stop and acknowledge it.
                 neutral_stop=data.action=='move' and data.x==0 and data.z==0
                 if time.monotonic()-received>.35 and not neutral_stop:continue
                 started=time.monotonic()
                 try:
-                    result=await run_in_threadpool(realtime_motion,token,data)
+                    result=await run_in_threadpool(realtime_motion,token,data,input_sampler.sample)
                     if result is not None:
+                        processed_seq=result['seq']
                         await send(result)
                     elif neutral_stop and pending.empty():
                         # Newer input supersedes an uncommitted release. Moves

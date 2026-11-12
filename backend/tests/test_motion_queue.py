@@ -44,3 +44,20 @@ def test_location_and_action_transitions_are_not_coalesced():
         enqueue(queue,0,motion(1))
         enqueue(queue,.12,motion(2,**change))
         assert [d.seq for _,d in drain(queue)]==[1,2]
+
+
+def test_sampler_refreshes_only_current_uninterrupted_pedestrian_press():
+    from backend.api.motion_queue import HeldInputSampler
+    sampler=HeldInputSampler()
+    first=motion(1);latest=motion(2,x=-1)
+    sampler.publish(first);sampler.publish(latest)
+    assert sampler.sample(first) is latest
+    stop=motion(3,x=0);sampler.publish(stop)
+    assert sampler.sample(first) is first
+    resumed=motion(4);sampler.publish(resumed)
+    assert sampler.sample(first) is first
+    assert sampler.sample(stop) is stop
+    sampler.publish(motion(5,city='birmingham'))
+    assert sampler.sample(resumed) is resumed
+    drive=motion(6,action='drive');sampler.publish(drive);sampler.publish(motion(7,action='drive'))
+    assert sampler.sample(drive) is drive

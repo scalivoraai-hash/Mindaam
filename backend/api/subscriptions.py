@@ -527,6 +527,9 @@ def apply_event(db, kind, obj, created):
 
 @router.post("/subscriptions/webhook")
 async def webhook(request: Request, db: Session = Depends(get_db)):
+    from .payment_policy import require_payment_actions
+
+    require_payment_actions()
     import stripe
 
     signing = os.getenv("STRIPE_SUBSCRIPTION_WEBHOOK_SECRET")

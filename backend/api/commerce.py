@@ -866,6 +866,9 @@ def checkout(
 
 @router.post("/payments/webhook")
 async def webhook(request: Request, db: Session = Depends(get_db)):
+    from .payment_policy import require_payment_actions
+
+    require_payment_actions()
     import stripe
 
     secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")

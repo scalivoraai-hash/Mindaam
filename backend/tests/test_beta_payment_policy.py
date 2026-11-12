@@ -47,6 +47,29 @@ def test_beta_blocks_all_new_payment_paths_preserves_free_and_wallet(system,monk
  with dbs() as db:
   assert db.scalar(select(func.count()).select_from(Payment))==payments
   assert db.scalar(select(func.count()).select_from(Ledger))==ledger
- # Closed payment switch must not disable signed reconciliation endpoints.
+ # Public beta rejects webhook delivery before any paid entitlement mutation.
  for route in ('/api/payments/webhook','/api/subscriptions/webhook'):
-  r=c.post(route,content='{}');assert 'temporarily unavailable during public beta' not in r.text
+  r=c.post(route,content='{}');assert r.status_code==409,r.text;assert r.json()['detail']==MESSAGE
+
+@pytest.mark.parametrize('route', ['/api/payments/webhook', '/api/subscriptions/webhook'])
+def test_beta_webhooks_do_not_parse_or_apply_provider_events(system, monkeypatch, route):
+ import stripe
+ from backend.api.commerce import PaymentEvent
+ from backend.api.subscriptions import SubscriptionEvent
+ c, dbs = system
+ monkeypatch.setenv('MINDAAM_PAYMENT_ACTIONS_ENABLED', 'false')
+ monkeypatch.setenv('STRIPE_WEBHOOK_SECRET', 'test-only-signing-secret')
+ monkeypatch.setenv('STRIPE_SUBSCRIPTION_WEBHOOK_SECRET', 'test-only-signing-secret')
+ calls = []
+ def construct(*args, **kwargs):
+  calls.append(True)
+  raise AssertionError('Closed beta must reject delivery before provider processing')
+ monkeypatch.setattr(stripe.Webhook, 'construct_event', construct)
+ with dbs() as db:
+  before = [db.scalar(select(func.count()).select_from(model)) for model in (Ledger, PaymentEvent, SubscriptionEvent)]
+ response = c.post(route, content='{"type":"invoice.paid","livemode":true}')
+ assert response.status_code == 409, response.text
+ assert response.json()['detail'] == MESSAGE
+ assert not calls
+ with dbs() as db:
+  assert [db.scalar(select(func.count()).select_from(model)) for model in (Ledger, PaymentEvent, SubscriptionEvent)] == before
