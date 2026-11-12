@@ -1,4 +1,4 @@
-"""Presentation-only rollout. Production is deliberately ineligible."""
+"""Presentation-only rollout, explicitly enabled for approved installed cities."""
 import os
 import json
 from pathlib import Path
@@ -11,7 +11,7 @@ APPROVED = {city['id'] for city in CITIES if not city.get('requires_activation')
 
 
 def selected_profile(city, environment, configured):
-    if environment == 'staging' and configured == 'cinematic-world-v2' and city in APPROVED and city in STYLES:
+    if environment in {'staging','production'} and configured == 'cinematic-world-v2' and city in APPROVED and city in STYLES:
         return 'cinematic-world-v2'
     return ('cinematic-world-v1' if environment == 'staging'
             and city == 'milton-keynes' and configured == 'cinematic-world-v1'

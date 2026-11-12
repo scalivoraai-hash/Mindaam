@@ -35,6 +35,8 @@ def test_geography_response_has_identical_json_without_loop_encoding():
     geo=district(city);arena=placement(city)
     radius=max(geo['radius'],max(abs(arena['x']),abs(arena['z']))+25) if arena else geo['radius']
     original={**geo,'radius':radius,'navigation':navigation(city),'arena':arena,'street_vehicles':placements(city)}
+    from backend.api.visual_profile import visual_profile
+    original['visual_profile']=visual_profile(city)['profile']
     response=geometry(city)
     assert isinstance(response,JSONResponse)
     assert response.body==JSONResponse(jsonable_encoder(original)).body

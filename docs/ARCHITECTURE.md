@@ -165,3 +165,7 @@ Password authentication session issuance uses function-scoped database dependenc
 
 
 Static bundled map coordinates are cached as immutable numeric tuples (including polygon holes), retaining identical JSON arrays and collision values while allowing Python's cyclic collector to untrack them. The public synchronous geography route constructs JSONResponse in its worker so FastAPI does not recursively re-encode the large map on the realtime event loop. GC remains enabled; there is no global freeze, collection suppression, timing relaxation or geometry change.
+
+
+### Atomic map presentation metadata and production publication
+The public geography response includes its runtime-selected visual profile, computed outside the cached static map. The client caches that complete response rather than racing a separate short profile request and caching a silent standard fallback. Existing geography request deadlines/retry rules and four-city public cache bound are unchanged; no user, permission or financial state is cached. The explicit cinematic-world-v2 flag is eligible in staging and production only for approved installed cities. Production release configuration selects it under the owner's publication instruction; all deployment, security and authenticated exact-image approval gates remain required. The legacy V1 presentation remains staging-only.

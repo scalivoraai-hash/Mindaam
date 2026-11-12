@@ -1,10 +1,11 @@
-import {api,Data} from './api';
+import {api,type Data} from './api.ts';
 // Only public bundled geography; never cache world, presence, entitlement or user data.
 const pending=new Map<string,Promise<Data>>();
 export function loadGeography(city:string):Promise<Data>{
  const found=pending.get(city);if(found)return found;
- const profile=fetch('/api/visual-profile/'+city,{cache:'no-store',signal:AbortSignal.timeout(1500)}).then(r=>r.ok?r.json():null).then(v=>v?.city===city&&['cinematic-world-v1','cinematic-world-v2'].includes(v?.profile)?v.profile:'standard').catch(()=>'standard');
- const request=Promise.all([api('/geography/'+encodeURIComponent(city)),profile]).then(([geography,visual_profile])=>({...geography,visual_profile})).catch(error=>{pending.delete(city);throw error});
+ // The profile travels with the map, so a separate short request cannot
+ // silently downgrade and cache a different world during a busy frame.
+ const request=api('/geography/'+encodeURIComponent(city)).catch(error=>{pending.delete(city);throw error});
  pending.set(city,request);if(pending.size>4)pending.delete(pending.keys().next().value!);
  return request;
 }

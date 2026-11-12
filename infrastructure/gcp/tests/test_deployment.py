@@ -60,10 +60,7 @@ class DeploymentSafety(unittest.TestCase):
             self.assertEqual(annotations['autoscaling.knative.dev/maxScale'],maximum)
             spec=manifest['spec']['template']['spec']; self.assertEqual(spec['serviceAccountName'],c.sa(env))
             values={v['name']:v for v in spec['containers'][0]['env']}
-            if env == 'staging':
-                self.assertEqual(values['MINDAAM_VISUAL_PROFILE']['value'], 'cinematic-world-v2')
-            else:
-                self.assertNotIn('MINDAAM_VISUAL_PROFILE', values)
+            self.assertEqual(values['MINDAAM_VISUAL_PROFILE']['value'], 'cinematic-world-v2')
             self.assertEqual(values['PUBLIC_ORIGIN']['value'],'https://exact.run.app')
             self.assertEqual(values['RUN_MIGRATIONS_ON_START']['value'],'false')
             self.assertNotIn('value',values['DATABASE_URL'])

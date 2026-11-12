@@ -34,7 +34,10 @@ async function main(){
    };
   }
  });
- await p.route('**/api/visual-profile/milton-keynes',route=>route.fulfill({json:{city:'milton-keynes',profile:'cinematic-world-v1'}}));
+ await p.route('**/api/geography/milton-keynes',async route=>{
+  const response=await route.fetch();
+  await route.fulfill({response,json:{...await response.json(),visual_profile:'cinematic-world-v1'}});
+ });
  const assetResponses=[];p.on('response',r=>{if(r.url().includes('/assets/whitehouse/'))assetResponses.push({url:new URL(r.url()).pathname,status:r.status()})});
  const started=Date.now();await p.goto(origin);await p.locator('.welcome-home').waitFor();await p.locator('.destination-card.is-owned').first().click();await p.locator('.world-access-modal').getByRole('button',{name:/^Enter /}).click();await p.locator('.world-playing').waitFor();await p.locator('.world-canvas canvas').waitFor({timeout:60000});
  await until(()=>assetResponses.some(r=>r.url.endsWith('.glb')&&r.status===200),'cinematic asset loaded');

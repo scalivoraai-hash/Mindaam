@@ -98,7 +98,7 @@ def run(c,sha):
  # window for correlation with the targeted reproduction; retain log history.
  metric_start=max(start,(datetime.datetime.fromisoformat(end)-datetime.timedelta(hours=1)).isoformat())
  result['metric_window']={'start':metric_start,'end':end}
- for metric in ['cloudsql.googleapis.com/database/postgresql/num_backends','cloudsql.googleapis.com/database/cpu/utilization','cloudsql.googleapis.com/database/memory/components','cloudsql.googleapis.com/database/disk/read_ops_count','cloudsql.googleapis.com/database/disk/write_ops_count','run.googleapis.com/container/memory/utilizations','run.googleapis.com/container/cpu/utilizations']:
+ for metric in ['cloudsql.googleapis.com/database/postgresql/num_backends','cloudsql.googleapis.com/database/postgresql/new_connection_count','cloudsql.googleapis.com/database/cpu/reserved_cores','cloudsql.googleapis.com/database/cpu/usage_time','cloudsql.googleapis.com/database/cpu/utilization','cloudsql.googleapis.com/database/memory/components','cloudsql.googleapis.com/database/disk/read_ops_count','cloudsql.googleapis.com/database/disk/write_ops_count','run.googleapis.com/container/memory/utilizations','run.googleapis.com/container/cpu/utilizations']:
   scope=f'resource.labels.database_id="{c.project}:mindaam-postgres"' if metric.startswith('cloudsql.') else f'resource.labels.revision_name="{release["revision"]}"'
   params={'filter':f'metric.type="{metric}" AND {scope}','interval.startTime':metric_start,'interval.endTime':end,'pageSize':1000}
   data=get_json('https://monitoring.googleapis.com/v3/projects/'+c.project+'/timeSeries?'+urlencode(params),token,c.project)

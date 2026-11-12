@@ -27,12 +27,20 @@ async function drive(page, control, latest, target, stops, runSpeed, navigation,
  async function release() {
   if(!held.size&&!contact)return;
   const previousStop=transport.stopSent;
+  const attempt={started_ms:Date.now(),previous_stop:previousStop,previous_ack:transport.stopAck,contact,keys:held.size};
+  transport.releases.push(attempt);if(transport.releases.length>8)transport.releases.shift();
   for(const key of held) await page.keyboard.up(key);
   held.clear();
   if(contact) await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   contact=false;
-  await until(()=>transport.stopSent>previousStop&&transport.stopAck>=transport.stopSent,
-   'Server acknowledgement of released '+control,8000);
+  attempt.dispatched_ms=Date.now();attempt.stop_after_dispatch=transport.stopSent;
+  try{
+   await until(()=>transport.stopSent>previousStop&&transport.stopAck>=transport.stopSent,
+    'Server acknowledgement of released '+control,8000);
+   attempt.passed=true;
+  }finally{
+   attempt.finished_ms=Date.now();attempt.final_stop=transport.stopSent;attempt.final_ack=transport.stopAck;
+  }
  }
  // The camera is at the application's default outdoor yaw after normal world entry.
  let segmentStart=xy(latest());
@@ -111,7 +119,19 @@ async function exercise(browser,control) {
   return response.json();
  };
  const u={page,context,states,touch:mobile,api};
- const transport={stopSent:0,stopAck:0,recent:[]};
+ const transport={stopSent:0,stopAck:0,recent:[],releases:[]};
+ await page.addInitScript(()=>{
+  window.__districtInputEvents=[];
+  for(const type of ['pointerdown','pointerup','pointercancel','lostpointercapture','blur','visibilitychange']){
+   window.addEventListener(type,event=>{
+    if(type.startsWith('pointer')||type==='lostpointercapture'){
+     if(!event.target?.closest?.('.mobile-joystick'))return;
+    }
+    window.__districtInputEvents.push({type,at_ms:Date.now(),hidden:document.hidden});
+    if(window.__districtInputEvents.length>64)window.__districtInputEvents.shift();
+   },true);
+  }
+ });
  const trace=(kind,d)=>{
   transport.recent.push({kind,at_ms:Date.now(),seq:d.seq,type:d.type,x:d.x,z:d.z,
    position:d.position&&{x:d.position.x,z:d.position.z,speed:d.position.speed,blocked:d.position.blocked,last_move:d.position.last_move}});
@@ -168,6 +188,10 @@ async function exercise(browser,control) {
   report.error=e.message.split('\n')[0];report.transport=transport;
   if(position)report.last_realtime_position=xy(position);
   if(registered&&position)try{
+   report.client_state=await page.evaluate(()=>({input_events:window.__districtInputEvents,
+    playing:!!document.querySelector('.world-playing'),
+    ready:document.querySelector('.world-canvas')?.getAttribute('data-ready'),
+    visual_profile:document.querySelector('.world-canvas')?.getAttribute('data-visual-profile')}));
    report.last_http_position=xy((await api('/world/'+route.city)).position);
    await page.screenshot({path:filename+'-failure.jpg',type:'jpeg',quality:70});
   }catch{/* Keep the original failure and last realtime acknowledgement. */}
