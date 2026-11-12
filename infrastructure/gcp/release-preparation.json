@@ -1,7 +1,7 @@
 {
-  "sha": "5ab339b4f0426ae1130ea68237e0313b67b5201a",
-  "image": "europe-west2-docker.pkg.dev/mindaam/mindaam/app@sha256:71d9418b7b4d5da132476db4ea445a3b0d2ccf52587f6ba3122847ba1e478ef5",
+  "sha": "c311666351fa3f25c0ffed38d2f3749e90d2170e",
+  "image": "europe-west2-docker.pkg.dev/mindaam/mindaam/app@sha256:9fb7b4ffa379c54c57a66daba2c119048c8db51785f141b9619c11e909c3d4a7",
   "preparation_authorized": true,
   "production_approved": false,
-  "source": "Owner instruction: prepare the current staging image for recovery, security and production readiness. Application CI 42946445382 and core staging acceptance 42948085839 passed. District acceptance remains unresolved; mandatory release gates and separate authenticated exact-image owner approval must pass before production promotion."
+  "source": "Owner authorises preparation of the corrected current staging release. PR29 CI 43145538253 and 43145528427 passed all 19 jobs. Staging deployment 43290333415 built this immutable image and passed 45-city property coverage and property/seating acceptance. Core media and mandatory district acceptance remain pending. This manifest authorises safety preparation only; production requires all acceptance, security, integrity, recovery and separate authenticated exact-image owner approval."
 }
