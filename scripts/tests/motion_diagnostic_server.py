@@ -44,11 +44,11 @@ def after_sql(conn, cursor, statement, parameters, context, executemany):
                        'seconds': elapsed, 'seq': getattr(local, 'seq', None), 'at': time.time()})
 
 original = main.realtime_motion
-def timed_motion(token, data):
+def timed_motion(token, data, sample_input=None):
     started, cpu = time.monotonic(), time.thread_time()
     local.seq = data.seq
     try:
-        return original(token, data)
+        return original(token, data, sample_input)
     finally:
         elapsed = time.monotonic() - started
         if elapsed > .1:
