@@ -385,7 +385,7 @@ def realtime_motion(token, data, sample_input=None):
             raise HTTPException(409,'Your location changed. Movement was cleared.')
         phases.append(('context',time.monotonic()))
         growth.require_access(db,u,p.city)
-        if sample_input is not None:
+        if sample_input is not None and data._received is not None and time.monotonic()-data._received[1]>.35:
             data=sample_input(data)
         result=(mobility.drive(mobility.Drive(steer=data.x,throttle=-data.z),u,db)
                 if data.action=='drive' else world.move_locked(world.Movement(dx=data.x,dz=data.z,mode=data.mode),u,db,p,input_received=data._received))

@@ -96,3 +96,13 @@ def test_database_admission_delay_uses_fresh_held_input_without_replaying_delay(
         assert result['position']['speed']==0
     with sessions() as db:
         assert db.get(Presence,user['id']).x==result['position']['x']
+
+
+def test_fresh_input_keeps_original_sequence_and_does_not_resample(system):
+    sessions,token,user,data=setup_motion(system)
+    data._received=(time.time(),time.monotonic())
+    def unexpected(_):
+        raise AssertionError('Fresh input must keep its existing integration path')
+    result=main.realtime_motion(token,data,unexpected)
+    assert result['seq']==data.seq
+    assert result['position']['speed']>0
