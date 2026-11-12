@@ -1,7 +1,7 @@
 {
-  "sha": "c311666351fa3f25c0ffed38d2f3749e90d2170e",
-  "image": "europe-west2-docker.pkg.dev/mindaam/mindaam/app@sha256:9fb7b4ffa379c54c57a66daba2c119048c8db51785f141b9619c11e909c3d4a7",
+  "sha": "09cdb5ddeb0e75b046fe8a5edfab084509b740aa",
+  "image": "europe-west2-docker.pkg.dev/mindaam/mindaam/app@sha256:d27e107ba068e989207566fc6f0696f8502e7c80b104fe13ab7694c7e9ba7e0f",
   "preparation_authorized": true,
   "production_approved": false,
-  "source": "Owner authorises preparation of the corrected current staging release. PR29 CI 43145538253 and 43145528427 passed all 19 jobs. Staging deployment 43290333415 built this immutable image and passed 45-city property coverage and property/seating acceptance. Core media and mandatory district acceptance remain pending. This manifest authorises safety preparation only; production requires all acceptance, security, integrity, recovery and separate authenticated exact-image owner approval."
+  "source": "Owner authorises exact-image free public beta release preparation. PR31 merged after Validation 43305825850 and 43305842682 passed all 19 jobs. Deployment 43309293221 built and deployed this corrected image; actual staging acceptance remains pending. This manifest authorises safety preparation only. Production still requires mandatory staging/district acceptance, security, database integrity, recovery, and separate authenticated exact-image owner approval. Payments and paid-entitlement webhooks must remain server-gated."
 }
