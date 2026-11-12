@@ -169,3 +169,5 @@ Static bundled map coordinates are cached as immutable numeric tuples (including
 
 ### Atomic map presentation metadata and production publication
 The public geography response includes its runtime-selected visual profile, computed outside the cached static map. The client caches that complete response rather than racing a separate short profile request and caching a silent standard fallback. Existing geography request deadlines/retry rules and four-city public cache bound are unchanged; no user, permission or financial state is cached. The explicit cinematic-world-v2 flag is eligible in staging and production only for approved installed cities. Production release configuration selects it under the owner's publication instruction; all deployment, security and authenticated exact-image approval gates remain required. The legacy V1 presentation remains staging-only.
+
+During a gradual rollout, geography without presentation metadata is supported through the existing visual-profile endpoint using the normal API request policy. Invalid or failed fallback responses are rejected and evicted from the pending cache, not converted into a cached standard profile.

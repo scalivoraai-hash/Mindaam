@@ -23,3 +23,9 @@ test('failed geography is not cached and a subsequent request can recover',async
  assert.deepEqual(await loadGeography('retry-regression'),{visual_profile:'standard',features:[]});
  assert.equal(globalThis.fetch.mock.callCount(),2);
 });
+
+test('an older backend remains compatible during gradual rollout',async t=>{
+ t.mock.method(globalThis,'fetch',async url=>({ok:true,status:200,json:async()=>url.includes('/visual-profile/')?{city:'older-backend',profile:'cinematic-world-v2'}:{features:[]}}));
+ assert.deepEqual(await loadGeography('older-backend'),{features:[],visual_profile:'cinematic-world-v2'});
+ assert.equal(globalThis.fetch.mock.callCount(),2);
+});
