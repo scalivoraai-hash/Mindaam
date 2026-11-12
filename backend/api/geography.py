@@ -54,9 +54,10 @@ def geometry(city:str):
     from .grand_arena import placement
     geo=district(city);arena=placement(city);radius=max(geo['radius'],max(abs(arena['x']),abs(arena['z']))+25) if arena else geo['radius']
     from .terrain import navigation
+    from .visual_profile import visual_profile
     # Encode the already JSON-native map in this sync endpoint's worker, not
     # through FastAPI's recursive encoder on the realtime event loop.
-    return JSONResponse({**geo,'radius':radius,'navigation':navigation(city),'arena':arena,'street_vehicles':placements(city)})
+    return JSONResponse({**geo,'radius':radius,'navigation':navigation(city),'arena':arena,'street_vehicles':placements(city),'visual_profile':visual_profile(city)['profile']})
 
 @lru_cache(maxsize=64)
 def footprints(city):
